@@ -1,0 +1,58 @@
+.layout {
+  background: rgba(240, 248, 255, 0.7);
+  border-radius: 20px;
+  margin: 40px;
+  padding: 30px;
+  color: #1a1a1a;
+
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  backdrop-filter: blur(8px);
+}
+
+.dashboard {
+  display: flex;
+  gap: 25px;
+  padding: 20px;
+  margin: 20px auto;
+  min-height: 80vh;
+  max-width: 1400px;
+}
+
+.right {
+  flex: 1;
+
+  background: white;
+  padding: 25px;
+  border-radius: 20px;
+
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  transition: 0.3s;
+}
+
+.right:hover {
+  transform: translateY(-3px);
+}
+
+.left {
+  flex: 4;
+
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.left-section {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+header h1 {
+  color: #222;
+  font-weight: 700;
+  font-size: 2rem;
+  margin-bottom: 25px;
+}
