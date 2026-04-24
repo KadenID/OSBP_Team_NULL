@@ -1,5 +1,5 @@
 import React from 'react';
-import './main_page.css';
+import './MainPage.css';
 
 function Main() {
 
@@ -17,10 +17,7 @@ function Main() {
 
         <div className="left-section">
           <div className="left">과제탭</div>
-
-          <div className="left">
-            알림탭
-          </div>
+          <div className="left">알림탭</div>
         </div>
 
         <div className="right">Ai 기능</div>
