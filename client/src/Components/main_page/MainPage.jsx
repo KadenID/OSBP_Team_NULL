@@ -1,10 +1,10 @@
 import React from 'react';
 import './MainPage.css';
 
-function Main() {
+function MainPage() {
 
   return (
-    <div>
+    <>
       <header>
         <div className="layout">
             <h1>학습 대시보드</h1>
@@ -24,8 +24,8 @@ function Main() {
 
       </main>
 
-    </div>
+    </>
   );
 }
 
-export default Main;
+export default MainPage;
