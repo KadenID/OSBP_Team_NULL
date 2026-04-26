@@ -1,0 +1,102 @@
+.assignment-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.tab-title {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 13px;
+}
+
+.mainbox {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tab-button {
+  padding: 8px 16px;
+  border: none;
+  background: #e8e8e8;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.tab-button.active {
+  background: #1890ff;
+  color: white;
+}
+
+.assignment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: #f8fbff; 
+  border: 1px solid #eef2f8;
+  border-radius: 12px;
+  transition: transform 0.2s;
+}
+
+.assignment-item:hover {
+  transform: scale(1.02); 
+}
+
+.subject {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.task-name {
+  font-weight: 600;
+  margin: 5px 0 0 0;
+  color: #2c3e50;
+}
+
+.status-box {
+  display: flex;
+  flex-direction: column; 
+  align-items: flex-end; 
+  gap: 8px; 
+  text-align: right;
+}
+
+.status {
+  font-size: 1rem;
+  padding: 5px 9px;
+  border-radius: 20px;
+}
+
+.status:hover {
+  transform: scale(1.1); 
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
+}
+
+.status.Incomplete {
+  background-color: #fff1f0; 
+  color: #ff4d4f;           
+  border: 1px solid #ffccc7;
+}
+
+.status.Complete {
+  background-color: #f6ffed; 
+  color: #52c41a;            
+  border: 1px solid #b7eb8f;
+}
+
+.d-day {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #e74c3c; 
+  margin-bottom: 2px;
+}
