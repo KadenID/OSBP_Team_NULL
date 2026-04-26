@@ -1,5 +1,7 @@
 import React from 'react';
 import './MainPage.css';
+import AssignmentTab from "../assignment-tab/AssignmentTab.jsx";
+
 
 function MainPage() {
 
@@ -16,7 +18,7 @@ function MainPage() {
       <main className="dashboard">
 
         <div className="left-section">
-          <div className="left">과제탭</div>
+          <div className="left"><AssignmentTab/></div>
           <div className="left">알림탭</div>
         </div>
 
