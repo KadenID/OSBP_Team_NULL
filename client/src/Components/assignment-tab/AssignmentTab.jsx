@@ -18,15 +18,19 @@ function AssignmentTab() {
   const [currentTab, setCurrentTab] = useState(STATUS.INCOMPLETE);
   
   //과제 정렬 함수  
-  const filteredList = (assignment || [])
-    .filter(item => item?.status === currentTab)
-    .sort((a,b) => (a?.dday || 0) - (b?.dday || 0));
-  
+  const filteredList = useMemo(() => {
+    return assignment
+     .filter(item => item.status === currentTab)
+     .sort((a,b) => a.dday - b.dday || 0);
+  }, [assignment, currentTab]);
+
   //상태 변경 함수
   const handleStatusChange = (id) => {
-    setAssignment(assignment.map(item =>
-      item?.id === id ? { ...item, status: STATUS.COMPLETE } : item
-    ));
+    setAssignment(prev =>
+      prev.map(item =>
+        item.id === id ? { ...item, status: STATUS.COMPLETE } : item
+      )
+    );
     setCurrentTab(STATUS.COMPLETE);
   }; 
 
