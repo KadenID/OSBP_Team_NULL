@@ -6,23 +6,33 @@ const STATUS = {
   COMPLETE: 'Complete'
 };
 
-
-function j() {
-const [assignment, setAssignment] = useState([
+function AssignmentTab() {
+  //임시 데이터(목 데이터)
+  const [assignment, setAssignment] = useState([
     { id: 1, subject: "오픈소스기초 프로젝트", task: "9주차 카페 글 작성", dday: 9, status: STATUS.INCOMPLETE },
     { id: 2, subject: "컴퓨터 구조", task: "4장 연습 문제 제출", dday: 3, status: STATUS.COMPLETE }
   ]);
 
-  //미제출 버튼 누르면 재출 완료로 바뀌면서 재출 완료 탭으로 넘어가기
-  //과제 남은 기간 순으로 정렬하기
-  //과제누르면 관련 정보 나오게
+  //과제 상세 설명 기능 (아직)
 
   const [currentTab, setCurrentTab] = useState(STATUS.INCOMPLETE);
-
-  const filteredList = assignment.filter(item => item.status === currentTab);
+  
+  //과제 정렬 함수  
+  const filteredList = (assignment || [])
+    .filter(item => item?.status === currentTab)
+    .sort((a,b) => (a?.dday || 0) - (b?.dday || 0));
+  
+  //상태 변경 함수
+  const handleStatusChange = (id) => {
+    setAssignment(assignment.map(item =>
+      item?.id === id ? { ...item, status: STATUS.COMPLETE } : item
+    ));
+    setCurrentTab(STATUS.COMPLETE);
+  }; 
 
   return (
     <>
+    {/*탭 버튼 구현*/}
     <div className="tab-buttons">
         <button 
           className={`tab-button ${currentTab === STATUS.INCOMPLETE ? 'active' : ''}`}
@@ -44,24 +54,30 @@ const [assignment, setAssignment] = useState([
             <p>과제가 없습니다.</p>
         ) : (
           filteredList.map((item) => (
-            <div className="assignment-item" key={item.id}>
+            <div className="assignment-item" key={item?.id}>
             
               <div className="info">
-                <span className="subject">{item.subject}</span>
-
-                <p className="task-name">{item.task}</p>
+                <span className="subject">{item?.subject}</span>
+                <p className="task-name">{item?.task}</p>
               </div>
-             
+
+              {/*미제출 누르면 제출 완료로 넘어감, 단방향*/}
               <div className="status-box">
-                <span className={`status ${item.status}`}>
+                <button 
+                  className={`status ${item?.status}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStatusChange(item?.id);
+                  }}
+                >
                   {item.status === STATUS.INCOMPLETE ? '미제출' : '제출 완료'}
-                </span>
-                <span className="d-day">D-{item.dday}</span>
+                </button>
+                <span className="d-day">D-{item?.dday}</span>
               </div>
 
             </div>
           ))
-      )}
+        )}
 
       </main>
     </div>
