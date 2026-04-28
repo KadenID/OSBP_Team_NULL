@@ -28,7 +28,13 @@ function AssignmentTab() {
   const handleStatusChange = (id) => {
     setAssignment(prev =>
       prev.map(item =>
-        item.id === id ? { ...item, status: STATUS.COMPLETE } : item
+        item.id === id ? { 
+          ...item, 
+          status: 
+            item.status === STATUS.COMPLETE 
+              ? STAATUS.COMPLETE
+              : STATUS.INCOMPLETE
+        } : item
       )
     );
     setCurrentTab(STATUS.COMPLETE);
