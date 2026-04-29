@@ -44,7 +44,7 @@ def get_enrolled_courses(session):
                                 
                     if course_name:
                         courses[course_id] = course_name
-                        print(f"[추출] ID: {course_id} | 과목명: {course_name}")
+                        print(f"ID: {course_id} | 과목명: {course_name}")
 
         print(f"\n총 {len(courses)}개의 과목을 찾았습니다.")
         return courses
@@ -53,10 +53,25 @@ def get_enrolled_courses(session):
         print(f"[{course_name}] 과목 목록 추출 중 오류 발생: {e}")
         return {}
 
+def get_assignments_for_course(session, course_id, course_name):
+    # 과제 목록 페이지 URL 생성
+    assign_index_url = f"https://lms.chungbuk.ac.kr/mod/assign/index.php?id={course_id}"
+    
+    resp = session.get(assign_index_url, timeout=10)
+    # 서버 응답이 200인지 확인하여 접속 여부 출력
+    if resp.status_code == 200:
+        print(f"[접속성공] {course_name} 과제 페이지에 연결되었습니다.")
+    else:
+        print(f"[접속실패] {course_name} 페이지 응답 코드: {resp.status_code}")
+    
+    return []
+
 if __name__ == "__main__":
     session, message = login_to_lms()
     if session:
-        print("LMS 로그인 성공\n")
-        get_enrolled_courses(session)
+        courses = get_enrolled_courses(session)
+        for c_id, c_name in courses.items():
+            # 정의한 함수를 여기서 바로 호출하여 접속 테스트 진행
+            get_assignments_for_course(session, c_id, c_name)
     else:
         print(f"로그인 실패: {message}")
