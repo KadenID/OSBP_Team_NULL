@@ -73,13 +73,6 @@ def get_assignments_for_course(session, course_id, course_name):
                     a_due = cols[2].text.strip()
                     a_status = cols[3].text.strip()
                     
-                    # [Step 5 핵심] 수집하는 모든 데이터를 즉시 출력
-                    print(f"\n{course_name}")
-                    print(f"-과제명: {a_name}")
-                    print(f"-마감일: {a_due}")
-                    print(f"-상태  : {a_status}")
-                    print(f"-링크  : {a_url}")
-                    
                     # 데이터 반환을 위해 리스트에 저장
                     assignments.append({
                         'course_name': course_name,
@@ -94,11 +87,30 @@ def get_assignments_for_course(session, course_id, course_name):
     except Exception as e:
         print(f"[{course_name}] 에러: {e}"); return []
 
+def crawl_all_assignments(session):
+    # 모든 과제 데이터를 하나의 리스트로 통합
+    all_assignments = []
+
+    courses = get_enrolled_courses(session)
+    
+    for course_id, course_name in courses.items():
+        assign_list = get_assignments_for_course(session, course_id, course_name)
+        all_assignments.extend(assign_list)
+        
+    return all_assignments
+
 if __name__ == "__main__":
     session, message = login_to_lms()
     if session:
-        courses = get_enrolled_courses(session)
-        for c_id, c_name in courses.items():
-            get_assignments_for_course(session, c_id, c_name)
+        final_assignments = crawl_all_assignments(session)
+
+        print("\n" + "="*50)
+        print(f"       학기 과제 현황 요약 (총 {len(final_assignments)}건)")
+        print("="*50)
+        
+        for idx, item in enumerate(final_assignments, 1):
+            print(f"{idx:2d}. [{item['course_name']}] {item['assignment_name']}")
+            print(f"    - 마감: {item['due_date']} | 상태: {item['status']}")
+            print(f"    - 링크: {item['url']}\n")
     else:
         print(f"로그인 실패: {message}")
