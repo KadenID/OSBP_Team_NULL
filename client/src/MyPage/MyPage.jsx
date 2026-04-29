@@ -1,10 +1,23 @@
 import "./MyPage.css";
-import { FiLogOut} from "react-icons/fi";
+import { FiLogOut, FiHome } from "react-icons/fi";
+import {useNavigate} from "react-router-dom";
 
 function MyPage() {
+    const navigate = useNavigate();
+
     return(
         <div className="mypage-container">
             
+            {/* 
+            메인화면 전환 버튼 
+            */}
+            <div className="top-right-menu">
+                <button className="main-button" onClick={()=> navigate("/")}>
+                    <FiHome className="main-icon" />
+                    메인
+                </button>
+            </div>
+
             {/* 
             마이페이지 상단 영역
             - 페이지 제목 및 간단한 설명 문구 표시
@@ -26,7 +39,7 @@ function MyPage() {
                  */}
                 <div className="mypage-card">
                     <h2 className="mypage-card-title">LMS 연동 상태</h2>
-                    <p className="mypage-card-content">연동 여부 표시 영역</p>
+                    <p className="mypage-card-content">연동 여부 및 사용자 정보 표시 영역</p>
                 </div>
 
                 {/* 
@@ -46,7 +59,10 @@ function MyPage() {
                     <h2 className="mypage-card-title">시간표 입력</h2>
                     <p className="mypage-card-content">수업 시간표 입력 영역</p>
                 </div>
-
+                
+                {/*
+                로그아웃 버튼 영역
+                 */}
                 <div className="mypage-footer">
                     <button className="logout-button">
                         <FiLogOut className="logout-icon" />
@@ -57,6 +73,8 @@ function MyPage() {
             </div>
 
         </div>
+
+    
     );
 }
 
