@@ -1,7 +1,7 @@
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import os
 
-key = AESGCM.generate_key(bit_lenght=256)
+key = os.environ.get("ENCRYPTION_KEY")
 aesgcm = AESGCM(key)
 
 def encrypt(text):
