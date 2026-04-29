@@ -46,7 +46,6 @@ def get_enrolled_courses(session):
                         courses[course_id] = course_name
                         print(f"ID: {course_id} | 과목명: {course_name}")
 
-        print(f"\n총 {len(courses)}개의 과목을 찾았습니다.")
         return courses
 
     except Exception as e:
@@ -56,22 +55,50 @@ def get_enrolled_courses(session):
 def get_assignments_for_course(session, course_id, course_name):
     # 과제 목록 페이지 URL 생성
     assign_index_url = f"https://lms.chungbuk.ac.kr/mod/assign/index.php?id={course_id}"
+    assignments = []
+
+    try:
+        resp = session.get(assign_index_url, timeout=10)
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        table = soup.find('table', class_='generaltable')
+        
+        if table:
+            rows = table.find('tbody').find_all('tr') if table.find('tbody') else table.find_all('tr')[1:]
+            for row in rows:
+                cols = row.find_all(['td', 'th'])
+                if len(cols) >= 4 and cols[1].find('a'):
+                    # 데이터 추출
+                    a_name = cols[1].find('a').text.strip()
+                    a_url = cols[1].find('a')['href']
+                    a_due = cols[2].text.strip()
+                    a_status = cols[3].text.strip()
+                    
+                    # [Step 5 핵심] 수집하는 모든 데이터를 즉시 출력
+                    print(f"\n{course_name}")
+                    print(f"-과제명: {a_name}")
+                    print(f"-마감일: {a_due}")
+                    print(f"-상태  : {a_status}")
+                    print(f"-링크  : {a_url}")
+                    
+                    # 데이터 반환을 위해 리스트에 저장
+                    assignments.append({
+                        'course_name': course_name,
+                        'assignment_name': a_name,
+                        'due_date': a_due,
+                        'status': a_status,
+                        'url': a_url
+                    })
+
+        return assignments
     
-    resp = session.get(assign_index_url, timeout=10)
-    # 서버 응답이 200인지 확인하여 접속 여부 출력
-    if resp.status_code == 200:
-        print(f"[접속성공] {course_name} 과제 페이지에 연결되었습니다.")
-    else:
-        print(f"[접속실패] {course_name} 페이지 응답 코드: {resp.status_code}")
-    
-    return []
+    except Exception as e:
+        print(f"[{course_name}] 에러: {e}"); return []
 
 if __name__ == "__main__":
     session, message = login_to_lms()
     if session:
         courses = get_enrolled_courses(session)
         for c_id, c_name in courses.items():
-            # 정의한 함수를 여기서 바로 호출하여 접속 테스트 진행
             get_assignments_for_course(session, c_id, c_name)
     else:
         print(f"로그인 실패: {message}")
