@@ -1,0 +1,151 @@
+/* 기본 설정 */
+body {
+  margin: 0;
+  background: #f7f7fb;
+}
+
+
+/* 마이페이지 전체 컨테이너 */
+.mypage-container {
+  max-width: 900px;          /* 최대 너비 제한 */
+  margin: 0 auto;            /* 가운데 정렬 */
+  padding: 70px 24px;        /* 위아래 여백 + 좌우 패딩 */
+}
+
+
+/*상단 헤더 영역 */
+.mypage-header {
+  margin-bottom: 30px;       /* 카드와 간격 */
+}
+
+.mypage-title {
+  margin: 0 0 8px;
+  font-size: 34px;
+  font-weight: 800;
+  color: #222;
+}
+
+.mypage-subtitle {
+  margin: 0;
+  font-size: 15px;
+  color: #777;
+}
+
+
+/* 우측 상단 메뉴 (메인 버튼) */
+.top-right-menu {
+  display: flex;
+  justify-content: flex-end; /* 오른쪽 정렬 */
+  margin-bottom: 10px;
+}
+
+.main-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;                 /* 아이콘과 텍스트 간격 */
+  padding: 7px 13px;
+  border: none;
+  border-radius: 9px;
+  background-color: #e5e7eb;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.main-button:hover {
+  background-color: #d1d5db;
+}
+
+.main-icon {
+  font-size: 15px;
+}
+
+
+/* 카드 리스트 영역 */
+.mypage-grid {
+  display: flex;
+  flex-direction: column;   /* 세로 정렬 */
+  gap: 20px;                /* 카드 간 간격 */
+}
+
+
+/* 개별 카드 스타일 */
+.mypage-card {
+  position: relative;
+  box-sizing: border-box;
+
+  background: #ffffff;
+  border: 1px solid #e8e8ef;
+  border-radius: 16px;
+
+  padding: 28px 32px;
+  padding-left: 40px; /* 포인트 라인 때문에 추가 */
+
+  min-height: 120px;
+
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.mypage-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 26px;
+  bottom: 26px;
+  width: 4px;
+  border-radius: 0 8px 8px 0;
+  background: #6366f1;
+}
+
+/* 카드 hover 효과 */
+.mypage-card:hover {
+  transform: translateY(-3px); /* 살짝 위로 이동 */
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+
+/* 카드 내부 텍스트 */
+.mypage-card-title {
+  margin: 0 0 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #2b2340;
+}
+
+.mypage-card-content {
+  margin: 0;
+  font-size: 15px;
+  color: #666;
+}
+
+
+/* 하단 영역 (로그아웃 버튼) */
+.mypage-footer {
+  display: flex;
+  justify-content: flex-end; /* 오른쪽 정렬 */
+  margin-top: 30px;
+}
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #e53935;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.logout-icon {
+  font-size: 16px;
+}
+
+.logout-button:hover {
+  text-decoration: underline;
+}
+
+
