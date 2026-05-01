@@ -2,6 +2,15 @@ import "./MyPage.css";
 import { FiLogOut, FiHome } from "react-icons/fi";
 import {useNavigate} from "react-router-dom";
 
+function MyPageCard({ title, content }) {
+    return (
+        <div className="mypage-card">
+            <h2 className="mypage-card-title">{title}</h2>
+            <p className="mypage-card-content">{content}</p>
+        </div>
+    );
+}
+
 function MyPage() {
     const navigate = useNavigate();
 
@@ -37,29 +46,20 @@ function MyPage() {
                 LMS 연동 상태 카드
                 - 사용자의 LMS 계정 연동 여부 표시
                  */}
-                <div className="mypage-card">
-                    <h2 className="mypage-card-title">LMS 연동 상태</h2>
-                    <p className="mypage-card-content">연동 여부 및 사용자 정보 표시 영역</p>
-                </div>
+                <MyPageCard title="LMS 연동 상태" content="연동 여부 및 사용자 정보 표시 영역" />
 
                 {/* 
                 알림 설정 카드
                 - 과제 및 공지 알림 설정 영역
                  */}
-                <div className="mypage-card">
-                    <h2 className="mypage-card-title">알림 설정</h2>
-                    <p className="mypage-card-content">과제 및 공지 알림 설정 영역</p>
-                </div>
+                <MyPageCard title="알림 설정" content="과제 및 공지 알림 설정 영역" />
 
                 {/*
                  시간표 입력 카드
                 - 사용자 시간표 입력 및 관리 영역
                  */}
-                <div className="mypage-card">
-                    <h2 className="mypage-card-title">시간표 입력</h2>
-                    <p className="mypage-card-content">수업 시간표 입력 영역</p>
-                </div>
-                
+                <MyPageCard title="시간표 입력" content="사용자 시간표 입력 및 관리 영역" />
+
                 {/*
                 로그아웃 버튼 영역
                  */}
@@ -71,10 +71,8 @@ function MyPage() {
                 </div>
 
             </div>
-
-        </div>
-
-    
+            
+        </div> 
     );
 }
 
