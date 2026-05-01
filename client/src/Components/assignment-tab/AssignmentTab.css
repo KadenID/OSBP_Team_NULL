@@ -129,13 +129,44 @@
   border-left: 5px solid #ff4d4f;
 }
 
+/* 태그 컨테이너 */
+.tag-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
 
-.d-day {
-  display: block;
-  font-size: 0.8rem;
+.tag-container p {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #555;
+  margin: 0;
+}
+
+.tag-container button {
+  padding: 6px 14px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  color: #666;
+}
+
+.tag-container button:hover {
+  background: #f0f0f0;
+}
+
+.tag-container button.on {
+  background-color: #1890ff;
+  color: white;
+  border-color: #1890ff;
   font-weight: 600;
-  color: #e74c3c; 
-  margin-bottom: 2px;
 }
 
 @media screen and (max-width: 768px) {
