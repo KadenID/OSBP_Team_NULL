@@ -116,44 +116,44 @@ function AssignmentTab() {
           ))}
         </div>
       )}
-      
+
 
     <div className="assignment-container">
-      <header> <p className="tab-title">과제</p></header>
+      <header> <p className="tab-title">과제 목록({filteredList.length})</p></header>
 
-      <main className="mainbox">
-        {filteredList.length === 0 ? (
-            <p>과제가 없습니다.</p>
-        ) : (
-          filteredList.map((item) => (
-            <div className="assignment-item" key={item?.id}>
+      <ui className="mainbox">
+        {filteredList.length === 0 ? <p>과제가 없습니다.</p> :
+          filteredList.map(({ isExpired, deadlineLabel, dday, ...item }) => (
+
+            <div className={`assignment-item ${getItemClass(isExpired, item.isSubmitted)}`} key={item?.id}>
             
               <div className="info">
                 <span className="subject">{item?.subject}</span>
                 <p className="task-name">{item?.task}</p>
               </div>
 
-              {/*미제출 누르면 제출 완료로 넘어감, 단방향*/}
+              {/**/}
               <div className="status-box">
-                <button 
-                  className={`status ${item?.status}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleStatusChange(item?.id);
-                  }}
-                >
-                  {item.status === STATUS.INCOMPLETE ? '미제출' : '제출 완료'}
-                </button>
+
+                <div className={`status-label ${item.isSubmitted ? 'done' : 'yet'}`}>
+                  {item.isSubmitted ? '제출 완료' : '미제출'}
+                </div>
+
+                <span className={`deadline-text ${isExpired ? 'expired-text' : ''}`}>
+                  기한: {deadlineLabel}
+                </span>
+
                 <span className="d-day">D-{item?.dday}</span>
               </div>
 
             </div>
-          ))
-        )}
+            
+            ))
+          }
+        </ui>
 
-      </main>
+      </div>
     </div>
-    </>
   );
 }
 
