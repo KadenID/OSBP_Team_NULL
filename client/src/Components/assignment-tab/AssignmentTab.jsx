@@ -21,7 +21,35 @@ function AssignmentTab() {
 
   const [currentTab, setCurrentTab] = useState(TABS.ALL);
   const [activeTags, setActiveTags] = useState([]);
+
+
+  // 1초마다 now 갱신
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer); // 언마운트 시 정리
+  }, []);
+
+
+  // 디데이 계산 함수
+  const calcDday = (deadline) => {
+    const diff = new Date(deadline) - now;
+    if (diff <= 0) return null;
+
+    const days    = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours   = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    // days > 0이어도 총 시간 전부 표시
+    const totalHours = days * 24 + hours;
+
+    if (days > 0) return `D-${days} (${totalHours}시간 ${minutes}분 ${seconds}초)`;
+    if (hours > 0) return `${totalHours}시간 ${minutes}분 ${seconds}초`;
+    return `${minutes}분 ${seconds}초`;
+  };
   
+
   const filteredList = useMemo(() => {
 
     return assignment
@@ -30,7 +58,7 @@ function AssignmentTab() {
         ...item,
         isExpired: new Date(item.deadline) < now,
         deadlineLabel: item.deadline.replace('T', ' ').substring(0, 16),
-        dday: calcDday(item.deadline) // ✅ 디데이 추가
+        dday: calcDday(item.deadline) // 디데이 추가
       }))
     
       .filter(item => {
@@ -147,7 +175,7 @@ function AssignmentTab() {
               </div>
 
             </div>
-            
+
             ))
           }
         </ui>
