@@ -7,20 +7,19 @@ body {
 
 /* 마이페이지 전체 컨테이너 */
 .mypage-container {
-  max-width: 900px;          /* 최대 너비 제한 */
-  margin: 0 auto;            /* 가운데 정렬 */
-  padding: 70px 24px;        /* 위아래 여백 + 좌우 패딩 */
-}
+  max-width: 900px;          
+  margin: 0 auto;            
+  padding: 70px 24px;        
 
 
-/*상단 헤더 영역 */
+/* 상단 헤더 영역 */
 .mypage-header {
-  margin-bottom: 30px;       /* 카드와 간격 */
+  margin-bottom: 30px;       
 }
 
 .mypage-title {
   margin: 0 0 8px;
-  font-size: 34px;
+  font-size: clamp(24px, 4vw, 34px);
   font-weight: 800;
   color: #222;
 }
@@ -35,22 +34,27 @@ body {
 /* 우측 상단 메뉴 (메인 버튼) */
 .top-right-menu {
   display: flex;
-  justify-content: flex-end; /* 오른쪽 정렬 */
+  justify-content: flex-end; 
   margin-bottom: 10px;
 }
 
-.main-button {
+/* 버튼 공통 */
+.main-button,
+.logout-button {
   display: flex;
   align-items: center;
-  gap: 6px;                 /* 아이콘과 텍스트 간격 */
+  gap: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.main-button {
   padding: 7px 13px;
   border: none;
   border-radius: 9px;
   background-color: #e5e7eb;
   color: #111827;
   font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .main-button:hover {
@@ -65,8 +69,8 @@ body {
 /* 카드 리스트 영역 */
 .mypage-grid {
   display: flex;
-  flex-direction: column;   /* 세로 정렬 */
-  gap: 20px;                /* 카드 간 간격 */
+  flex-direction: column;   
+  gap: 20px;                
 }
 
 
@@ -85,7 +89,7 @@ body {
   min-height: 120px;
 
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .mypage-card::before {
@@ -124,20 +128,15 @@ body {
 /* 하단 영역 (로그아웃 버튼) */
 .mypage-footer {
   display: flex;
-  justify-content: flex-end; /* 오른쪽 정렬 */
+  justify-content: flex-end; 
   margin-top: 30px;
 }
 
 .logout-button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   background: none;
   border: none;
   color: #e53935;
   font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .logout-icon {
@@ -148,15 +147,18 @@ body {
   text-decoration: underline;
 }
 
+/* 접근성 */
+.main-button:focus-visible,
+.logout-button:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
 /* 미디어쿼리 */
 /* 화면 너비가 768px 이하일 때 */
 @media (max-width: 768px) {
   .mypage-container {
     padding: 40px 16px;
-  }
-
-  .top-right-menu {
-    justify-content: flex-end;
   }
 
   .mypage-title {
@@ -169,6 +171,7 @@ body {
 
   .mypage-card {
     padding: 20px;
+    padding-left: 28px; 
     min-height: 100px;
   }
 
@@ -195,6 +198,7 @@ body {
 
   .mypage-card {
     padding: 18px;
+    padding-left: 26px;
     border-radius: 12px;
   }
 
