@@ -22,12 +22,41 @@ function AssignmentTab() {
   const [currentTab, setCurrentTab] = useState(TABS.ALL);
   const [activeTags, setActiveTags] = useState([]);
   
-  //과제 정렬 함수  
   const filteredList = useMemo(() => {
+
     return assignment
-     .filter(item => item.status === currentTab)
-     .sort((a,b) => a.dday - b.dday || 0);
-  }, [assignment, currentTab]);
+      
+      .map(item => ({
+        ...item,
+        isExpired: new Date(item.deadline) < now,
+        deadlineLabel: item.deadline.replace('T', ' ').substring(0, 16),
+        dday: calcDday(item.deadline) // ✅ 디데이 추가
+      }))
+    
+      .filter(item => {
+        const { isExpired } = item;
+
+        if (currentTab === TABS.COMPLETED) return isExpired && item.isSubmitted; // 완료탭 : 제출완료 + 기한 지남
+
+        if (currentTab === TABS.INCOMPLETED) {
+          if (activeTags.length > 0) {
+            return activeTags.every(tag => {
+              if (tag === Status.SUBMITTED)   return item.isSubmitted;
+              if (tag === Status.UNSUBMITTED) return !item.isSubmitted;
+              if (tag === Status.ONGOING)     return !isExpired;
+              if (tag === Status.OVERDUE)     return isExpired;
+              return true;
+            });
+          }
+          return !item.isSubmitted && !isExpired; // 진행탭 : 태그 선택 안하는 경우, 미제출 + 기한 남음
+        }
+
+        return true; // 전체 탭
+      })
+      .sort((a, b) => new Date(a.deadline) - new Date(b.deadline)); // 마감 기한이 빠른 순으로 배열
+
+  }, [assignment, currentTab, activeTags, now]);
+  
 
   //상태 변경
   const toggleTag = (tag) => { // 토글
