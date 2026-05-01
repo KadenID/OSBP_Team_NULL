@@ -1,21 +1,26 @@
-import React, {useState} from 'react';
+import React, {useState, useMemo, useEffect} from 'react';
 import './AssignmentTab.css';
 
+const TABS = { ALL: 'ALL', INCOMPLETED: 'INCOMPLETED', COMPLETED: 'COMPLETED' };
+
 const STATUS = {
-  INCOMPLETE: 'Incomplete',
-  COMPLETE: 'Complete'
+  UNSUBMITTED: 'UNSUBMITTED',
+  SUBMITTED: 'SUBMITTED',
+  ONGOING: 'ONGOING',
+  OVERDUE: 'OVERDUE'
 };
 
 function AssignmentTab() {
   //임시 데이터(목 데이터)
   const [assignment, setAssignment] = useState([
-    { id: 1, subject: "오픈소스기초 프로젝트", task: "9주차 카페 글 작성", dday: 9, status: STATUS.INCOMPLETE },
-    { id: 2, subject: "컴퓨터 구조", task: "4장 연습 문제 제출", dday: 3, status: STATUS.COMPLETE }
+    { id: 1, subject: "오픈소스기초 프로젝트", task: "9주차 카페 글 작성", deadline: "2026-05-10T23:59:59", isSubmitted: true },
+    { id: 2, subject: "컴퓨터 구조", task: "4장 연습 문제 제출", deadline: "2026-05-25T23:59:59", isSubmitted: false }
   ]);
 
   //과제 상세 설명 기능 (아직)
 
-  const [currentTab, setCurrentTab] = useState(STATUS.INCOMPLETE);
+  const [currentTab, setCurrentTab] = useState(TABS.ALL);
+  const [activeTags, setActiveTags] = useState([]);
   
   //과제 정렬 함수  
   const filteredList = useMemo(() => {
@@ -24,21 +29,28 @@ function AssignmentTab() {
      .sort((a,b) => a.dday - b.dday || 0);
   }, [assignment, currentTab]);
 
-  //상태 변경 함수
-  const handleStatusChange = (id) => {
-    setAssignment(prev =>
-      prev.map(item =>
-        item.id === id ? { 
-          ...item, 
-          status: 
-            item.status === STATUS.COMPLETE 
-              ? STAATUS.COMPLETE
-              : STATUS.INCOMPLETE
-        } : item
-      )
-    );
-    setCurrentTab(STATUS.COMPLETE);
-  }; 
+  //상태 변경
+  const toggleTag = (tag) => { // 토글
+    setActiveTags((prev) => {
+      if (prev.includes(tag)) return prev.filter((t) => t !== tag);
+
+      let nextTags = [...prev];
+
+      if (tag === Status.SUBMITTED) { // 제출/미제출 중 하나만 선택 가능
+        nextTags = nextTags.filter((t) => t !== Status.UNSUBMITTED);
+      } else if (tag === Status.UNSUBMITTED) {
+        nextTags = nextTags.filter((t) => t !== Status.SUBMITTED);
+      }
+
+      if (tag === Status.ONGOING) { // 기한 지남/기한 남음 중 하나만 선택 가능
+        nextTags = nextTags.filter((t) => t !== Status.OVERDUE);
+      } else if (tag === Status.OVERDUE) {
+        nextTags = nextTags.filter((t) => t !== Status.ONGOING);
+      }
+
+      return [...nextTags, tag];
+    });
+  };
 
   return (
     <>
