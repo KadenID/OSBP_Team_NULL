@@ -96,6 +96,28 @@ function AssignmentTab() {
         ))}
       </div>
 
+
+      {currentTab === TABS.INCOMPLETED && ( // 진행 탭의 필터링 태그
+        <div className="tag-container">
+          <p>상세 필터:</p>
+          {[
+            { id: Status.SUBMITTED,   label: '제출' },
+            { id: Status.UNSUBMITTED, label: '미제출' },
+            { id: Status.ONGOING,     label: '기한 남음' },
+            { id: Status.OVERDUE,     label: '기한 지남' }
+          ].map(tag => (
+            <button
+              key={tag.id}
+              className={activeTags.includes(tag.id) ? 'on' : ''}
+              onClick={() => toggleTag(tag.id)}
+            >
+              {tag.label}
+            </button>
+          ))}
+        </div>
+      )}
+      
+
     <div className="assignment-container">
       <header> <p className="tab-title">과제</p></header>
 
