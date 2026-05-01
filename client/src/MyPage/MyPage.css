@@ -148,4 +148,57 @@ body {
   text-decoration: underline;
 }
 
+/* 미디어쿼리 */
+/* 화면 너비가 768px 이하일 때 */
+@media (max-width: 768px) {
+  .mypage-container {
+    padding: 40px 16px;
+  }
 
+  .top-right-menu {
+    justify-content: flex-end;
+  }
+
+  .mypage-title {
+    font-size: 26px;
+  }
+
+  .mypage-subtitle {
+    font-size: 14px;
+  }
+
+  .mypage-card {
+    padding: 20px;
+    min-height: 100px;
+  }
+
+  .mypage-card-title {
+    font-size: 18px;
+  }
+
+  .mypage-card-content {
+    font-size: 14px;
+  }
+
+  .main-button,
+  .logout-button {
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+}
+
+/* 화면 너비가 480px 이하일 때 */
+@media (max-width: 480px) {
+  .mypage-container {
+    padding: 32px 14px;
+  }
+
+  .mypage-card {
+    padding: 18px;
+    border-radius: 12px;
+  }
+
+  .mypage-title {
+    font-size: 24px;
+  }
+}
