@@ -11,8 +11,9 @@ const STATUS = {
 };
 
 function AssignmentTab() {
+
   //임시 데이터(목 데이터)
-  const [assignment, setAssignment] = useState([
+  const [assignment] = useState([
     { id: 1, subject: "오픈소스기초 프로젝트", task: "9주차 카페 글 작성", deadline: "2026-05-10T23:59:59", isSubmitted: true },
     { id: 2, subject: "컴퓨터 구조", task: "4장 연습 문제 제출", deadline: "2026-05-25T23:59:59", isSubmitted: false }
   ]);
@@ -69,10 +70,10 @@ function AssignmentTab() {
         if (currentTab === TABS.INCOMPLETED) {
           if (activeTags.length > 0) {
             return activeTags.every(tag => {
-              if (tag === Status.SUBMITTED)   return item.isSubmitted;
-              if (tag === Status.UNSUBMITTED) return !item.isSubmitted;
-              if (tag === Status.ONGOING)     return !isExpired;
-              if (tag === Status.OVERDUE)     return isExpired;
+              if (tag === STATUS.SUBMITTED)   return item.isSubmitted;
+              if (tag === STATUS.UNSUBMITTED) return !item.isSubmitted;
+              if (tag === STATUS.ONGOING)     return !isExpired;
+              if (tag === STATUS.OVERDUE)     return isExpired;
               return true;
             });
           }
@@ -93,21 +94,31 @@ function AssignmentTab() {
 
       let nextTags = [...prev];
 
-      if (tag === Status.SUBMITTED) { // 제출/미제출 중 하나만 선택 가능
-        nextTags = nextTags.filter((t) => t !== Status.UNSUBMITTED);
-      } else if (tag === Status.UNSUBMITTED) {
-        nextTags = nextTags.filter((t) => t !== Status.SUBMITTED);
+      if (tag === STATUS.SUBMITTED) { // 제출/미제출 중 하나만 선택 가능
+        nextTags = nextTags.filter((t) => t !== STATUS.UNSUBMITTED);
+      } else if (tag === STATUS.UNSUBMITTED) {
+        nextTags = nextTags.filter((t) => t !== STATUS.SUBMITTED);
       }
 
-      if (tag === Status.ONGOING) { // 기한 지남/기한 남음 중 하나만 선택 가능
-        nextTags = nextTags.filter((t) => t !== Status.OVERDUE);
-      } else if (tag === Status.OVERDUE) {
-        nextTags = nextTags.filter((t) => t !== Status.ONGOING);
+      if (tag === STATUS.ONGOING) { // 기한 지남/기한 남음 중 하나만 선택 가능
+        nextTags = nextTags.filter((t) => t !== STATUS.OVERDUE);
+      } else if (tag === STATUS.OVERDUE) {
+        nextTags = nextTags.filter((t) => t !== STATUS.ONGOING);
       }
 
       return [...nextTags, tag];
     });
   };
+
+
+  // 상태 조합별 카드 배경 클래스 결정 함수
+  const getItemClass = (isExpired, isSubmitted) => {
+    if (isExpired) return 'expired';       
+    if (!isExpired && !isSubmitted) return 'yet-ongoing';
+    if (!isExpired && isSubmitted) return 'done-ongoing';
+    return '';
+  };
+
 
   return (
     <div className="assignment-wrapper">
@@ -129,10 +140,10 @@ function AssignmentTab() {
         <div className="tag-container">
           <p>상세 필터:</p>
           {[
-            { id: Status.SUBMITTED,   label: '제출' },
-            { id: Status.UNSUBMITTED, label: '미제출' },
-            { id: Status.ONGOING,     label: '기한 남음' },
-            { id: Status.OVERDUE,     label: '기한 지남' }
+            { id: STATUS.SUBMITTED,   label: '제출' },
+            { id: STATUS.UNSUBMITTED, label: '미제출' },
+            { id: STATUS.ONGOING,     label: '기한 남음' },
+            { id: STATUS.OVERDUE,     label: '기한 지남' }
           ].map(tag => (
             <button
               key={tag.id}
@@ -149,18 +160,19 @@ function AssignmentTab() {
     <div className="assignment-container">
       <header> <p className="tab-title">과제 목록({filteredList.length})</p></header>
 
-      <ui className="mainbox">
+      <ul className="mainbox">
         {filteredList.length === 0 ? <p>과제가 없습니다.</p> :
           filteredList.map(({ isExpired, deadlineLabel, dday, ...item }) => (
 
-            <div className={`assignment-item ${getItemClass(isExpired, item.isSubmitted)}`} key={item?.id}>
+            <li className={`assignment-item ${getItemClass(isExpired, item.isSubmitted)}`} key={item?.id}>
             
+
               <div className="info">
                 <span className="subject">{item?.subject}</span>
                 <p className="task-name">{item?.task}</p>
               </div>
 
-              {/**/}
+             
               <div className="status-box">
 
                 <div className={`status-label ${item.isSubmitted ? 'done' : 'yet'}`}>
@@ -171,14 +183,18 @@ function AssignmentTab() {
                   기한: {deadlineLabel}
                 </span>
 
-                <span className="d-day">D-{item?.dday}</span>
+                {/* 디데이: 기한 안 지났을 때만 표시, 실시간 갱신 */}
+                {dday && (
+                    <span className="dday-text"> {dday}</span>
+                  )}
+
               </div>
 
-            </div>
+            </li>
 
             ))
           }
-        </ui>
+        </ul>
 
       </div>
     </div>
