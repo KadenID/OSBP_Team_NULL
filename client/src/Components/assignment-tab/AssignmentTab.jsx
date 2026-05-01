@@ -82,19 +82,18 @@ function AssignmentTab() {
   };
 
   return (
-    <>
-    {/*탭 버튼 구현*/}
-    <div className="tab-buttons">
-        <button 
-          className={`tab-button ${currentTab === STATUS.INCOMPLETE ? 'active' : ''}`}
-          onClick={() => setCurrentTab(STATUS.INCOMPLETE)}
-        > 미제출
-        </button>
-        <button 
-          className={`tab-button ${currentTab === STATUS.COMPLETE ? 'active' : ''}`}
-          onClick={() => setCurrentTab(STATUS.COMPLETE)}
-        > 제출 완료
-        </button>
+    <div className="assignment-wrapper">
+
+      <div className="tab-buttons">  {/*전체, 진행, 완료 탭 버튼*/}
+        {Object.entries(TABS).map(([key, value]) => (
+          <button
+            key={key}
+            className={`tab-button ${currentTab === value ? 'active' : ''}`}
+            onClick={() => { setCurrentTab(value); setActiveTags([]); }}
+          >
+            {value === 'ALL' ? '전체' : value === 'INCOMPLETED' ? '진행' : '완료'}
+          </button>
+        ))}
       </div>
 
     <div className="assignment-container">
