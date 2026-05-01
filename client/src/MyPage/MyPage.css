@@ -1,7 +1,51 @@
+/* 색상 변수 및 테마 설정 */
+html{
+  color-scheme: light dark;
+}
+
+:root {
+  --bg: #f7f7fb;
+  --title: #222;
+  --subtitle: #777;
+  --card-bg: #ffffff;
+  --card-border: #e8e8ef;
+  --card-title: #2b2340;
+  --card-content: #666;
+  --primary: #6366f1;
+  --btn-bg: #e5e7eb;
+  --btn-bg-hover: #d1d5db;
+  --btn-text: #111827;
+  --danger: #e53935;
+  --focus: #6366f1;
+  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
+  --card-hover-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+/* 다크 모드 색상 변수 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1e2430;
+    --title: #f3f4f6;
+    --subtitle: #c4c7cf;
+    --card-bg: #2a3142;
+    --card-border: #3b4458;
+    --card-title: #ffffff;
+    --card-content: #c2c8d1;
+    --primary: #8b8dff;
+    --btn-bg: #374155;
+    --btn-bg-hover: #4b556a;
+    --btn-text: #f3f4f6;
+    --danger: #ff7b7b;
+    --focus: #a5b4fc;
+    --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    --card-hover-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+  }
+}
+
 /* 기본 설정 */
 body {
   margin: 0;
-  background: #f7f7fb;
+  background: var(--bg);
 }
 
 
@@ -10,7 +54,7 @@ body {
   max-width: 900px;          
   margin: 0 auto;            
   padding: 70px 24px;        
-
+}
 
 /* 상단 헤더 영역 */
 .mypage-header {
@@ -20,14 +64,14 @@ body {
 .mypage-title {
   margin: 0 0 8px;
   font-size: clamp(24px, 4vw, 34px);
-  font-weight: 800;
-  color: #222;
+  font-weight: 700;
+  color: var(--title);
 }
 
 .mypage-subtitle {
   margin: 0;
   font-size: 15px;
-  color: #777;
+  color: var(--subtitle);
 }
 
 
@@ -50,15 +94,15 @@ body {
 
 .main-button {
   padding: 7px 13px;
-  border: none;
+  border: 1px solid var(--card-border);
   border-radius: 9px;
-  background-color: #e5e7eb;
-  color: #111827;
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
   font-size: 13px;
 }
 
 .main-button:hover {
-  background-color: #d1d5db;
+  background-color: var(--btn-bg-hover);
 }
 
 .main-icon {
@@ -78,17 +122,13 @@ body {
 .mypage-card {
   position: relative;
   box-sizing: border-box;
-
-  background: #ffffff;
-  border: 1px solid #e8e8ef;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: 16px;
-
   padding: 28px 32px;
-  padding-left: 40px; /* 포인트 라인 때문에 추가 */
-
+  padding-left: 40px;
   min-height: 120px;
-
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--card-shadow);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -100,13 +140,13 @@ body {
   bottom: 26px;
   width: 4px;
   border-radius: 0 8px 8px 0;
-  background: #6366f1;
+  background: var(--primary);
 }
 
 /* 카드 hover 효과 */
 .mypage-card:hover {
-  transform: translateY(-3px); /* 살짝 위로 이동 */
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+  box-shadow: var(--card-hover-shadow);
 }
 
 
@@ -115,13 +155,13 @@ body {
   margin: 0 0 12px;
   font-size: 20px;
   font-weight: 700;
-  color: #2b2340;
+  color: var(--card-title);
 }
 
 .mypage-card-content {
   margin: 0;
   font-size: 15px;
-  color: #666;
+  color: var(--card-content);
 }
 
 
@@ -135,7 +175,7 @@ body {
 .logout-button {
   background: none;
   border: none;
-  color: #e53935;
+  color: var(--danger);
   font-size: 14px;
 }
 
@@ -145,13 +185,15 @@ body {
 
 .logout-button:hover {
   text-decoration: underline;
+  opacity: 0.85;
 }
 
 /* 접근성 */
 .main-button:focus-visible,
 .logout-button:focus-visible {
-  outline: 2px solid #6366f1;
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
+  border-radius: 8px;
 }
 
 /* 미디어쿼리 */
@@ -187,6 +229,10 @@ body {
   .logout-button {
     font-size: 14px;
     padding: 10px 14px;
+  }
+
+  .mypage-card:hover {
+    transform: none;
   }
 }
 
