@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './MainPage.css';
-//import AssignmentTab from "../assignment-tab/AssignmentTab.jsx";
+import AssignmentTab from "../assignment-tab/AssignmentTab.jsx";
 import { FiLogOut, FiHome } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
@@ -43,7 +43,7 @@ function MainPage() {
         <main className="dashboard">
 
           <div className="left-section">
-            {/*<div className="left"><AssignmentTab/></div>*/}
+            <div className="left"><AssignmentTab/></div>
             <div className="left">알림탭</div>
           </div>
 
