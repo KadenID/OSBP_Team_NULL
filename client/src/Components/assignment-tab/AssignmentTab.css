@@ -6,7 +6,7 @@
 
 .tab-title {
   font-size: 1rem;
-  color: #333;
+  color: var(--text-h);
   margin-bottom: 13px;
 }
 
@@ -27,7 +27,8 @@
 .tab-button {
   padding: 8px 16px;
   border: none;
-  background: #e8e8e8;
+  background: var(--border);
+  color: var(--text);
   border-radius: 20px;
   cursor: pointer;
   font-weight: 500;
@@ -43,8 +44,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background-color: #f8fbff; 
-  border: 1px solid #eef2f8;
+  background-color: var(--bg-card); 
+  border: 1px solid var(--border);
   border-radius: 12px;
   transition: transform 0.2s;
 }
@@ -56,8 +57,8 @@
 /* 상태 조합별 카드 배경 */
 /* 기한 지남 공통 → 회색 */
 .assignment-item.expired {
-  background-color: #f5f5f5;
-  border-color: #e0e0e0;
+  background-color: var(--border);
+  border-color: var(--text);
   border-left: 5px solid #bbb;
 }
 
@@ -73,15 +74,27 @@
   border-left: 5px solid #53c71a;
 }
 
+[data-theme='dark'] .assignment-item.yet-ongoing {
+  background-color: #000000; 
+  border-color: #5c2223;
+  border-left: 5px solid #ff4d4f;
+}
+
+[data-theme='dark'] .assignment-item.done-ongoing {
+  background-color: #000000;
+  border-color: #274916;
+  border-left: 5px solid #53c71a;
+}
+
 .subject {
   font-size: 0.8rem;
-  color: #888;
+  color: var(--text);
 }
 
 .task-name {
   font-weight: 600;
   margin: 5px 0 0 0;
-  color: #2c3e50;
+  color: var(--text);
 }
 
 .status-box {
@@ -95,14 +108,14 @@
 /* 제출 상태 라벨 */
 .status-label {
   font-size: 0.9rem;
-  font-weight: 590;
+  font-weight: 630;
   padding: 5px 9px;
   border-radius: 20px;
 }
 
 .status-label.done { /*제출완료 버튼*/
   background-color: #f6ffed;
-  color: #53c71a;
+  color: #3b7f19;
   border: 1px solid #b7eb8f;
 }
 
@@ -136,21 +149,23 @@
   gap: 10px;
   margin-bottom: 20px;
   padding: 10px;
-  background-color: #f9f9f9;
+  background-color: var(--bg-layout);
   border-radius: 8px;
 }
 
 .tag-container p {
   font-size: 0.9rem;
   font-weight: bold;
-  color: #555;
+  color: var(--text-h);
   margin: 0;
 }
 
 .tag-container button {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+
   padding: 6px 14px;
-  border: 1px solid #ddd;
-  background: white;
   border-radius: 15px;
   cursor: pointer;
   font-size: 0.85rem;
