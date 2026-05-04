@@ -1,0 +1,214 @@
+.assignment-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.tab-title {
+  font-size: 1rem;
+  color: var(--text-h);
+  margin-bottom: 13px;
+}
+
+.mainbox {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0;       
+  list-style: none; 
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tab-button {
+  padding: 8px 16px;
+  border: none;
+  background: var(--border);
+  color: var(--text);
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.tab-button.active {
+  background: #1890ff;
+  color: white;
+}
+
+.assignment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px;
+  min-height: 110px;
+  background-color: var(--bg-card); 
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: transform 0.2s;
+}
+
+.assignment-item:hover {
+  transform: scale(1.02); 
+}
+
+
+/* 상태 조합별 카드 배경 */
+/* 기한 지남 공통 → 회색 */
+.assignment-item.expired {
+  background-color: var(--border);
+  border-color: var(--text);
+  border-left: 5px solid #bbb;
+}
+
+.assignment-item.yet-ongoing {    /* 기한남음 + 미제출 */
+  background-color: #fff1f0;
+  border-color: #ffccc7;
+  border-left: 5px solid #ff4d4f;
+}
+
+.assignment-item.done-ongoing {   /* 기한남음 + 제출완료 */
+  background-color: #f6ffed;
+  border-color: #b7eb8f;
+  border-left: 5px solid #53c71a;
+}
+
+[data-theme='dark'] .assignment-item.yet-ongoing {
+  background-color: #000000; 
+  border-color: #5c2223;
+  border-left: 5px solid #ff4d4f;
+}
+
+[data-theme='dark'] .assignment-item.done-ongoing {
+  background-color: #000000;
+  border-color: #274916;
+  border-left: 5px solid #53c71a;
+}
+
+.subject {
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.task-name {
+  font-weight: 600;
+  margin: 5px 0 0 0;
+  color: var(--text);
+}
+
+.status-box {
+  display: flex;
+  flex-direction: column; 
+  align-items: flex-end; 
+  gap: 8px; 
+  text-align: right;
+}
+
+/* 제출 상태 라벨 */
+.status-label {
+  font-size: 0.9rem;
+  font-weight: 630;
+  padding: 5px 9px;
+  border-radius: 20px;
+}
+
+.status-label.done { /* 제출완료 버튼 */
+  background-color: #f6ffed;
+  color: #3b7f19;
+  border: 1px solid #b7eb8f;
+}
+
+.status-label.yet {
+  background-color: #fff1f0;
+  color: #ff4d4f;
+  border: 1px solid #ffccc7;
+}
+
+/* 기한 텍스트: 기본 빨강 (기한 안 지남) */
+.deadline-text {
+  display: block;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #ff4d4f;
+}
+
+/* 기한 지남 - 회색으로 흐리게 */
+.expired-text {
+  color: #000000 !important;
+}
+
+.expired-item {
+  border-left: 5px solid #ff4d4f;
+}
+
+/* 필터링 태그 컨테이너 */
+.tag-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: var(--bg-layout);
+  border-radius: 8px;
+}
+
+.tag-container p {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--text-h);
+  margin: 0;
+}
+
+.tag-container button {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+
+  padding: 6px 14px;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  color: #666;
+}
+
+.tag-container button:hover {
+  background: #f0f0f0;
+}
+
+.tag-container button.on {
+  background-color: #1890ff;
+  color: white;
+  border-color: #1890ff;
+  font-weight: 600;
+}
+
+@media screen and (max-width: 768px) {
+  .tab-buttons {
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+
+  .tab-button {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .assignment-item {
+    padding: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .status-box {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
