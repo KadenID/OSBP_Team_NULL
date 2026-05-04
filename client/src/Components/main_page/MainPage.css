@@ -1,13 +1,34 @@
+:root {
+  --bg-layout: rgba(240, 248, 255, 0.7);
+  --bg-card: #ffffff;
+  --text-main: #1a1a1a;
+  --text-header: #222222;
+  --shadow: rgba(0, 0, 0, 0.08);
+  --shadow-hover: rgba(0, 0, 0, 0.13);
+  --backdrop: blur(8px);
+}
+
+/*다크 모드*/
+[data-theme='dark'] {
+  --bg-layout: rgba(30, 30, 40, 0.8);
+  --bg-card: #2c2c2e;
+  --text-main: #f0f0f0;
+  --text-header: #ffffff;
+  --shadow: rgba(0, 0, 0, 0.3);
+  --shadow-hover: rgba(0, 0, 0, 0.5);
+}
+
 .layout {
-  background: rgba(240, 248, 255, 0.7);
+  background: var(--bg-layout);
+  color: var(--text);
+  backdrop-filter: var(--backdrop);
+  box-shadow: 0 8px 20px var(--shadow);
+
   border-radius: 20px;
   margin: 40px auto;
   max-width: 1400px;
   padding: 30px;
   box-sizing: border-box;
-  color: #1a1a1a;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-  backdrop-filter: blur(8px);
 }
 
 .dashboard {
@@ -19,11 +40,13 @@
 }
 
 .right, .left {
+  background: var(--bg-card);
+  color: var(--text);
+  box-shadow: 0 6px 18px var(--shadow);
+
   flex: 1;
-  background: white;
   padding: 25px;
   border-radius: 20px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
 }
 
 .left-section {
@@ -34,12 +57,12 @@
 }
 
 .right:hover, .left:hover {
-  box-shadow: 0 10px 26px rgba(0,0,0,0.13);
+  box-shadow: 0 10px 26px var(--shadow-hover);
   transform: translateY(-2px);
 }
 
 header h1 {
-  color: #222;
+  color: var(--text-h);
   font-weight: 700;
   font-size: 2rem;
   margin-bottom: 25px;
