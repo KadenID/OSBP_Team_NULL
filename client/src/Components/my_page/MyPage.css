@@ -1,0 +1,254 @@
+/* 색상 변수 및 테마 설정 */
+html{
+  color-scheme: light dark;
+}
+
+:root {
+  --bg: #f7f7fb;
+  --title: #222;
+  --subtitle: #777;
+  --card-bg: #ffffff;
+  --card-border: #e8e8ef;
+  --card-title: #2b2340;
+  --card-content: #666;
+  --primary: #6366f1;
+  --btn-bg: #e5e7eb;
+  --btn-bg-hover: #d1d5db;
+  --btn-text: #111827;
+  --danger: #e53935;
+  --focus: #6366f1;
+  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
+  --card-hover-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+/* 다크 모드 색상 변수 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1e2430;
+    --title: #f3f4f6;
+    --subtitle: #c4c7cf;
+    --card-bg: #2a3142;
+    --card-border: #3b4458;
+    --card-title: #ffffff;
+    --card-content: #c2c8d1;
+    --primary: #8b8dff;
+    --btn-bg: #374155;
+    --btn-bg-hover: #4b556a;
+    --btn-text: #f3f4f6;
+    --danger: #ff7b7b;
+    --focus: #a5b4fc;
+    --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    --card-hover-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+  }
+}
+
+/* 기본 설정 */
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+
+/* 마이페이지 전체 컨테이너 */
+.mypage-container {
+  max-width: 900px;          
+  margin: 0 auto;            
+  padding: 70px 24px;        
+}
+
+/* 상단 헤더 영역 */
+.mypage-header {
+  margin-bottom: 30px;       
+}
+
+.mypage-title {
+  margin: 0 0 8px;
+  font-size: clamp(24px, 4vw, 34px);
+  font-weight: 700;
+  color: var(--title);
+}
+
+.mypage-subtitle {
+  margin: 0;
+  font-size: 15px;
+  color: var(--subtitle);
+}
+
+
+/* 우측 상단 메뉴 (메인 버튼) */
+.top-right-menu {
+  display: flex;
+  justify-content: flex-end; 
+  margin-bottom: 10px;
+}
+
+/* 버튼 공통 */
+.main-button,
+.logout-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.main-button {
+  padding: 7px 13px;
+  border: 1px solid var(--card-border);
+  border-radius: 9px;
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  font-size: 13px;
+}
+
+.main-button:hover {
+  background-color: var(--btn-bg-hover);
+}
+
+.main-icon {
+  font-size: 15px;
+}
+
+
+/* 카드 리스트 영역 */
+.mypage-grid {
+  display: flex;
+  flex-direction: column;   
+  gap: 20px;                
+}
+
+
+/* 개별 카드 스타일 */
+.mypage-card {
+  position: relative;
+  box-sizing: border-box;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 28px 32px;
+  padding-left: 40px;
+  min-height: 120px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mypage-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 26px;
+  bottom: 26px;
+  width: 4px;
+  border-radius: 0 8px 8px 0;
+  background: var(--primary);
+}
+
+/* 카드 hover 효과 */
+.mypage-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--card-hover-shadow);
+}
+
+
+/* 카드 내부 텍스트 */
+.mypage-card-title {
+  margin: 0 0 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--card-title);
+}
+
+.mypage-card-content {
+  margin: 0;
+  font-size: 15px;
+  color: var(--card-content);
+}
+
+
+/* 하단 영역 (로그아웃 버튼) */
+.mypage-footer {
+  display: flex;
+  justify-content: flex-end; 
+  margin-top: 30px;
+}
+
+.logout-button {
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: 14px;
+}
+
+.logout-icon {
+  font-size: 16px;
+}
+
+.logout-button:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+/* 접근성 */
+.main-button:focus-visible,
+.logout-button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* 미디어쿼리 */
+/* 화면 너비가 768px 이하일 때 */
+@media (max-width: 768px) {
+  .mypage-container {
+    padding: 40px 16px;
+  }
+
+  .mypage-title {
+    font-size: 26px;
+  }
+
+  .mypage-subtitle {
+    font-size: 14px;
+  }
+
+  .mypage-card {
+    padding: 20px;
+    padding-left: 28px; 
+    min-height: 100px;
+  }
+
+  .mypage-card-title {
+    font-size: 18px;
+  }
+
+  .mypage-card-content {
+    font-size: 14px;
+  }
+
+  .main-button,
+  .logout-button {
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+
+  .mypage-card:hover {
+    transform: none;
+  }
+}
+
+/* 화면 너비가 480px 이하일 때 */
+@media (max-width: 480px) {
+  .mypage-container {
+    padding: 32px 14px;
+  }
+
+  .mypage-card {
+    padding: 18px;
+    padding-left: 26px;
+    border-radius: 12px;
+  }
+
+  .mypage-title {
+    font-size: 24px;
+  }
+}
