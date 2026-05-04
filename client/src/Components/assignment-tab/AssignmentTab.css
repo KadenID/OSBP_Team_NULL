@@ -55,6 +55,7 @@
   transform: scale(1.02); 
 }
 
+
 /* 상태 조합별 카드 배경 */
 /* 기한 지남 공통 → 회색 */
 .assignment-item.expired {

@@ -182,12 +182,10 @@ function AssignmentTab() {
 
             <li className={`assignment-item ${getItemClass(isExpired, item.isSubmitted)}`} key={item.id}>
             
-
               <div className="info">
                 <span className="subject">{item?.subject}</span>
                 <p className="task-name">{item?.task}</p>
               </div>
-
              
               <div className="status-box">
 
@@ -203,7 +201,6 @@ function AssignmentTab() {
                 {ddayText && (
                     <span className="dday-text"> {ddayText}</span>
                   )}
-
               </div>
 
             </li>
