@@ -43,7 +43,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px;
+  padding: 11px;
+  min-height: 110px;
   background-color: var(--bg-card); 
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -113,7 +114,7 @@
   border-radius: 20px;
 }
 
-.status-label.done { /*제출완료 버튼*/
+.status-label.done { /* 제출완료 버튼 */
   background-color: #f6ffed;
   color: #3b7f19;
   border: 1px solid #b7eb8f;
@@ -128,12 +129,12 @@
 /* 기한 텍스트: 기본 빨강 (기한 안 지남) */
 .deadline-text {
   display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 500;
   color: #ff4d4f;
 }
 
-/* 기한 지남 → 회색으로 흐리게 */
+/* 기한 지남 - 회색으로 흐리게 */
 .expired-text {
   color: #000000 !important;
 }
@@ -142,7 +143,7 @@
   border-left: 5px solid #ff4d4f;
 }
 
-/* 태그 컨테이너 */
+/* 필터링 태그 컨테이너 */
 .tag-container {
   display: flex;
   align-items: center;
