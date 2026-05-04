@@ -1,20 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import './MainPage.css';
 import AssignmentTab from "../assignment-tab/AssignmentTab.jsx";
-import { FiLogOut, FiHome } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
 function MainPage() {
 
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const navigate = useNavigate();
 
+  // 초기 테마 설정
+  const [theme, setTheme] = useState(() => {
+
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved;
+
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return systemDark ? 'dark' : 'light';
+    });
+  
+
+// 테마 변경 시 DOM + 저장 동기화
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
-  }, [isDarkMode]);
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
 
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
 
@@ -28,7 +40,7 @@ function MainPage() {
 
               <div className="top-right-menu">
                   <button onClick={toggleTheme} className="dark-button" style={{ marginRight: '10px' }}>
-                      {isDarkMode ? '🌞  ' : '🌙  '}
+                      {theme === 'dark' ? '🌞' : '🌙'}
                   </button>
                   <button type="button" className="my-button" onClick={() => navigate("/mypage")}>
                       <FiHome className="main-icon" />

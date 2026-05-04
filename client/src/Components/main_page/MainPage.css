@@ -55,7 +55,7 @@ body {
 
 .right, .left {
   background: var(--bg-card);
-  color: var(--text);
+  color: var(--text-main);
   box-shadow: 0 6px 18px var(--shadow);
 
   flex: 1;
