@@ -1,4 +1,4 @@
-import urllib.parse             #ID 추출
+import urllib.parse             #과목별 ID 추출
 import requests                 #서버 통신
 import re                       #과목명 정제
 from bs4 import BeautifulSoup   #html > python 객체로 변환하여 탐색
@@ -72,10 +72,19 @@ def get_assignments_for_course(session, course_id, course_name):
                     a_url = cols[1].find('a')['href']
                     a_due = cols[2].text.strip()
                     a_status = cols[3].text.strip()
+
+                    # 과제 고유 ID 추출 (URL의 id 파라미터 값)
+                    parsed_assign_url = urllib.parse.urlparse(a_url)
+                    a_id = urllib.parse.parse_qs(parsed_assign_url.query).get('id', [None])[0]
                     
+                    # '2026-05-9 9:5' -> '2026-05-09 09:05' 형태로 정규화
+                    a_due = re.sub(r'(?<!\d)(\d)(?!\d)', r'0\1', a_due)
+
                     # 데이터 반환을 위해 리스트에 저장
                     assignments.append({
+                        'course_id': course_id,
                         'course_name': course_name,
+                        'assignment_id': a_id,
                         'assignment_name': a_name,
                         'due_date': a_due,
                         'status': a_status,
@@ -85,7 +94,8 @@ def get_assignments_for_course(session, course_id, course_name):
         return assignments
     
     except Exception as e:
-        print(f"[{course_name}] 에러: {e}"); return []
+        print(f"과제 목록 추출 중 오류 발생: {e}")
+        return []
 
 def crawl_all_assignments(session):
     # 모든 과제 데이터를 하나의 리스트로 통합
@@ -96,7 +106,10 @@ def crawl_all_assignments(session):
     for course_id, course_name in courses.items():
         assign_list = get_assignments_for_course(session, course_id, course_name)
         all_assignments.extend(assign_list)
-        
+    
+    #마감일을 기준으로 오름차순 정렬
+    all_assignments.sort(key=lambda x: x['due_date'])
+
     return all_assignments
 
 if __name__ == "__main__":
