@@ -54,16 +54,29 @@ function AssignmentTab() {
   };
   
 
+  const processed = useMemo(() => {
+    return assignment.map(item => ({
+      ...item,
+      deadlineDate: new Date(item.deadline)
+    }));
+  }, [assignment]);
+
+
   const filteredList = useMemo(() => {
 
-    return assignment
+    return processed
       
-      .map(item => ({
-        ...item,
-        isExpired: new Date(item.deadline) < now,
-        deadlineLabel: item.deadline.replace('T', ' ').substring(0, 16),
-        dday: calcDday(item.deadline) // 디데이 추가
-      }))
+      .map(item => {
+        const diff = item.deadlineDate - now;
+        
+        return {
+          ...item,
+          ddayValue: diff,
+          isExpired: diff <= 0, 
+          ddayText: calcDday(item.deadline), // Dday 추가
+          deadlineLabel: item.deadline.replace('T', ' ').substring(0, 16),
+        };
+      })
     
       .filter(item => {
         const { isExpired } = item;
@@ -85,7 +98,7 @@ function AssignmentTab() {
 
         return true; // 전체 탭
       })
-      .sort((a, b) => new Date(a.deadline) - new Date(b.deadline)); // 마감 기한이 빠른 순으로 배열
+      .sort((a, b) => a.ddayValue - b.ddayValue); // 마감 기한이 빠른 순으로 배열
 
   }, [assignment, currentTab, activeTags, now]);
   
@@ -165,9 +178,9 @@ function AssignmentTab() {
 
       <ul className="mainbox">
         {filteredList.length === 0 ? <p>과제가 없습니다.</p> :
-          filteredList.map(({ isExpired, deadlineLabel, dday, ...item }) => (
+          filteredList.map(({ isExpired, deadlineLabel, ddayText, ...item }) => (
 
-            <li className={`assignment-item ${getItemClass(isExpired, item.isSubmitted)}`} key={item?.id}>
+            <li className={`assignment-item ${getItemClass(isExpired, item.isSubmitted)}`} key={item.id}>
             
 
               <div className="info">
@@ -187,8 +200,8 @@ function AssignmentTab() {
                 </span>
 
                 {/* 디데이: 기한 안 지났을 때만 표시, 실시간 갱신 */}
-                {dday && (
-                    <span className="dday-text"> {dday}</span>
+                {ddayText && (
+                    <span className="dday-text"> {ddayText}</span>
                   )}
 
               </div>
