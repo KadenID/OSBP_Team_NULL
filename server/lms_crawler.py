@@ -44,7 +44,7 @@ def get_enrolled_courses(session):
                                 
                     if course_name:
                         courses[course_id] = course_name
-                        print(f"ID: {course_id} | 과목명: {course_name}")
+                        #print(f"ID: {course_id} | 과목명: {course_name}")
 
         return courses
 
