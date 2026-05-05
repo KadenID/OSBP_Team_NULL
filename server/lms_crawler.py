@@ -77,8 +77,9 @@ def get_assignments_for_course(session, course_id, course_name):
                     parsed_assign_url = urllib.parse.urlparse(a_url)
                     a_id = urllib.parse.parse_qs(parsed_assign_url.query).get('id', [None])[0]
                     
-                    # '2026-05-9 9:5' -> '2026-05-09 09:05' 형태로 정규화
+                    # 'yyyy-mm-d h:m' -> 'yyyy-mm-ddThh:mm:ss' 형태로 정규화
                     a_due = re.sub(r'(?<!\d)(\d)(?!\d)', r'0\1', a_due)
+                    a_due = a_due.replace(" ", "T") + ":00"
 
                     # 데이터 반환을 위해 리스트에 저장
                     assignments.append({
