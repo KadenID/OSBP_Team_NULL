@@ -10,6 +10,33 @@ const STATUS = {
   OVERDUE: 'OVERDUE'
 };
 
+
+// 타이머 컴포넌트 분리 - 컴포넌트 내부에서만 1초마다 리렌더링
+  const CountdownText = ({ deadlineDate }) => {
+    const [now, setNow] = useState(new Date());
+
+    useEffect(() => { // 이 컴포넌트가 마운트될 때만 타이머가 시작
+      const timer = setInterval(() => setNow(new Date()), 1000);
+      return () => clearInterval(timer); // 언마운트 시 클린업
+    }, []);
+
+    const diff = deadlineDate - now;
+    if (diff <= 0) return <span className="dday-text expired">기한 종료</span>; // 기한이 지났을 경우 처리
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    const totalHours = days * 24 + hours; // 며칠인지와 상관없이 전체 시간 합산
+
+    let displayText = "";
+    if (days > 0) { displayText = `D-${days} (${totalHours}시간 ${minutes}분 ${seconds}초)`;
+    } else if (hours > 0) { displayText = `${totalHours}시간 ${minutes}분 ${seconds}초`;
+    } else { displayText = `${minutes}분 ${seconds}초`;
+    } return <span className="dday-text">{displayText}</span>;
+  };
+
+
 function AssignmentTab() {
 
   //임시 데이터(목 데이터)
@@ -26,33 +53,6 @@ function AssignmentTab() {
   const [currentTab, setCurrentTab] = useState(TABS.ALL);
   const [activeTags, setActiveTags] = useState([]);
 
-
-  // 1초마다 now 갱신
-  const [now, setNow] = useState(new Date());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(timer); // 언마운트 시 정리
-  }, []);
-
-
-  // 디데이 계산 함수
-  const calcDday = (deadline) => {
-    const diff = new Date(deadline) - now;
-    if (diff <= 0) return null;
-
-    const days    = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours   = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-    // days > 0이어도 총 시간 전부 표시
-    const totalHours = days * 24 + hours;
-
-    if (days > 0) return `D-${days} (${totalHours}시간 ${minutes}분 ${seconds}초)`;
-    if (hours > 0) return `${totalHours}시간 ${minutes}분 ${seconds}초`;
-    return `${minutes}분 ${seconds}초`;
-  };
-  
 
   const processed = useMemo(() => {
     return assignment.map(item => ({
