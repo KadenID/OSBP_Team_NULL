@@ -60,7 +60,7 @@ function AssignmentTab() {
   const [showModal, setShowModal] = useState(false);
   const [targetId, setTargetId] = useState(null);
 
-  
+
   // 과제 추가 로직 source : user 로 과제 생성
   const addAssignment = (e) => {
     e.preventDefault();
@@ -85,6 +85,23 @@ function AssignmentTab() {
     setNewSubject(""); setNewTask(""); setNewDeadline("");
   };
 
+
+  // 삭제 로직 (source 체크)
+  const confirmDelete = () => {
+    setAssignment(prev => prev.filter(item => item.id !== targetId));
+    setShowModal(false);
+    setTargetId(null);
+  };
+
+
+  // 제출 상태 토글 함수
+  const toggleSubmit = (id) => {
+    setAssignment(prev => prev.map(item => 
+      item.id === id ? { ...item, isSubmitted: !item.isSubmitted } : item
+    ));
+  };
+
+  
    // 과제 필터링 함수 : processed + filteredList
   const processed = useMemo(() => {
     const now = new Date();
