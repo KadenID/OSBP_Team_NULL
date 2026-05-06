@@ -101,7 +101,7 @@ function AssignmentTab() {
     ));
   };
 
-  
+
    // 과제 필터링 함수 : processed + filteredList
   const processed = useMemo(() => {
     const now = new Date();
@@ -178,6 +178,26 @@ function AssignmentTab() {
   return (
     <div className="assignment-wrapper">
 
+      <form className="add-form" onSubmit={addAssignment}> {/* 과제 생성 창 */}
+
+        <div className="input-group">
+          <div className="input-field">
+            <input type="text" placeholder="과목" value={newSubject} onChange={e => setNewSubject(e.target.value)} />
+          </div>
+
+          <div className="input-field">
+            <input type="text" placeholder="할 일" value={newTask} onChange={e => setNewTask(e.target.value)} />
+          </div>
+
+          <div className="input-field">
+            <input type="datetime-local" value={newDeadline} onChange={e => setNewDeadline(e.target.value)} />
+          </div>
+        </div>
+          
+          {error && <p className="error-text">{error}</p>} {/* 에러 메시지 */}
+          <button type="submit" className="add-submit-btn">새 과제 추가</button>
+      </form>
+
       <div className="tab-buttons">  {/*전체, 진행, 완료 탭 버튼*/}
         {Object.entries(TABS).map(([key, value]) => (
           <button
@@ -192,8 +212,7 @@ function AssignmentTab() {
 
 
       {currentTab === TABS.INCOMPLETED && ( // 진행 탭의 필터링 태그
-        <div className="tag-container">
-          <p>상세 필터:</p>
+        <div className="tag-container"><p>상세 필터:</p>
           {[
             { id: STATUS.SUBMITTED,   label: '제출' },
             { id: STATUS.UNSUBMITTED, label: '미제출' },
@@ -204,8 +223,7 @@ function AssignmentTab() {
               key={tag.id}
               className={activeTags.includes(tag.id) ? 'on' : ''}
               onClick={() => toggleTag(tag.id)}
-            >
-              {tag.label}
+            >{tag.label}
             </button>
           ))}
         </div>
