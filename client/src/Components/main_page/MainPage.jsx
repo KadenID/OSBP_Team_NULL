@@ -42,7 +42,7 @@ function MainPage() {
               <div className="top-right-menu">
                   {/* 테마 토글 버튼: 현재 상태에 따라 해/달 아이콘 표시 */}
                   <button onClick={toggleTheme} className="dark-button" style={{ marginRight: '10px' }}>
-                      {theme === 'dark' ? '라이트 모드 🌞' : '다크 모드 🌙'}
+                      {theme === 'dark' ? '🌞' : '🌙'}
                   </button>
 
                   {/* 마이페이지 이동 버튼 */}
