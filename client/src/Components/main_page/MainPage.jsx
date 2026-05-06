@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './MainPage.css';
 import AssignmentTab from "../assignment-tab/AssignmentTab.jsx";
 import { useNavigate } from "react-router-dom";
+import { FiHome } from "react-icons/fi";
 
 function MainPage() {
 
@@ -35,13 +36,16 @@ function MainPage() {
       <div className="layout">
 
       <header>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="header-top">
             <h1>학습 대시보드</h1>
 
               <div className="top-right-menu">
+                  {/* 테마 토글 버튼: 현재 상태에 따라 해/달 아이콘 표시 */}
                   <button onClick={toggleTheme} className="dark-button" style={{ marginRight: '10px' }}>
-                      {theme === 'dark' ? '🌞' : '🌙'}
+                      {theme === 'dark' ? '라이트 모드 🌞' : '다크 모드 🌙'}
                   </button>
+
+                  {/* 마이페이지 이동 버튼 */}
                   <button type="button" className="my-button" onClick={() => navigate("/mypage")}>
                       <FiHome className="main-icon" />
                       Mypage

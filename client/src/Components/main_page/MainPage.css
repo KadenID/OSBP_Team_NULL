@@ -26,11 +26,6 @@
   --shadow-hover: rgba(0, 0, 0, 0.5);
 }
 
-/* 기본 배경 적용 */
-body {
-  background-color: var(--bg);
-  color: var(--text-main);
-}
 
 .layout {
   background: var(--bg-layout);
@@ -43,6 +38,12 @@ body {
   max-width: 1400px;
   padding: 30px;
   box-sizing: border-box;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .dashboard {
