@@ -41,18 +41,49 @@ function AssignmentTab() {
 
   //임시 데이터(목 데이터)
   const [assignment] = useState([
-    { id: 1, subject: "오픈소스기초 프로젝트", task: "9주차 카페 글 작성", deadline: "2026-05-10T23:59:59", isSubmitted: true },
-    { id: 2, subject: "컴퓨터 구조", task: "4장 연습 문제 제출", deadline: "2026-05-25T23:59:59", isSubmitted: false },
-    { id: 3, subject: "3333", task: "3333", deadline: "2026-04-14T23:59:59", isSubmitted: false },
-    { id: 4, subject: "4444", task: "4444", deadline: "2026-04-25T23:59:59", isSubmitted: true }
+    { id: 1, subject: "오픈소스기초 프로젝트", task: "9주차 카페 글 작성", deadline: "2026-05-10T23:59:59", isSubmitted: true, source: 'lms' },
+    { id: 2, subject: "컴퓨터 구조", task: "4장 연습 문제 제출", deadline: "2026-05-25T23:59:59", isSubmitted: false, source: 'lms' },
+    { id: 3, subject: "3333", task: "3333", deadline: "2026-04-14T23:59:59", isSubmitted: false, source: 'lms' },
+    { id: 4, subject: "4444", task: "4444", deadline: "2026-04-25T23:59:59", isSubmitted: true, source: 'lms' }
   ]);
 
-  // 과제 상세 설명 기능 (아직)
-  // 과제 생성 기능 : 사용자가 직접 과제 생성, 삭제 가능한 과제 (아직)
+  // 과제 상세 설명 기능 (다른 브랜치를 통해 구현할 예정)
+
+  const [newSubject, setNewSubject] = useState("");
+  const [newTask, setNewTask] = useState("");
+  const [newDeadline, setNewDeadline] = useState("");
 
   const [currentTab, setCurrentTab] = useState(TABS.ALL);
   const [activeTags, setActiveTags] = useState([]);
 
+  const [error, setError] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [targetId, setTargetId] = useState(null);
+
+  
+  // 과제 추가 로직 source : user 로 과제 생성
+  const addAssignment = (e) => {
+    e.preventDefault();
+
+    if (!newSubject || !newTask || !newDeadline) { 
+      setError("모든 값을 입력해주세요");
+      return; }
+
+    const deadlineObj = new Date(newDeadline);
+    deadlineObj.setSeconds(59);
+
+    const newItem = {
+      id: Date.now(),
+      subject: newSubject,
+      task: newTask,
+      deadline: deadlineObj.toISOString(),
+      isSubmitted: false,
+      source: 'user'
+    };
+
+    setAssignment([...assignment, newItem]);
+    setNewSubject(""); setNewTask(""); setNewDeadline("");
+  };
 
    // 과제 필터링 함수 : processed + filteredList
   const processed = useMemo(() => {
