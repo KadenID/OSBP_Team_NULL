@@ -12,35 +12,35 @@ const STATUS = {
 
 
 // 타이머 컴포넌트 분리 - 컴포넌트 내부에서만 1초마다 리렌더링
-  const CountdownText = ({ deadlineDate }) => {
-    const [now, setNow] = useState(new Date());
+const CountdownText = ({ deadlineDate }) => {
+  const [now, setNow] = useState(new Date());
 
-    useEffect(() => { // 이 컴포넌트가 마운트될 때만 타이머가 시작
-      const timer = setInterval(() => setNow(new Date()), 1000);
-      return () => clearInterval(timer); // 언마운트 시 클린업
-    }, []);
+  useEffect(() => { // 이 컴포넌트가 마운트될 때만 타이머가 시작
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer); // 언마운트 시 클린업
+  }, []);
 
-    const diff = deadlineDate - now;
-    if (diff <= 0) return <span className="dday-text expired">기한 종료</span>; // 기한이 지났을 경우 처리
+  const diff = deadlineDate - now;
+  if (diff <= 0) return <span className="dday-text">기한 종료</span>; // 기한이 지났을 경우 처리
 
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    const totalHours = days * 24 + hours; // 며칠인지와 상관없이 전체 시간 합산
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+  const totalHours = days * 24 + hours; // 며칠인지와 상관없이 전체 시간 합산
 
-    let displayText = "";
-    if (days > 0) { displayText = `D-${days} (${totalHours}시간 ${minutes}분 ${seconds}초)`;
-    } else if (hours > 0) { displayText = `${totalHours}시간 ${minutes}분 ${seconds}초`;
-    } else { displayText = `${minutes}분 ${seconds}초`;
-    } return <span className="dday-text">{displayText}</span>;
-  };
+  let displayText = "";
+  if (days > 0) { displayText = `D-${days} (${totalHours}시간 ${minutes}분 ${seconds}초)`;
+  } else if (hours > 0) { displayText = `${totalHours}시간 ${minutes}분 ${seconds}초`;
+  } else { displayText = `${minutes}분 ${seconds}초`;
+  } return <span className="dday-text">{displayText}</span>;
+};
 
 
 function AssignmentTab() {
 
   //임시 데이터(목 데이터)
-  const [assignment] = useState([
+  const [assignment, setAssignment] = useState([
     { id: 1, subject: "오픈소스기초 프로젝트", task: "9주차 카페 글 작성", deadline: "2026-05-10T23:59:59", isSubmitted: true, source: 'lms' },
     { id: 2, subject: "컴퓨터 구조", task: "4장 연습 문제 제출", deadline: "2026-05-25T23:59:59", isSubmitted: false, source: 'lms' },
     { id: 3, subject: "3333", task: "3333", deadline: "2026-04-14T23:59:59", isSubmitted: false, source: 'lms' },
@@ -56,7 +56,6 @@ function AssignmentTab() {
   const [currentTab, setCurrentTab] = useState(TABS.ALL);
   const [activeTags, setActiveTags] = useState([]);
 
-  const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [targetId, setTargetId] = useState(null);
 
@@ -65,17 +64,13 @@ function AssignmentTab() {
   const addAssignment = (e) => {
     e.preventDefault();
 
-    if (!newSubject || !newTask || !newDeadline) { 
-      setError("모든 값을 입력해주세요");
-      return; }
-
-    const deadlineObj = new Date(newDeadline);
+    const deadlineObj = new Date(newDeadline || Date.now()); // 기한 미선택 시 현재시간 기준
     deadlineObj.setSeconds(59);
 
     const newItem = {
       id: Date.now(),
-      subject: newSubject,
-      task: newTask,
+      subject: newSubject || "제목 없음",
+      task: newTask || "내용 없음",
       deadline: deadlineObj.toISOString(),
       isSubmitted: false,
       source: 'user'
@@ -105,47 +100,37 @@ function AssignmentTab() {
    // 과제 필터링 함수 : processed + filteredList
   const processed = useMemo(() => {
     const now = new Date();
-
     return assignment.map(item => {
+      
       const deadlineDate = new Date(item.deadline);
-
-        return {
-          ...item,
-          deadlineDate,
-          isExpired: deadlineDate - now <= 0
-        };
-      });
-
+      return { ...item, deadlineDate, isExpired: deadlineDate - now <= 0 };
+    });
   }, [assignment]);
 
 
   const filteredList = useMemo(() => {
     return processed.filter(item => {
 
-    const isExpired = item.isExpired;
-
-    // 완료탭 : 제출완료 + 기한 지남
-    if (currentTab === TABS.COMPLETED) return isExpired && item.isSubmitted;
-
-    if (currentTab === TABS.INCOMPLETED) {
-       if (activeTags.length > 0) {
-            return activeTags.every(tag => {
-              if (tag === STATUS.SUBMITTED) return item.isSubmitted;
-              if (tag === STATUS.UNSUBMITTED) return !item.isSubmitted;
-              if (tag === STATUS.ONGOING) return !isExpired;
-              if (tag === STATUS.OVERDUE) return isExpired;
-              return true;
-            });
-          } return !item.isSubmitted && !isExpired; // 진행탭 : 태그 선택 안하는 경우, 미제출 + 기한 남음
-        } return true;
-      });
+      const isExpired = item.isExpired;
+      
+      if (currentTab === TABS.COMPLETED) return isExpired && item.isSubmitted; // 완료탭 : 제출완료 + 기한 지남
+      if (currentTab === TABS.INCOMPLETED) {
+        if (activeTags.length > 0) {
+          return activeTags.every(tag => {
+            if (tag === STATUS.SUBMITTED) return item.isSubmitted;
+            if (tag === STATUS.UNSUBMITTED) return !item.isSubmitted;
+            if (tag === STATUS.ONGOING) return !isExpired;
+            if (tag === STATUS.OVERDUE) return isExpired;
+            return true;
+          });
+        } return !item.isSubmitted && !isExpired; // 진행탭 : 태그 선택 안하는 경우, 미제출 + 기한 남음
+      } return true;
+    });
   }, [processed, currentTab, activeTags]);
 
 
   const sortedList = useMemo(() => { // 남은 기한이 적은 순으로 과제 정렬
-    return [...filteredList].sort(
-      (a, b) => a.deadlineDate - b.deadlineDate
-    );
+    return [...filteredList].sort((a, b) => a.deadlineDate - b.deadlineDate);
   }, [filteredList]);
   
 
@@ -158,7 +143,7 @@ function AssignmentTab() {
 
       if (tag === STATUS.SUBMITTED) nextTags = nextTags.filter((t) => t !== STATUS.UNSUBMITTED);
       else if (tag === STATUS.UNSUBMITTED) nextTags = nextTags.filter((t) => t !== STATUS.SUBMITTED);
-
+      
       if (tag === STATUS.ONGOING) nextTags = nextTags.filter((t) => t !== STATUS.OVERDUE);
       else if (tag === STATUS.OVERDUE) nextTags = nextTags.filter((t) => t !== STATUS.ONGOING);
       return [...nextTags, tag];
@@ -178,8 +163,7 @@ function AssignmentTab() {
   return (
     <div className="assignment-wrapper">
 
-      <form className="add-form" onSubmit={addAssignment}> {/* 과제 생성 창 */}
-
+      <form className="add-form" onSubmit={addAssignment}>
         <div className="input-group">
           <div className="input-field">
             <input type="text" placeholder="과목" value={newSubject} onChange={e => setNewSubject(e.target.value)} />
@@ -194,7 +178,6 @@ function AssignmentTab() {
           </div>
         </div>
           
-          {error && <p className="error-text">{error}</p>} {/* 에러 메시지 */}
           <button type="submit" className="add-submit-btn">새 과제 추가</button>
       </form>
 
@@ -271,15 +254,15 @@ function AssignmentTab() {
                 </div>
               </li>
             ))}
-        </ul>
-        {showModal && (<div className="modal-overlay">
-            <div className="modal"><p>과제를 삭제하시겠습니까?</p>
-              <div className="modal-buttons">
-              <button onClick={confirmDelete}>삭제</button>
-              <button onClick={() => setShowModal(false)}>취소</button>
-              </div>
+      </ul>
+      {showModal && (<div className="modal-overlay">
+          <div className="modal"><p>과제를 삭제하시겠습니까?</p>
+            <div className="modal-buttons">
+            <button onClick={confirmDelete}>삭제</button>
+            <button onClick={() => setShowModal(false)}>취소</button>
             </div>
-          </div>)}
+          </div >
+        </div>)}
       </div>
     </div>
   );

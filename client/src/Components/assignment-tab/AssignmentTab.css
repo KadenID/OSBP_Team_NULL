@@ -296,14 +296,7 @@
   white-space: nowrap;
 }
 
-.error-text {
-  color: #e2595b9e;
-  font-size: 14px;
-  margin-top: 8px;
-
-  white-space: nowrap;   /* 줄바꿈 방지 */
-}
-
+/* 생성 과제 삭제창 */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -321,7 +314,7 @@
 }
 
 .modal {
-  background: var(--bg-card);
+  background: white;
   padding: 20px;
   border-radius: 12px;
   width: 300px;
