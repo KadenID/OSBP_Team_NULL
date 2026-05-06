@@ -234,41 +234,54 @@ function AssignmentTab() {
       <header> <p className="tab-title">과제 목록({filteredList.length})</p></header>
 
       <ul className="mainbox">
-        {filteredList.length === 0 ? <p>과제가 없습니다.</p> :
-          filteredList.map(({ isExpired, deadlineLabel, ddayText, ...item }) => (
+        {sortedList.length === 0 ? <p>과제가 없습니다.</p> :
+            sortedList.map(item => (
+             <li
+                className={`assignment-item ${getItemClass(item.isExpired, item.isSubmitted)}`}
+                key={item.id}
+                >
 
-            <li className={`assignment-item ${getItemClass(isExpired, item.isSubmitted)}`} key={item.id}>
-            
               <div className="info">
-                <span className="subject">{item?.subject}</span>
-                <p className="task-name">{item?.task}</p>
+                <span className={`source-tag ${item.source}`}>{item.source === 'lms' ? 'LMS' : 'USER'}</span>
+                <span className="subject">{item.subject}</span>
+                <p className="task-name">{item.task}</p>
               </div>
              
               <div className="status-box">
-
                 <div className={`status-label ${item.isSubmitted ? 'done' : 'yet'}`}>
                   {item.isSubmitted ? '제출 완료' : '미제출'}
                 </div>
 
-                <span className={`deadline-text ${isExpired ? 'expired-text' : ''}`}>
-                  기한: {deadlineLabel}
-                </span>
+                <span className="deadline-text"> 기한: {item.deadline.replace('T', ' ').slice(0, 16)}</span>
+                <CountdownText deadlineDate={item.deadlineDate} /> 
 
-                {/* 디데이: 기한 안 지났을 때만 표시, 실시간 갱신 */}
-                {ddayText && (
-                    <span className="dday-text"> {ddayText}</span>
-                  )}
-              </div>
+                <div className="item-actions">
+                    {item.source === 'user' ? (
+                      <>
+                        <button onClick={() => toggleSubmit(item.id)} className="action-btn toggle">
+                          {item.isSubmitted ? '진행으로 변경' : '완료 처리'}
+                        </button>
+                        <button onClick={() => {setTargetId(item.id); setShowModal(true);}} className="action-btn delete">삭제</button>
+                      </>
+                    ) : (
+                      <span className="lock-msg">시스템 관리항목</span>
+                    )}
+                  </div>
 
-            </li>
-
-            ))
-          }
+                </div>
+              </li>
+            ))}
         </ul>
-
+        {showModal && (<div className="modal-overlay">
+            <div className="modal"><p>과제를 삭제하시겠습니까?</p>
+              <div className="modal-buttons">
+              <button onClick={confirmDelete}>삭제</button>
+              <button onClick={() => setShowModal(false)}>취소</button>
+              </div>
+            </div>
+          </div>)}
       </div>
     </div>
   );
 }
-
 export default AssignmentTab;
