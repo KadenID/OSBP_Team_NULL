@@ -54,74 +54,65 @@ function AssignmentTab() {
   const [activeTags, setActiveTags] = useState([]);
 
 
+   // 과제 필터링 함수 : processed + filteredList
   const processed = useMemo(() => {
-    return assignment.map(item => ({
-      ...item,
-      deadlineDate: new Date(item.deadline)
-    }));
+    const now = new Date();
+
+    return assignment.map(item => {
+      const deadlineDate = new Date(item.deadline);
+
+        return {
+          ...item,
+          deadlineDate,
+          isExpired: deadlineDate - now <= 0
+        };
+      });
+
   }, [assignment]);
 
 
   const filteredList = useMemo(() => {
+    return processed.filter(item => {
 
-    return processed
-      
-      .map(item => {
-        const diff = item.deadlineDate - now;
-        
-        return {
-          ...item,
-          ddayValue: diff,
-          isExpired: diff <= 0, 
-          ddayText: calcDday(item.deadline), // Dday 추가
-          deadlineLabel: item.deadline.replace('T', ' ').substring(0, 16),
-        };
-      })
-    
-      .filter(item => {
-        const { isExpired } = item;
+    const isExpired = item.isExpired;
 
-        if (currentTab === TABS.COMPLETED) return isExpired && item.isSubmitted; // 완료탭 : 제출완료 + 기한 지남
+    // 완료탭 : 제출완료 + 기한 지남
+    if (currentTab === TABS.COMPLETED) return isExpired && item.isSubmitted;
 
-        if (currentTab === TABS.INCOMPLETED) {
-          if (activeTags.length > 0) {
+    if (currentTab === TABS.INCOMPLETED) {
+       if (activeTags.length > 0) {
             return activeTags.every(tag => {
-              if (tag === STATUS.SUBMITTED)   return item.isSubmitted;
+              if (tag === STATUS.SUBMITTED) return item.isSubmitted;
               if (tag === STATUS.UNSUBMITTED) return !item.isSubmitted;
-              if (tag === STATUS.ONGOING)     return !isExpired;
-              if (tag === STATUS.OVERDUE)     return isExpired;
+              if (tag === STATUS.ONGOING) return !isExpired;
+              if (tag === STATUS.OVERDUE) return isExpired;
               return true;
             });
-          }
-          return !item.isSubmitted && !isExpired; // 진행탭 : 태그 선택 안하는 경우, 미제출 + 기한 남음
-        }
+          } return !item.isSubmitted && !isExpired; // 진행탭 : 태그 선택 안하는 경우, 미제출 + 기한 남음
+        } return true;
+      });
+  }, [processed, currentTab, activeTags]);
 
-        return true; // 전체 탭
-      })
-      .sort((a, b) => a.ddayValue - b.ddayValue); // 마감 기한이 빠른 순으로 배열
 
-  }, [assignment, currentTab, activeTags, now]);
+  const sortedList = useMemo(() => { // 남은 기한이 적은 순으로 과제 정렬
+    return [...filteredList].sort(
+      (a, b) => a.deadlineDate - b.deadlineDate
+    );
+  }, [filteredList]);
   
 
   //상태 변경
-  const toggleTag = (tag) => { // 토글
+  const toggleTag = (tag) => {
     setActiveTags((prev) => {
       if (prev.includes(tag)) return prev.filter((t) => t !== tag);
 
       let nextTags = [...prev];
 
-      if (tag === STATUS.SUBMITTED) { // 제출/미제출 중 하나만 선택 가능
-        nextTags = nextTags.filter((t) => t !== STATUS.UNSUBMITTED);
-      } else if (tag === STATUS.UNSUBMITTED) {
-        nextTags = nextTags.filter((t) => t !== STATUS.SUBMITTED);
-      }
+      if (tag === STATUS.SUBMITTED) nextTags = nextTags.filter((t) => t !== STATUS.UNSUBMITTED);
+      else if (tag === STATUS.UNSUBMITTED) nextTags = nextTags.filter((t) => t !== STATUS.SUBMITTED);
 
-      if (tag === STATUS.ONGOING) { // 기한 지남/기한 남음 중 하나만 선택 가능
-        nextTags = nextTags.filter((t) => t !== STATUS.OVERDUE);
-      } else if (tag === STATUS.OVERDUE) {
-        nextTags = nextTags.filter((t) => t !== STATUS.ONGOING);
-      }
-
+      if (tag === STATUS.ONGOING) nextTags = nextTags.filter((t) => t !== STATUS.OVERDUE);
+      else if (tag === STATUS.OVERDUE) nextTags = nextTags.filter((t) => t !== STATUS.ONGOING);
       return [...nextTags, tag];
     });
   };
