@@ -64,14 +64,11 @@ function AssignmentTab() {
   const addAssignment = (e) => {
     e.preventDefault();
 
-    const deadlineObj = new Date(newDeadline || Date.now()); // 기한 미선택 시 현재시간 기준
-    deadlineObj.setSeconds(59);
-
     const newItem = {
       id: Date.now(),
-      subject: newSubject || "제목 없음",
-      task: newTask || "내용 없음",
-      deadline: deadlineObj.toISOString(),
+      subject: newSubject,
+      task: newTask,
+      deadline: `${newDeadline}:59`,
       isSubmitted: false,
       source: 'user'
     };
@@ -174,7 +171,7 @@ function AssignmentTab() {
           </div>
 
           <div className="input-field">
-            <input type="datetime-local" value={newDeadline} onChange={e => setNewDeadline(e.target.value)} />
+            <input type="datetime-local" value={newDeadline} onChange={e => setNewDeadline(e.target.value)} required/>
           </div>
         </div>
           
