@@ -1,0 +1,379 @@
+/* 과제 박스 */
+.assignment-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.tab-title {
+  font-size: 1rem;
+  color: var(--text-header);
+  margin-bottom: 1px;
+}
+
+.mainbox {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0;       
+  list-style: none; 
+}
+
+/* 전체 / 진행 / 완료 탭 박스 */
+.tab-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tab-button {
+  padding: 8px 16px;
+  border: none;
+  background: var(--border);
+  color: var(--text);
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.tab-button.active {
+  background: #1890ff;
+  color: white;
+}
+
+/* 과제 각각 박스 */
+.assignment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px;
+  height: 110px;
+  background-color: var(--bg-card); 
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: transform 0.2s;
+}
+
+.assignment-item:hover {
+  transform: scale(1.02); 
+}
+
+
+/* 상태 조합별 카드 배경 */
+/* 기한 지남 공통 → 회색 */
+.assignment-item.expired {
+  background-color: #e7e7e7;
+  border-color: #838383;
+  border-left: 5px solid #bbb;
+}
+
+.assignment-item.yet-ongoing {    /* 기한남음 + 미제출 */
+  background-color: #fff1f0;
+  border-color: #ffccc7;
+  border-left: 5px solid #ff4d4f;
+}
+
+.assignment-item.done-ongoing {   /* 기한남음 + 제출완료 */
+  background-color: #f6ffed;
+  border-color: #b7eb8f;
+  border-left: 5px solid #53c71a;
+}
+
+[data-theme='dark'] .assignment-item.expired {
+  background-color: #18181838;
+  border-color: #838383;
+  border-left: 5px solid #858585;
+}
+
+[data-theme='dark'] .assignment-item.yet-ongoing {
+  background-color: #000000; 
+  border-color: #5c2223;
+  border-left: 5px solid #ff4d4f;
+}
+
+[data-theme='dark'] .assignment-item.done-ongoing {
+  background-color: #000000;
+  border-color: #274916;
+  border-left: 5px solid #53c71a;
+}
+
+/* 과목 */
+.subject {
+  font-size: 0.8rem;
+  color: var(--text-main);
+}
+
+/* 과제명 */
+.task-name {
+  font-weight: 600;
+  margin: 5px 0 0 0;
+  color: var(--text-main);
+}
+
+.status-box {
+  display: flex;
+  flex-direction: column; 
+  align-items: flex-end; 
+  gap: 5px; 
+  text-align: right;
+}
+
+/* 제출 상태 라벨 */
+.status-label {
+  font-size: 0.9rem;
+  font-weight: 630;
+  padding: 6px 9px;
+  border-radius: 20px;
+}
+
+.status-label.done { /* 제출완료 버튼 */
+  background-color: #f6ffed;
+  color: #3b7f19;
+  border: 1px solid #b7eb8f;
+}
+
+.status-label.yet {
+  background-color: #fff1f0;
+  color: #ff4d4f;
+  border: 1px solid #ffccc7;
+}
+
+.dday-text {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #fa4a4d;
+}
+
+/* 기한 텍스트: 기본 빨강 (기한 안 지남) */
+.deadline-text {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #ff4d4f;
+}
+
+/* 필터링 태그 컨테이너 */
+.tag-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: var(--bg-layout);
+  color: var(--text-main);
+  border-radius: 8px;
+}
+
+.tag-container p {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.tag-container button {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+
+  padding: 6px 14px;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  color: #666;
+}
+
+.tag-container button:hover {
+  background: #f0f0f0;
+}
+
+.tag-container button.on {
+  background-color: #1890ff;
+  color: white;
+  border-color: #1890ff;
+  font-weight: 600;
+}
+
+/* 상세 필터 태그 */
+[data-theme='dark'] .tag-container button {
+  background: #3b3b3b;
+  border-color: #525252;
+  color: #c7c7c7;
+}
+
+[data-theme='dark'] .tag-container button.on {
+  background-color: #188fffa9;
+  color: #fff;
+}
+
+/* LMS. USER 태그 스타일 */
+.source-tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 8px;
+  font-weight: bold;
+}
+.source-tag.lms { background: #f9f0ff; color: #1890ff; }
+.source-tag.user { background: #f9f0ff; color: #722ed1; }
+
+/* 버튼 디자인 - 생성과제의 완료 처리, 삭제 버튼 */
+.item-actions {
+  display: flex;
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.action-btn {
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.action-btn.toggle { background: #52c41a; color: white; }
+.action-btn.delete { background: #ff4d4f; color: white; }
+.lock-msg { font-size: 11px; color: #bfbfbf;}
+
+/* 과제 생성창 */
+.add-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  background-color: var(--bg-card);
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 17px;
+}
+
+.input-group {
+  display: flex;
+  flex: 1;
+  gap: 10px;
+}
+
+.input-field {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 5px;
+}
+
+.input-field label {
+  font-size: 14px;
+  font-weight: bold;
+  color: #888;
+  margin-left: 4px;
+}
+
+.input-field input {
+  padding: 8px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--bg-card); 
+  color: var(--text-main);       
+  outline: none;
+}
+
+[data-theme='dark'] .input-field input {
+  border-color: #707070;
+  background: #0e0e0e;
+}
+
+.input-field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+.add-submit-btn {
+  height: 32px;
+  padding: 0 15px;
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* 생성 과제 삭제창 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  background: rgba(0, 0, 0, 0.5);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 999;
+}
+
+.modal {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  width: 300px;
+
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.modal-buttons button {
+  flex: 1;
+  margin: 0 4px;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.modal-buttons button:first-child {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.modal-buttons button:last-child {
+  background-color: #ddd;
+}
+
+@media screen and (max-width: 768px) {
+  .tab-buttons {
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+
+  .tab-button {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .assignment-item {
+    padding: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .assignment-item .status-box {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
