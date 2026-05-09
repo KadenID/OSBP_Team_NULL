@@ -1,30 +1,48 @@
 import { useState } from "react";
 
 function AlarmSettings() {
-  const [isAlarmEnabled, setIsAlarmEnabled] = useState(true);
-const [defaultReminder, setDefaultReminder] = useState({
-    id: "1hour",
-    type: "preset",
-    value: 1,
-    unit: "hour",
-});
+    const [isAlarmEnabled, setIsAlarmEnabled] = useState(true);
+    const [defaultReminder, setDefaultReminder] = useState({
+        id: "1hour",
+        type: "preset",
+        value: 1,
+        unit: "hour"
+    });
+    
+    const reminderOptions = [
+        { id: "30min", label: "30분 전", value: 30, unit: "minute" },
+        { id: "1hour", label: "1시간 전", value: 1, unit: "hour" },
+        { id: "3hour", label: "3시간 전", value: 3, unit: "hour" },
+        { id: "1day", label: "1일 전", value: 1, unit: "day" }
+    ];
+    const courses = [
+        { id: "course1", name: "과목명1" },
+        { id: "course2", name: "과목명2" }
+    ]
 
-const reminderOptions = [
-    { id: "30min", label: "30분 전", value: 30, unit: "minute" },
-    { id: "1hour", label: "1시간 전", value: 1, unit: "hour" },
-    { id: "3hour", label: "3시간 전", value: 3, unit: "hour" },
-    { id: "1day", label: "1일 전", value: 1, unit: "day" },
-];
+    const [selectedCourseId, setSelectedCourseId] = useState("");
+    const [selectedReminder, setSelectedReminder] = useState("6hours");
+    const [courseReminders, setCourseReminders] = useState({});
 
-const courses = [
-    { id: "course1", name: "과목명1" },
-    { id: "course2", name: "과목명2" },
-]
+    const handleCourseReminderChange = (courseId, value) => {
+        setCourseReminders((prev) => ({...prev, [courseId]: value,}));
+    };
+
+    const handleAddCourseReminder = () => {
+        if (!selectedCourseId) return;
+
+        setCourseReminders((prev) => ({...prev, [selectedCourseId]: selectedReminder,
+        }));
+        
+        setSelectedCourseId("");
+        setSelectedReminder("6hours");
+    };
+
   return (
     <div className="alarm-settings">
       <div className="alarm-toggle-row">
         <div>
-          <h3 className="alarm-toggle-title">전체 알림</h3>
+          <h3 className="alarm-section-title">전체 알림</h3>
           <p className="alarm-description">
             과제 알림 기능을 켜거나 끌 수 있습니다.
           </p>
@@ -98,6 +116,7 @@ const courses = [
                 <input
                     type="number"
                     min="1"
+                    disabled={!isAlarmEnabled}
                     value={defaultReminder.value}
                     onChange={(e) =>
                         setDefaultReminder({
@@ -136,17 +155,61 @@ const courses = [
         <div className="alarm-section">
           <h3 className="alarm-section-title">과목별 추가 알림</h3>
 
-          {courses.map((course) => (
-            <div className="alarm-course-item" key={course.id}>
-                <span className="alarm-course-name">{course.name}</span>
+          <div className="course-reminder-add-row">
+            <select
+            className="alarm-select"
+            disabled={!isAlarmEnabled}
+            value={selectedCourseId}
+            onChange={(e) => setSelectedCourseId(e.target.value)}
+            >
+                <option value="">과목 선택</option>
                 
-                <select className="alarm-select" disabled={!isAlarmEnabled}>
-                    <option>마감 6시간 전</option>
-                    <option>마감 12시간 전</option>
-                    <option>마감 1일 전</option>
+                {courses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                        {course.name}
+                    </option>
+                ))}
+            </select>
+            
+            <select
+            className="alarm-select"
+            disabled={!isAlarmEnabled}
+            value={selectedReminder}
+            onChange={(e) => setSelectedReminder(e.target.value)}
+            >
+                <option value="3hours">마감 3시간 전</option>
+                <option value="6hours">마감 6시간 전</option>
+                <option value="12hours">마감 12시간 전</option>
+                <option value="1day">마감 1일 전</option>
                 </select>
+                
+                <button
+                type="button"
+                className="add-reminder-button"
+                disabled={!isAlarmEnabled}
+                onClick={handleAddCourseReminder}
+                >
+                    추가
+                </button>
+
+                <div className="alarm-course-list">
+                    {Object.entries(courseReminders).map(([courseId, reminder]) => {
+                        const course = courses.find((c) => c.id === courseId);
+                        
+                        return (
+                        <div className="alarm-course-item" key={courseId}>
+                            <span className="alarm-course-name">
+                                {course?.name}
+                            </span>
+                            
+                            <span className="alarm-course-time">
+                                {reminder}
+                            </span>
+                        </div>
+                    );
+                })}
+                </div>
             </div>
-        ))}
         </div>
       </div>
     </div>
