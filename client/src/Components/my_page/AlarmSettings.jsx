@@ -38,6 +38,25 @@ function AlarmSettings() {
         setSelectedReminder("6hours");
     };
 
+    const handleDeleteCourseReminder = (courseId) => {
+        setCourseReminders((prev) => {
+            const updated = { ...prev };
+            delete updated[courseId];
+            return updated;
+        });
+    };
+    
+    const getReminderLabel = (value) => {
+        const labels = {
+            "3hours": "마감 3시간 전",
+            "6hours": "마감 6시간 전",
+            "12hours": "마감 12시간 전",
+            "1day": "마감 1일 전",
+        };
+        
+        return labels[value] || value;
+    };
+
   return (
     <div className="alarm-settings">
       <div className="alarm-toggle-row">
@@ -201,13 +220,23 @@ function AlarmSettings() {
                             <span className="alarm-course-name">
                                 {course?.name}
                             </span>
-                            
+                        <div className="alarm-course-info">
                             <span className="alarm-course-time">
-                                {reminder}
+                                {getReminderLabel(reminder)}
                             </span>
                         </div>
-                    );
-                })}
+                        
+                        <button
+                        type="button"
+                        className="delete-reminder-button"
+                        onClick={() =>
+                            handleDeleteCourseReminder(courseId)
+                        }
+                        > 삭제 
+                        </button>
+                        </div>
+                        );
+                    })}
                 </div>
             </div>
         </div>
