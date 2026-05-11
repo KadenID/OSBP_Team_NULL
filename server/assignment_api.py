@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from typing import List
 import uvicorn
 
 app = FastAPI(
@@ -18,6 +19,12 @@ class AssignmentItem(BaseModel):
     due_date: str
     status: str
     url: str
+
+class APIResponse(BaseModel):
+    success: bool
+    message: str
+    total_count: int
+    data: List[AssignmentItem] = []
 
 if __name__ == "__main__":
     uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)
