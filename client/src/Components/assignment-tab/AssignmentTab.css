@@ -332,10 +332,16 @@
 }
 
 @media screen and (max-width: 768px) {
+  .assignment-wrapper {
+  width: 100%;
+}
+
   .assignment-item {
     padding: 12px;
     flex-direction: column;
     align-items: flex-start;
+    height: auto; 
+    gap: 10px;   
   }
 
   .assignment-item .status-box {
