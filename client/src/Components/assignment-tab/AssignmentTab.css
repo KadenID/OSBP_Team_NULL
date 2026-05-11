@@ -19,28 +19,6 @@
   list-style: none; 
 }
 
-/* 전체 / 진행 / 완료 탭 박스 */
-.tab-buttons {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.tab-button {
-  padding: 8px 16px;
-  border: none;
-  background: var(--border);
-  color: var(--text);
-  border-radius: 20px;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.tab-button.active {
-  background: #1890ff;
-  color: white;
-}
-
 /* 과제 각각 박스 */
 .assignment-item {
   display: flex;
@@ -354,17 +332,6 @@
 }
 
 @media screen and (max-width: 768px) {
-  .tab-buttons {
-    gap: 8px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-  }
-
-  .tab-button {
-    flex: 1;
-    min-width: 100px;
-  }
-
   .assignment-item {
     padding: 12px;
     flex-direction: column;
