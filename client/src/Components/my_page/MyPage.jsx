@@ -27,7 +27,7 @@ function MyPageCard({ title = "", content = "" }) {
     return (
         <section className="mypage-card">
             <h2 className="mypage-card-title">{title}</h2>
-            {content && <p className="mypage-card-content">{content}</p>}
+            {content && <div className="mypage-card-content">{content}</div>}
         </section>
     );
 }
