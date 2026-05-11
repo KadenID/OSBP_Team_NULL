@@ -10,6 +10,7 @@
   --shadow: rgba(0, 0, 0, 0.08);
   --shadow-hover: rgba(0, 0, 0, 0.13);
   --backdrop: blur(8px);
+  --button-card-border: #c4c5c7;
 }
 
 /* 다크 모드 */
@@ -24,6 +25,7 @@
   --btn-text: #f3f4f6;
   --shadow: rgba(0, 0, 0, 0.3);
   --shadow-hover: rgba(0, 0, 0, 0.5);
+  --button-card-border: #2c323c;
 }
 
 
@@ -94,7 +96,7 @@ header h1 {
 
 .my-button, .dark-button {
   padding: 7px 13px;
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--button-card-border);
   border-radius: 9px;
   font-size: 13px;
   background-color: var(--btn-bg);
