@@ -88,16 +88,14 @@ header h1 {
 /* 우측 상단 메뉴 */
 .top-right-menu {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-direction: row;
+  align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
 }
 
 .my-button, .dark-button {
   padding: 7px 13px;
   border: 1px solid var(--button-card-border);
-  border-radius: 9px;
   font-size: 13px;
   background-color: var(--btn-bg);
   color: var(--btn-text);
