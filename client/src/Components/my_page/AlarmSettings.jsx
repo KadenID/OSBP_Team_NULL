@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /* 전체 과목 기본 알림 옵션 */
 const reminderOptions = [
@@ -42,10 +42,17 @@ function AlarmSettings() {
     const [courseReminders, setCourseReminders] = useState({});
     
     const isSelectedCourseAlreadyAdded =
-    selectedCourseId !== "" && courseReminders[selectedCourseId];
+    selectedCourseId !== "" && Boolean(courseReminders[selectedCourseId]);
     
+    const isAllCoursesAdded = courses.every(
+        (course) => courseReminders[course.id]
+    );
+
     const isAddButtonDisabled =
-    !isAlarmEnabled || !selectedCourseId || isSelectedCourseAlreadyAdded;
+    !isAlarmEnabled || 
+    !selectedCourseId || 
+    isSelectedCourseAlreadyAdded ||
+    isAllCoursesAdded;
     
     /* 과목별 알림 추가 */
     const handleAddCourseReminder = () => {
@@ -79,21 +86,36 @@ function AlarmSettings() {
     };
     
     /* 알림 설정 저장 */
+    useEffect(() => {
+        if (!saveMessage) return;
+
+        const timerId = setTimeout(() => {
+            setSaveMessage("");
+        }, 3000);
+
+        return () => clearTimeout(timerId);
+    }, [saveMessage]);
+
     const handleSaveAlarmSettings = () => {
         const isDefaultAlarmDisabled = defaultReminder.id === "none";
         
+        const formattedCourseReminders = Object.entries(courseReminders).map(
+            ([courseId, reminderId]) => {
+                const reminder = courseReminderOptions.find(
+                    (option) => option.id === reminderId
+                );
+                return { courseId, reminder };
+            }
+        );
         console.log({
             isAlarmEnabled,
             isDefaultAlarmDisabled,
             defaultReminder,
-            courseReminders,
+            courseReminders : formattedCourseReminders,
         });
 
         setSaveMessage("알림 설정이 저장되었습니다.");
 
-        setTimeout(() => {
-            setSaveMessage("");
-        }, 3000);
     };
     
     return (
@@ -252,6 +274,12 @@ function AlarmSettings() {
                     추가
                     </button>
                 </div>
+
+                {isAllCoursesAdded && (
+                    <p className="alarm-helper-text">
+                        모든 과목에 알림이 추가되었습니다.
+                    </p>
+                )}
                 
                 {/* 과목별 알림 목록 */}
                 <div className="alarm-course-list">
@@ -260,7 +288,9 @@ function AlarmSettings() {
                         
                         return (
                         <div className="alarm-course-item" key={courseId}>
-                            <span className="alarm-course-name">{course?.name}</span>
+                            <span className="alarm-course-name">
+                                {course?.name || "알 수 없는 과목"}
+                            </span>
                             
                             <div className="alarm-course-info">
                                 <span className="alarm-course-time">
@@ -285,7 +315,7 @@ function AlarmSettings() {
             {/* 알림 설정 저장 */}
             <div className="save-alarm-wrapper">
                 {saveMessage && isAlarmEnabled && (
-                    <p className="alarm-save-message">
+                    <p className="alarm-save-message" role="status" aria-live="polite">
                         {saveMessage}
                     </p>
                 )}
