@@ -45,7 +45,12 @@ def get_lms_assignments():
         assignments = crawl_all_assignments(session)
     
         # 프론트엔드 전달용 최종 JSON Response 생성
-        return APIResponse(success=True, message="API 연결 테스트", total_count=0, data=[])
+        return APIResponse(
+            success=True,
+            message="과제 데이터 로딩 성공.",
+            total_count=len(assignments),
+            data=assignments
+        )
     
     except Exception as e:
         # 크롤링 중 예기치 못한 에러 발생 시 500 에러 반환
