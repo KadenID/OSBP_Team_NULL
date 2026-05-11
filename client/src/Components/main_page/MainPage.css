@@ -1,13 +1,51 @@
+:root {
+  --bg: #f7f7fb;
+  --bg-layout: rgba(240, 248, 255, 0.7);
+  --bg-card: #ffffff;
+  --text-main: #1a1a1a;
+  --text-header: #222222;
+  --btn-bg: #e5e7eb;
+  --btn-bg-hover: #d1d5db;
+  --btn-text: #111827;
+  --shadow: rgba(0, 0, 0, 0.08);
+  --shadow-hover: rgba(0, 0, 0, 0.13);
+  --backdrop: blur(8px);
+  --button-card-border: #c4c5c7;
+}
+
+/* 다크 모드 */
+[data-theme='dark'] {
+  --bg: #1e2430;
+  --bg-layout: rgba(30, 30, 40, 0.8);
+  --bg-card: #2c2c2e;
+  --text-main: #f0f0f0;
+  --text-header: #ffffff;
+  --btn-bg: #374155;
+  --btn-bg-hover: #4b556a;
+  --btn-text: #f3f4f6;
+  --shadow: rgba(0, 0, 0, 0.3);
+  --shadow-hover: rgba(0, 0, 0, 0.5);
+  --button-card-border: #2c323c;
+}
+
+
 .layout {
-  background: rgba(240, 248, 255, 0.7);
+  background: var(--bg-layout);
+  color: var(--text-main);
+  backdrop-filter: var(--backdrop);
+  box-shadow: 0 8px 20px var(--shadow);
+
   border-radius: 20px;
   margin: 40px auto;
   max-width: 1400px;
   padding: 30px;
   box-sizing: border-box;
-  color: #1a1a1a;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-  backdrop-filter: blur(8px);
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .dashboard {
@@ -19,11 +57,13 @@
 }
 
 .right, .left {
+  background: var(--bg-card);
+  color: var(--text-main);
+  box-shadow: 0 6px 18px var(--shadow);
+
   flex: 1;
-  background: white;
   padding: 25px;
   border-radius: 20px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
 }
 
 .left-section {
@@ -34,15 +74,55 @@
 }
 
 .right:hover, .left:hover {
-  box-shadow: 0 10px 26px rgba(0,0,0,0.13);
+  box-shadow: 0 10px 26px var(--shadow-hover);
   transform: translateY(-2px);
 }
 
 header h1 {
-  color: #222;
+  color: var(--text-header);
   font-weight: 700;
   font-size: 2rem;
   margin-bottom: 25px;
+}
+
+/* 우측 상단 메뉴 */
+.top-right-menu {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.my-button, .dark-button {
+  padding: 7px 13px;
+  border: 1px solid var(--button-card-border);
+  font-size: 13px;
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.my-button:hover, .dark-button:hover {
+  transform: translateY(-1px);
+  background-color: var(--btn-bg-hover);
+}
+
+/* 화면 모드 변경 및 마이페이지 버튼 */
+.dark-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 16px;
+}
+
+.my-button {
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 8px;
 }
 
 @media screen and (max-width: 768px) {
