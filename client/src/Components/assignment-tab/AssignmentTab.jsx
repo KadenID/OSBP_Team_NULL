@@ -56,6 +56,17 @@ function AssignmentTab() {
   const [showModal, setShowModal] = useState(false);
   const [targetId, setTargetId] = useState(null);
 
+  
+  // 모달 열림 상태 - hover 효과 제거 
+  useEffect(() => {
+    if (showModal) document.body.classList.add('modal-open');
+    else document.body.classList.remove('modal-open');
+
+    return () => {
+     document.body.classList.remove('modal-open');
+    };
+  }, [showModal]);
+
 
   // 과제 추가 로직 source : user 로 과제 생성
   const addAssignment = (e) => {
