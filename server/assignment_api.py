@@ -4,6 +4,7 @@ from typing import List
 import uvicorn
 
 from lms_login import login_to_lms
+from lms_crawler import crawl_all_assignments
 
 app = FastAPI(
     title="LMS Assignment API", 
@@ -36,9 +37,22 @@ def get_lms_assignments():
     """
     session, message = login_to_lms()
     if not session:
+        # 로그인 실패 (또는 .env 미설정, 네트워크 오류 등) 시 401 에러 반환
         raise HTTPException(status_code=401, detail=f"인증 실패: {message}")
     
-    return APIResponse(success=True, message="API 연결 테스트", total_count=0, data=[])
+    try:
+        # 크롤링 모듈 연동 (마감일 기준 오름차순 정렬된 데이터 반환)
+        assignments = crawl_all_assignments(session)
+    
+        # 프론트엔드 전달용 최종 JSON Response 생성
+        return APIResponse(success=True, message="API 연결 테스트", total_count=0, data=[])
+    
+    except Exception as e:
+        # 크롤링 중 예기치 못한 에러 발생 시 500 에러 반환
+        raise HTTPException(status_code=500, detail=f"서버 내부 오류 발생: {str(e)}")
 
+# ---------------------------------------------------------
+# 로컬 테스트 코드
+# ---------------------------------------------------------
 if __name__ == "__main__":
     uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)
