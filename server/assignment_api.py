@@ -26,5 +26,9 @@ class APIResponse(BaseModel):
     total_count: int
     data: List[AssignmentItem] = []
 
+@app.get("/api/assignments", response_model=APIResponse)
+def get_lms_assignments():
+    return APIResponse(success=True, message="API 연결 테스트", total_count=0, data=[])
+
 if __name__ == "__main__":
     uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)
