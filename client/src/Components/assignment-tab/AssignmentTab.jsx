@@ -51,7 +51,10 @@ function AssignmentTab() {
   const [newTask, setNewTask] = useState("");
   const [newDeadline, setNewDeadline] = useState("");
 
-  const [activeTags, setActiveTags] = useState([]);
+  const [activeTags, setActiveTags] = useState([
+    STATUS.UNSUBMITTED,
+    STATUS.ONGOING
+  ]);
 
   const [showModal, setShowModal] = useState(false);
   const [targetId, setTargetId] = useState(null);
@@ -186,8 +189,8 @@ function AssignmentTab() {
 
         <div className="tag-container"><p>상세 필터:</p> {/* 필터링 태그 */}
           {[
-            { id: STATUS.SUBMITTED,   label: '제출' },
             { id: STATUS.UNSUBMITTED, label: '미제출' },
+            { id: STATUS.SUBMITTED,   label: '제출' },
             { id: STATUS.ONGOING,     label: '기한 남음' },
             { id: STATUS.OVERDUE,     label: '기한 지남' }
           ].map(tag => (
