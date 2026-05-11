@@ -318,7 +318,8 @@
 }
 
 .modal {
-  background: white;
+  background: var(--bg-card);
+  color: var(--text-main);
   padding: 20px;
   border-radius: 12px;
   width: 300px;
@@ -348,7 +349,8 @@
 }
 
 .modal-buttons button:last-child {
-  background-color: #ddd;
+  background-color: #9b9b9b;
+  color: white;
 }
 
 @media screen and (max-width: 768px) {
