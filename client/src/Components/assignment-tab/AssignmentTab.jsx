@@ -48,7 +48,15 @@ function AssignmentTab() {
     fetch('http://localhost:8000/api/assignments')
       .then(response => response.json())
       .then(result => {
-        // 데이터 처리 로직 예정
+          // 백엔드 데이터 형식을 프론트엔드 형식으로 매핑
+          const fetchedData = result.data.map(item => ({
+            id: item.assignment_id,           // 고유 ID
+            subject: item.course_name,        // 과목명
+            task: item.assignment_name,       // 과제명
+            deadline: item.due_date,          // 마감일
+            isSubmitted: item.status.includes('제출 완료'), // 상태를 boolean으로 변환
+            source: 'lms'                     // 출처 표시
+          }));
       })
       .catch(error => {
         console.error("API 호출 중 오류 발생:", error);
