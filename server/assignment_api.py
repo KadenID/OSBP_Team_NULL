@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware  # CORS 미들웨어 추가
 from pydantic import BaseModel
 from typing import List
 import uvicorn
@@ -9,6 +10,15 @@ from lms_crawler import crawl_all_assignments
 app = FastAPI(
     title="LMS Assignment API", 
     description="충북대 LMS 과제 데이터를 프론트엔드에 제공하는 API"
+)
+
+# CORS 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],    # 실제 서비스 시에는 ["http://localhost:5173"] 처럼 프론트 주소만 허용
+    allow_credentials=True,
+    allow_methods=["*"],    # GET, POST 등 모든 메서드 허용
+    allow_headers=["*"],
 )
 
 # ---------------------------------------------------------
