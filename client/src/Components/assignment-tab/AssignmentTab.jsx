@@ -1,8 +1,6 @@
 import React, {useState, useMemo, useEffect} from 'react';
 import './AssignmentTab.css';
 
-const TABS = { ALL: 'ALL', INCOMPLETED: 'INCOMPLETED', COMPLETED: 'COMPLETED' };
-
 const STATUS = {
   UNSUBMITTED: 'UNSUBMITTED',
   SUBMITTED: 'SUBMITTED',
@@ -39,13 +37,23 @@ const CountdownText = ({ deadlineDate }) => {
 
 function AssignmentTab() {
 
-  //임시 데이터(목 데이터)
-  const [assignment, setAssignment] = useState([
-    { id: 1, subject: "오픈소스기초 프로젝트", task: "9주차 카페 글 작성", deadline: "2026-05-10T23:59:59", isSubmitted: true, source: 'lms' },
-    { id: 2, subject: "컴퓨터 구조", task: "4장 연습 문제 제출", deadline: "2026-05-25T23:59:59", isSubmitted: false, source: 'lms' },
-    { id: 3, subject: "3333", task: "3333", deadline: "2026-04-14T23:59:59", isSubmitted: false, source: 'lms' },
-    { id: 4, subject: "4444", task: "4444", deadline: "2026-04-25T23:59:59", isSubmitted: true, source: 'lms' }
-  ]);
+  // 임시 데이터를 지우고 빈 배열로 초기 상태 설정
+  const [assignment, setAssignment] = useState([]);
+  // 로딩 상태를 관리할 state 추가
+  const [isLoading, setIsLoading] = useState(true);
+
+  // useEffect를 사용하여 최초 렌더링 시 API 자동 호출
+  useEffect(() => {
+    // 백엔드 API 주소로 GET 요청
+    fetch('http://localhost:8000/api/assignments')
+      .then(response => response.json())
+      .then(result => {
+        // 데이터 처리 로직 예정
+      })
+      .catch(error => {
+        console.error("API 호출 중 오류 발생:", error);
+      })
+  }, []); // 빈 배열 []을 넣어야 최초 1회만 실행
 
   // 과제 상세 설명 기능 (다른 브랜치를 통해 구현할 예정)
 
@@ -53,11 +61,24 @@ function AssignmentTab() {
   const [newTask, setNewTask] = useState("");
   const [newDeadline, setNewDeadline] = useState("");
 
-  const [currentTab, setCurrentTab] = useState(TABS.ALL);
-  const [activeTags, setActiveTags] = useState([]);
+  const [activeTags, setActiveTags] = useState([
+    STATUS.UNSUBMITTED,
+    STATUS.ONGOING
+  ]);
 
   const [showModal, setShowModal] = useState(false);
   const [targetId, setTargetId] = useState(null);
+
+  
+  // 모달 열림 상태 - hover 효과 제거 
+  useEffect(() => {
+    if (showModal) document.body.classList.add('modal-open');
+    else document.body.classList.remove('modal-open');
+
+    return () => {
+     document.body.classList.remove('modal-open');
+    };
+  }, [showModal]);
 
 
   // 과제 추가 로직 source : user 로 과제 생성
@@ -110,9 +131,9 @@ function AssignmentTab() {
 
       const isExpired = item.isExpired;
       
-      if (currentTab === TABS.COMPLETED) return isExpired && item.isSubmitted; // 완료탭 : 제출완료 + 기한 지남
-      if (currentTab === TABS.INCOMPLETED) {
-        if (activeTags.length > 0) {
+      // 태그 선택 안하면 전체 표시
+      if (activeTags.length === 0) return true;
+
           return activeTags.every(tag => {
             if (tag === STATUS.SUBMITTED) return item.isSubmitted;
             if (tag === STATUS.UNSUBMITTED) return !item.isSubmitted;
@@ -120,10 +141,8 @@ function AssignmentTab() {
             if (tag === STATUS.OVERDUE) return isExpired;
             return true;
           });
-        } return !item.isSubmitted && !isExpired; // 진행탭 : 태그 선택 안하는 경우, 미제출 + 기한 남음
-      } return true;
-    });
-  }, [processed, currentTab, activeTags]);
+        });
+      }, [processed, activeTags]);
 
 
   const sortedList = useMemo(() => { // 남은 기한이 적은 순으로 과제 정렬
@@ -131,17 +150,17 @@ function AssignmentTab() {
   }, [filteredList]);
   
 
-  //상태 변경
+  // 상태 변경
   const toggleTag = (tag) => {
     setActiveTags((prev) => {
       if (prev.includes(tag)) return prev.filter((t) => t !== tag);
 
       let nextTags = [...prev];
 
-      if (tag === STATUS.SUBMITTED) nextTags = nextTags.filter((t) => t !== STATUS.UNSUBMITTED);
+      if (tag === STATUS.SUBMITTED) nextTags = nextTags.filter((t) => t !== STATUS.UNSUBMITTED); // 제출 - 미제출 하나만 선택 가능
       else if (tag === STATUS.UNSUBMITTED) nextTags = nextTags.filter((t) => t !== STATUS.SUBMITTED);
       
-      if (tag === STATUS.ONGOING) nextTags = nextTags.filter((t) => t !== STATUS.OVERDUE);
+      if (tag === STATUS.ONGOING) nextTags = nextTags.filter((t) => t !== STATUS.OVERDUE); // 기한남음 - 기한지남 하나만 선택 가능
       else if (tag === STATUS.OVERDUE) nextTags = nextTags.filter((t) => t !== STATUS.ONGOING);
       return [...nextTags, tag];
     });
@@ -160,7 +179,7 @@ function AssignmentTab() {
   return (
     <div className="assignment-wrapper">
 
-      <form className="add-form" onSubmit={addAssignment}>
+      <form className="add-form" onSubmit={addAssignment}> {/* 과제 생성 영역 */}
         <div className="input-group">
           <div className="input-field">
             <input type="text" placeholder="과목" value={newSubject} onChange={e => setNewSubject(e.target.value)} />
@@ -178,24 +197,10 @@ function AssignmentTab() {
           <button type="submit" className="add-submit-btn">새 과제 추가</button>
       </form>
 
-      <div className="tab-buttons">  {/*전체, 진행, 완료 탭 버튼*/}
-        {Object.entries(TABS).map(([key, value]) => (
-          <button
-            key={key}
-            className={`tab-button ${currentTab === value ? 'active' : ''}`}
-            onClick={() => { setCurrentTab(value); setActiveTags([]); }}
-          >
-            {value === 'ALL' ? '전체' : value === 'INCOMPLETED' ? '진행' : '완료'}
-          </button>
-        ))}
-      </div>
-
-
-      {currentTab === TABS.INCOMPLETED && ( // 진행 탭의 필터링 태그
-        <div className="tag-container"><p>상세 필터:</p>
+        <div className="tag-container"><p>상세 필터:</p> {/* 필터링 태그 */}
           {[
-            { id: STATUS.SUBMITTED,   label: '제출' },
             { id: STATUS.UNSUBMITTED, label: '미제출' },
+            { id: STATUS.SUBMITTED,   label: '제출' },
             { id: STATUS.ONGOING,     label: '기한 남음' },
             { id: STATUS.OVERDUE,     label: '기한 지남' }
           ].map(tag => (
@@ -207,13 +212,12 @@ function AssignmentTab() {
             </button>
           ))}
         </div>
-      )}
 
 
     <div className="assignment-container">
       <header> <p className="tab-title">과제 목록({filteredList.length})</p></header>
 
-      <ul className="mainbox">
+      <ul className="mainbox"> {/* 과제 없는 경우 */}
         {sortedList.length === 0 ? <p>과제가 없습니다.</p> :
             sortedList.map(item => (
              <li
@@ -221,7 +225,7 @@ function AssignmentTab() {
                 key={item.id}
                 >
 
-              <div className="info">
+              <div className="info"> {/* lms 과제인지 생성 과제인지 라벨링 */}
                 <span className={`source-tag ${item.source}`}>{item.source === 'lms' ? 'LMS' : 'USER'}</span>
                 <span className="subject">{item.subject}</span>
                 <p className="task-name">{item.task}</p>
@@ -235,7 +239,7 @@ function AssignmentTab() {
                 <span className="deadline-text"> 기한: {item.deadline.replace('T', ' ').slice(0, 16)}</span>
                 <CountdownText deadlineDate={item.deadlineDate} /> 
 
-                <div className="item-actions">
+                <div className="item-actions"> {/* 생성과제 - 삭제, 완료 처리 버튼 영역 */}
                     {item.source === 'user' ? (
                       <>
                         <button onClick={() => toggleSubmit(item.id)} className="action-btn toggle">
