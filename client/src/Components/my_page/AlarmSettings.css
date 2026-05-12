@@ -3,8 +3,7 @@
   --alarm-section-bg: rgba(99, 102, 241, 0.035);
   --alarm-focus-shadow: rgba(99, 102, 241, 0.16);
   --alarm-switch-off: #d1d5db;
-  --alarm-chip-active: #6c63ff;
-  --alarm-chip-hover: #f0f1ff;
+  --alarm-button: #6c63ff;
   --alarm-button-hover: #5b54e8;
   --alarm-input-border: #d8dbe8;
   --alarm-white: #ffffff;
@@ -29,10 +28,6 @@
   background: var(--alarm-section-bg);
 }
 
-.alarm-section + .alarm-section {
-  margin-top: 20px;
-}
-
 .alarm-disabled {
   opacity: 0.45;
   pointer-events: none;
@@ -45,14 +40,6 @@
   font-size: 16px;
   font-weight: 700;
   color: var(--card-title);
-}
-
-.alarm-label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--card-content);
 }
 
 .alarm-description {
@@ -111,56 +98,17 @@
   transform: translateX(22px);
 }
 
-/* 기본 알림 선택 */
-.reminder-chip-group {
+/* 과목별 알림 추가 */
+.course-reminder-add-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.reminder-chip {
-  padding: 9px 14px;
-  border: 1px solid var(--border-color);
-  border-radius: 999px;
-  background-color: var(--card-bg);
-  color: var(--text-color);
-  font-size: 14px;
-  cursor: pointer;
-  transition: transform 0.2s ease, background-color 0.2s ease;
-}
-
-.reminder-chip:not(:disabled):hover {
-  transform: translateY(-1px);
-  background-color: var(--alarm-chip-hover);
-}
-
-.reminder-chip.active {
-  border-color: var(--alarm-chip-active);
-  background-color: var(--alarm-chip-active);
-  color: var(--alarm-white);
-  font-weight: 700;
-}
-
-.reminder-chip:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-  transform: none;
-}
-
-/* 직접 설정 */
-.custom-reminder-box {
-  display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 14px;
-  padding: 14px;
-  background-color: var(--sub-card-bg);
 }
 
+.alarm-select,
 .custom-reminder-box input,
-.custom-reminder-box select,
-.alarm-select {
+.custom-reminder-box select {
   padding: 9px 10px;
   border: 1px solid var(--alarm-input-border);
   border-radius: 10px;
@@ -172,41 +120,42 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.custom-reminder-box input {
-  width: 70px;
-}
-
-.custom-reminder-box input:focus,
-.custom-reminder-box select:focus,
-.alarm-select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--alarm-focus-shadow);
-}
-
-/* 과목별 추가 알림 */
-.course-reminder-add-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-
 .alarm-select {
   min-width: 180px;
   cursor: pointer;
 }
 
-.alarm-select:disabled {
+.custom-reminder-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background-color: var(--sub-card-bg);
+}
+
+.custom-reminder-box input {
+  width: 70px;
+}
+
+.alarm-select:focus,
+.custom-reminder-box input:focus,
+.custom-reminder-box select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--alarm-focus-shadow);
+}
+
+.alarm-select:disabled,
+.custom-reminder-box input:disabled,
+.custom-reminder-box select:disabled {
   cursor: not-allowed;
   opacity: 0.6;
-  transform: none;
 }
 
 .add-reminder-button {
   padding: 10px 16px;
-  border: 1px solid var(--alarm-chip-active);
+  border: 1px solid var(--alarm-button);
   border-radius: 10px;
-  background-color: var(--alarm-chip-active);
+  background-color: var(--alarm-button);
   color: var(--alarm-white);
   font-size: 14px;
   font-weight: 700;
@@ -231,7 +180,7 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
-  margin-top: 8px;
+  margin-top: 16px;
 }
 
 .alarm-course-item {
@@ -240,7 +189,6 @@
   justify-content: space-between;
   gap: 16px;
   padding: 16px;
-  border-radius: 12px;
   background-color: var(--card-bg);
 }
 
@@ -276,6 +224,7 @@
 
 .delete-reminder-button:not(:disabled):hover {
   opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .delete-reminder-button:disabled {
@@ -320,11 +269,9 @@
 .alarm-save-message {
   margin: 0;
   padding: 8px 12px;
-
   border-radius: 8px;
   background-color: rgba(99, 102, 241, 0.08);
   color: var(--primary);
-
   font-size: 12px;
   font-weight: 600;
 }
@@ -339,10 +286,15 @@
 
   .course-reminder-add-row,
   .alarm-select,
+  .custom-reminder-box,
   .add-reminder-button,
   .delete-reminder-button,
   .save-alarm-button {
     width: 100%;
+  }
+
+  .custom-reminder-box {
+    justify-content: space-between;
   }
 
   .save-alarm-wrapper {
