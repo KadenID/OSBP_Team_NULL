@@ -48,6 +48,7 @@ function AssignmentTab() {
     fetch('http://localhost:8000/api/assignments')
       .then(response => response.json())
       .then(result => {
+        if (result.success) {
           // 백엔드 데이터 형식을 프론트엔드 형식으로 매핑
           const fetchedData = result.data.map(item => ({
             id: item.assignment_id,           // 고유 ID
@@ -57,10 +58,18 @@ function AssignmentTab() {
             isSubmitted: item.status.includes('제출 완료'), // 상태를 boolean으로 변환
             source: 'lms'                     // 출처 표시
           }));
+        
+          setAssignment(fetchedData); // 변환된 데이터로 상태 업데이트
+        } else {
+          console.error("데이터를 불러오지 못했습니다:", result.message);
+        }
       })
       .catch(error => {
         console.error("API 호출 중 오류 발생:", error);
       })
+      .finally(() => {
+        setIsLoading(false); // 성공 여부와 관계없이 로딩 종료
+      });
   }, []); // 빈 배열 []을 넣어야 최초 1회만 실행
 
   // 과제 상세 설명 기능 (다른 브랜치를 통해 구현할 예정)
