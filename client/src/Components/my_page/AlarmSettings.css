@@ -276,6 +276,18 @@
   font-weight: 600;
 }
 
+.alarm-empty-text {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--alarm-input-border);
+  border-radius: 12px;
+  background-color: var(--card-bg);
+  color: var(--card-content);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+
 /* 반응형 */
 @media (max-width: 640px) {
   .alarm-toggle-row,

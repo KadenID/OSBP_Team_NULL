@@ -7,6 +7,14 @@ const courses = [
     { id: "course2", name: "과목명2" },
 ];
 
+const createReminderId = () => {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+
+    return `${Date.now()}-${Math.random()}`;
+};
+
 function AlarmSettings() {
     /* 전체 알림 상태 */
     const [isAlarmEnabled, setIsAlarmEnabled] = useState(true);
@@ -14,29 +22,35 @@ function AlarmSettings() {
     
     /* 과목별 알림 추가 상태 */
     const [selectedCourseId, setSelectedCourseId] = useState("all");
-    const [reminderValue, setReminderValue] = useState(1);
+    const [reminderValue, setReminderValue] = useState("1");
     const [reminderUnit, setReminderUnit] = useState("hour");
     const [courseReminders, setCourseReminders] = useState([]);
 
+    const isReminderValueInvalid =
+    reminderValue === "" || Number(reminderValue) < 1;
+    
     const isAddButtonDisabled =
-        !isAlarmEnabled || !selectedCourseId || reminderValue < 1;
+    !isAlarmEnabled || !selectedCourseId || isReminderValueInvalid;
+
 
     /* 과목별 알림 추가 */
     const handleAddCourseReminder = () => {
         if (isAddButtonDisabled) return;
         
+        const normalizedValue = Math.max(1, Number(reminderValue) || 1);
+        
         setCourseReminders((prev) => [
             ...prev,
             {
-                id: crypto.randomUUID(),
+                id: createReminderId(),
                 courseId: selectedCourseId,
-                value: reminderValue,
+                value: normalizedValue,
                 unit: reminderUnit,
             },
         ]);
         
         setSelectedCourseId("all");
-        setReminderValue(1);
+        setReminderValue("1");
         setReminderUnit("hour");
     };
 
@@ -133,12 +147,11 @@ function AlarmSettings() {
                                 min="1"
                                 disabled={!isAlarmEnabled}
                                 value={reminderValue}
-                                onChange={(e) => {
-                                    const nextValue = Math.max(
-                                        1,
-                                        Number(e.target.value) || 1
-                                    );
-                                    setReminderValue(nextValue);
+                                onChange={(e) => setReminderValue(e.target.value)}
+                                onBlur={() => {
+                                    if (reminderValue === "" || Number(reminderValue) < 1) {
+                                        setReminderValue("1");
+                                    }
                                 }}
                             />
 
@@ -167,11 +180,16 @@ function AlarmSettings() {
 
                     {/* 과목별 알림 목록 */}
                     <div className="alarm-course-list">
-                        {courseReminders.map((reminder) => (
-                            <div className="alarm-course-item" key={reminder.id}>
-                                <span className="alarm-course-name">
-                                    {getCourseName(reminder.courseId)}
-                                </span>
+                        {courseReminders.length === 0 ? (
+                            <p className="alarm-empty-text">
+                                설정된 알림이 없습니다.
+                            </p>
+                        ) : (
+                            courseReminders.map((reminder) => (
+                                <div className="alarm-course-item" key={reminder.id}>
+                                    <span className="alarm-course-name">
+                                        {getCourseName(reminder.courseId)}
+                                    </span>
 
                                 <div className="alarm-course-info">
                                     <span className="alarm-course-time">
@@ -191,7 +209,8 @@ function AlarmSettings() {
                                     삭제
                                 </button>
                             </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </div>
 
