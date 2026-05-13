@@ -1,3 +1,5 @@
+import AlarmSettings from "./AlarmSettings";
+import "./AlarmSettings.css";
 import "./MyPage.css";
 import { FiLogOut, FiHome } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +13,7 @@ const MY_PAGE_CARDS = [
     {
         id: "alarm",
         title: "알림 설정",
-        content: "과제 및 공지 알림 설정 영역",
+        content: <AlarmSettings />,
     },
     {
         id: "timetable",
@@ -25,7 +27,7 @@ function MyPageCard({ title = "", content = "" }) {
     return (
         <section className="mypage-card">
             <h2 className="mypage-card-title">{title}</h2>
-            {content && <p className="mypage-card-content">{content}</p>}
+            {content && <div className="mypage-card-content">{content}</div>}
         </section>
     );
 }

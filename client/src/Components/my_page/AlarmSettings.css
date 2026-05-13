@@ -1,0 +1,315 @@
+/* 알림 설정 */
+.alarm-settings {
+  --alarm-section-bg: rgba(99, 102, 241, 0.035);
+  --alarm-focus-shadow: rgba(99, 102, 241, 0.16);
+  --alarm-switch-off: #d1d5db;
+  --alarm-button: #6c63ff;
+  --alarm-button-hover: #5b54e8;
+  --alarm-input-border: #d8dbe8;
+  --alarm-white: #ffffff;
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 4px;
+}
+
+/* 공통 섹션 */
+.alarm-section,
+.alarm-toggle-row,
+.alarm-course-item,
+.custom-reminder-box {
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+}
+
+.alarm-section {
+  padding: 18px 20px;
+  background: var(--alarm-section-bg);
+}
+
+.alarm-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+/* 텍스트 */
+.alarm-section-title {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--card-title);
+}
+
+.alarm-description {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--card-content);
+}
+
+/* 전체 알림 토글 */
+.alarm-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  background-color: var(--card-bg);
+}
+
+.alarm-switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.alarm-switch input {
+  display: none;
+}
+
+.alarm-slider {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  border-radius: 999px;
+  background-color: var(--alarm-switch-off);
+  transition: background-color 0.2s ease;
+}
+
+.alarm-slider::before {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 3px;
+  left: 3px;
+  border-radius: 50%;
+  background-color: var(--alarm-white);
+  transition: transform 0.2s ease;
+}
+
+.alarm-switch input:checked + .alarm-slider {
+  background-color: var(--primary);
+}
+
+.alarm-switch input:checked + .alarm-slider::before {
+  transform: translateX(22px);
+}
+
+/* 과목별 알림 추가 */
+.course-reminder-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.alarm-select,
+.custom-reminder-box input,
+.custom-reminder-box select {
+  padding: 9px 10px;
+  border: 1px solid var(--alarm-input-border);
+  border-radius: 10px;
+  background-color: var(--card-bg);
+  color: var(--title);
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.alarm-select {
+  min-width: 180px;
+  cursor: pointer;
+}
+
+.custom-reminder-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background-color: var(--sub-card-bg);
+}
+
+.custom-reminder-box input {
+  width: 70px;
+}
+
+.alarm-select:focus,
+.custom-reminder-box input:focus,
+.custom-reminder-box select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--alarm-focus-shadow);
+}
+
+.alarm-select:disabled,
+.custom-reminder-box input:disabled,
+.custom-reminder-box select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.add-reminder-button {
+  padding: 10px 16px;
+  border: 1px solid var(--alarm-button);
+  border-radius: 10px;
+  background-color: var(--alarm-button);
+  color: var(--alarm-white);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.add-reminder-button:not(:disabled):hover {
+  transform: translateY(-1px);
+  background-color: var(--alarm-button-hover);
+}
+
+.add-reminder-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+/* 과목별 알림 목록 */
+.alarm-course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.alarm-course-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  background-color: var(--card-bg);
+}
+
+.alarm-course-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--card-title);
+}
+
+.alarm-course-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.alarm-course-time {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--card-content);
+}
+
+.delete-reminder-button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: #ef4444;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.delete-reminder-button:not(:disabled):hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.delete-reminder-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+/* 저장 버튼 */
+.save-alarm-wrapper {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.save-alarm-button {
+  display: block;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background-color: var(--primary);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.save-alarm-button:not(:disabled):hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.save-alarm-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+.alarm-save-message {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: rgba(99, 102, 241, 0.08);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.alarm-empty-text {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--alarm-input-border);
+  border-radius: 12px;
+  background-color: var(--card-bg);
+  color: var(--card-content);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+
+/* 반응형 */
+@media (max-width: 640px) {
+  .alarm-toggle-row,
+  .alarm-course-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .course-reminder-add-row,
+  .alarm-select,
+  .custom-reminder-box,
+  .add-reminder-button,
+  .delete-reminder-button,
+  .save-alarm-button {
+    width: 100%;
+  }
+
+  .custom-reminder-box {
+    justify-content: space-between;
+  }
+
+  .save-alarm-wrapper {
+    width: 100%;
+  }
+}
