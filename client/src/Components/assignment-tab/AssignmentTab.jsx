@@ -202,7 +202,10 @@ function AssignmentTab() {
 
     <div className="assignment-container">
       <header> <p className="tab-title">과제 목록({filteredList.length})</p></header>
-
+      {/* 로딩 중일 때와 아닐 때를 구분해서 렌더링 */}
+      {isLoading && assignment.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px' }}>데이터를 불러오는 중입니다...</div>
+      ) : (
       <ul className="mainbox"> {/* 과제 없는 경우 */}
         {sortedList.length === 0 ? <p>과제가 없습니다.</p> :
             sortedList.map(item => (
@@ -242,6 +245,7 @@ function AssignmentTab() {
               </li>
             ))}
       </ul>
+    )}
       {showModal && (<div className="modal-overlay">
           <div className="modal"><p>과제를 삭제하시겠습니까?</p>
             <div className="modal-buttons">
