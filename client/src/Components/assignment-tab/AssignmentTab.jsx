@@ -37,13 +37,40 @@ const CountdownText = ({ deadlineDate }) => {
 
 function AssignmentTab() {
 
-  //임시 데이터(목 데이터)
-  const [assignment, setAssignment] = useState([
-    { id: 1, subject: "오픈소스기초 프로젝트", task: "9주차 카페 글 작성", deadline: "2026-05-10T23:59:59", isSubmitted: true, source: 'lms' },
-    { id: 2, subject: "컴퓨터 구조", task: "4장 연습 문제 제출", deadline: "2026-05-25T23:59:59", isSubmitted: false, source: 'lms' },
-    { id: 3, subject: "3333", task: "3333", deadline: "2026-04-14T23:59:59", isSubmitted: false, source: 'lms' },
-    { id: 4, subject: "4444", task: "4444", deadline: "2026-04-25T23:59:59", isSubmitted: true, source: 'lms' }
-  ]);
+  // 임시 데이터를 지우고 빈 배열로 초기 상태 설정
+  const [assignment, setAssignment] = useState([]);
+  // 로딩 상태를 관리할 state 추가
+  const [isLoading, setIsLoading] = useState(true);
+
+  // useEffect를 사용하여 최초 렌더링 시 API 자동 호출
+  useEffect(() => {
+    // 백엔드 API 주소로 GET 요청
+    fetch('http://localhost:8000/api/assignments')
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          // 백엔드 데이터 형식을 프론트엔드 형식으로 매핑
+          const fetchedData = result.data.map(item => ({
+            id: item.assignment_id,           // 고유 ID
+            subject: item.course_name,        // 과목명
+            task: item.assignment_name,       // 과제명
+            deadline: item.due_date,          // 마감일
+            isSubmitted: item.status.includes('제출 완료'), // 상태를 boolean으로 변환
+            source: 'lms'                     // 출처 표시
+          }));
+        
+          setAssignment(fetchedData); // 변환된 데이터로 상태 업데이트
+        } else {
+          console.error("데이터를 불러오지 못했습니다:", result.message);
+        }
+      })
+      .catch(error => {
+        console.error("API 호출 중 오류 발생:", error);
+      })
+      .finally(() => {
+        setIsLoading(false); // 성공 여부와 관계없이 로딩 종료
+      });
+  }, []); // 빈 배열 []을 넣어야 최초 1회만 실행
 
   // 과제 상세 설명 기능 (다른 브랜치를 통해 구현할 예정)
 
