@@ -7,6 +7,13 @@ const courses = [
     { id: "course2", name: "과목명2" },
 ];
 
+/* 알림 단위별 최대 입력값 */
+const reminderMaxByUnit ={
+    minute: 59,
+    hour: 23,
+    day: 30,
+};
+
 const createReminderId = () => {
     if (typeof crypto !== "undefined" && crypto.randomUUID) {
         return crypto.randomUUID();
@@ -26,9 +33,10 @@ function AlarmSettings() {
     const [reminderUnit, setReminderUnit] = useState("hour");
     const [courseReminders, setCourseReminders] = useState([]);
 
-    const isReminderValueInvalid =
-    reminderValue === "" || Number(reminderValue) < 1;
-    
+    const reminderMaxValue = reminderMaxByUnit[reminderUnit];
+
+    const isReminderValueInvalid = reminderValue === "" || Number(reminderValue) < 1 || Number(reminderValue) > reminderMaxValue;
+
     const isAddButtonDisabled =
     !isAlarmEnabled || !selectedCourseId || isReminderValueInvalid;
 
@@ -37,7 +45,10 @@ function AlarmSettings() {
     const handleAddCourseReminder = () => {
         if (isAddButtonDisabled) return;
         
-        const normalizedValue = Math.max(1, Number(reminderValue) || 1);
+        const normalizedValue = Math.min(
+            reminderMaxValue,
+            Math.max(1, Number(reminderValue) || 1)
+        );
         
         setCourseReminders((prev) => [
             ...prev,
@@ -143,22 +154,51 @@ function AlarmSettings() {
                             <span>마감</span>
 
                             <input
-                                type="number"
-                                min="1"
-                                disabled={!isAlarmEnabled}
-                                value={reminderValue}
-                                onChange={(e) => setReminderValue(e.target.value)}
-                                onBlur={() => {
-                                    if (reminderValue === "" || Number(reminderValue) < 1) {
-                                        setReminderValue("1");
-                                    }
-                                }}
-                            />
+                               type="number"
+                               min="1"
+                               max={reminderMaxValue}
+                               disabled={!isAlarmEnabled}
+                               value={reminderValue}
+                               onChange={(e) => {
+                                const value = e.target.value;
+
+                                if (value === "") {
+                                    setReminderValue("");
+                                    return;
+                                }
+
+                                const nextValue = Math.min(
+                                reminderMaxValue,
+                                Math.max(1, Number(value))
+                                );
+                                
+                                setReminderValue(String(nextValue));
+                            }}
+                            onBlur={() => {
+                                if (reminderValue === "" || Number(reminderValue) < 1) {
+                                    setReminderValue("1");
+                                    return;
+                                }
+                                
+                                if (Number(reminderValue) > reminderMaxValue) {
+                                    setReminderValue(String(reminderMaxValue));
+                                }
+                            }}
+                        />
 
                             <select
                                 value={reminderUnit}
                                 disabled={!isAlarmEnabled}
-                                onChange={(e) => setReminderUnit(e.target.value)}
+                                onChange={(e) => {
+                                    const nextUnit = e.target.value ;
+                                    const nextMaxValue = reminderMaxByUnit[nextUnit] ?? 1;
+
+                                    setReminderUnit(nextUnit);
+
+                                    if(Number(reminderValue) > nextMaxValue) {
+                                        setReminderValue(String(nextMaxValue));
+                                    }
+                                }}
                             >
                                 <option value="minute">분</option>
                                 <option value="hour">시간</option>
