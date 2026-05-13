@@ -9,7 +9,12 @@ const useAssignmentStore = create((set, get) => ({
   fetchAssignments: async () => {
     set({ isLoading: true });
     try {
-      // API 호출 로직이 들어갈 자리
+      const response = await fetch('http://localhost:8000/api/assignments');
+      const result = await response.json();
+      
+      if (!result.success) {
+        console.error("데이터를 불러오지 못했습니다:", result.message);
+      }
     } finally {
       set({ isLoading: false }); // 성공 여부와 관계없이 로딩 종료
     }
