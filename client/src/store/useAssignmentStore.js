@@ -26,7 +26,7 @@ const useAssignmentStore = create((set, get) => ({
         }));
         
         // 데이터 저장 및 호출 완료 플래그 설정
-        set({ assignments: fetchedData, isFetched: true });
+        set({ assignment: fetchedData, isFetched: true });
       } else {
         console.error("데이터를 불러오지 못했습니다:", result.message);
       } 

@@ -42,7 +42,10 @@ function AssignmentTab() {
   const { 
     assignment, 
     isLoading, 
-    fetchAssignments
+    fetchAssignments,
+    addAssignment,
+    deleteAssignment, 
+    toggleSubmit
   } = useAssignmentStore();
 
   // 최초 렌더링 시 스토어의 API 호출 함수 실행 (store 내부에서 중복 호출 방지 처리)
@@ -76,8 +79,8 @@ function AssignmentTab() {
   }, [showModal]);
 
 
-  // 과제 추가 로직 source : user 로 과제 생성
-  const addAssignment = (e) => {
+  // 과제 추가 로직
+  const handleAddAssignment = (e) => {
     e.preventDefault();
 
     const newItem = {
@@ -89,26 +92,9 @@ function AssignmentTab() {
       source: 'user'
     };
 
-    setAssignment([...assignment, newItem]);
+    addAssignment(newItem); // store의 추가 액션 호출
     setNewSubject(""); setNewTask(""); setNewDeadline("");
   };
-
-
-  // 삭제 로직 (source 체크)
-  const confirmDelete = () => {
-    setAssignment(prev => prev.filter(item => item.id !== targetId));
-    setShowModal(false);
-    setTargetId(null);
-  };
-
-
-  // 제출 상태 토글 함수
-  const toggleSubmit = (id) => {
-    setAssignment(prev => prev.map(item => 
-      item.id === id ? { ...item, isSubmitted: !item.isSubmitted } : item
-    ));
-  };
-
 
    // 과제 필터링 함수 : processed + filteredList
   const processed = useMemo(() => {
@@ -144,6 +130,11 @@ function AssignmentTab() {
     return [...filteredList].sort((a, b) => a.deadlineDate - b.deadlineDate);
   }, [filteredList]);
   
+  const confirmDelete = () => {
+    deleteAssignment(targetId); // 스토어의 삭제 액션 실행
+    setShowModal(false);        // 모달 닫기
+    setTargetId(null);          // 타겟 ID 초기화
+  };
 
   // 상태 변경
   const toggleTag = (tag) => {
@@ -174,7 +165,7 @@ function AssignmentTab() {
   return (
     <div className="assignment-wrapper">
 
-      <form className="add-form" onSubmit={addAssignment}> {/* 과제 생성 영역 */}
+      <form className="add-form" onSubmit={handleAddAssignment}> {/* 과제 생성 영역 */}
         <div className="input-group">
           <div className="input-field">
             <input type="text" placeholder="과목" value={newSubject} onChange={e => setNewSubject(e.target.value)} />
