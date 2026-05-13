@@ -1,5 +1,6 @@
 import React, {useState, useMemo, useEffect} from 'react';
 import './AssignmentTab.css';
+import useAssignmentStore from '../../store/useAssignmentStore';
 
 const STATUS = {
   UNSUBMITTED: 'UNSUBMITTED',
@@ -37,40 +38,17 @@ const CountdownText = ({ deadlineDate }) => {
 
 function AssignmentTab() {
 
-  // 임시 데이터를 지우고 빈 배열로 초기 상태 설정
-  const [assignment, setAssignment] = useState([]);
-  // 로딩 상태를 관리할 state 추가
-  const [isLoading, setIsLoading] = useState(true);
+  // Zustand 스토어에서 상태와 함수 가져오기
+  const { 
+    assignment, 
+    isLoading, 
+    fetchAssignments
+  } = useAssignmentStore();
 
-  // useEffect를 사용하여 최초 렌더링 시 API 자동 호출
+  // 최초 렌더링 시 스토어의 API 호출 함수 실행 (store 내부에서 중복 호출 방지 처리)
   useEffect(() => {
-    // 백엔드 API 주소로 GET 요청
-    fetch('http://localhost:8000/api/assignments')
-      .then(response => response.json())
-      .then(result => {
-        if (result.success) {
-          // 백엔드 데이터 형식을 프론트엔드 형식으로 매핑
-          const fetchedData = result.data.map(item => ({
-            id: item.assignment_id,           // 고유 ID
-            subject: item.course_name,        // 과목명
-            task: item.assignment_name,       // 과제명
-            deadline: item.due_date,          // 마감일
-            isSubmitted: item.status.includes('제출 완료'), // 상태를 boolean으로 변환
-            source: 'lms'                     // 출처 표시
-          }));
-        
-          setAssignment(fetchedData); // 변환된 데이터로 상태 업데이트
-        } else {
-          console.error("데이터를 불러오지 못했습니다:", result.message);
-        }
-      })
-      .catch(error => {
-        console.error("API 호출 중 오류 발생:", error);
-      })
-      .finally(() => {
-        setIsLoading(false); // 성공 여부와 관계없이 로딩 종료
-      });
-  }, []); // 빈 배열 []을 넣어야 최초 1회만 실행
+    fetchAssignments();
+  }, [fetchAssignments]);
 
   // 과제 상세 설명 기능 (다른 브랜치를 통해 구현할 예정)
 
