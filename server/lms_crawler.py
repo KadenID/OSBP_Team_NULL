@@ -95,8 +95,9 @@ def get_assignments_for_course(session, course_id, course_name):
         return assignments
     
     except Exception as e:
-        print(f"과제 목록 추출 중 오류 발생: {e}")
-        return []
+        error_msg = f"과목 목록 추출 중 오류 발생: {str(e)}"
+        print(error_msg)
+        raise Exception(error_msg)
 
 def crawl_all_assignments(session):
     # 모든 과제 데이터를 하나의 리스트로 통합

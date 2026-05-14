@@ -1,5 +1,6 @@
 import React, {useState, useMemo, useEffect} from 'react';
 import './AssignmentTab.css';
+import useAssignmentStore from '../../store/useAssignmentStore';
 
 const STATUS = {
   UNSUBMITTED: 'UNSUBMITTED',
@@ -37,13 +38,20 @@ const CountdownText = ({ deadlineDate }) => {
 
 function AssignmentTab() {
 
-  //임시 데이터(목 데이터)
-  const [assignment, setAssignment] = useState([
-    { id: 1, subject: "오픈소스기초 프로젝트", task: "9주차 카페 글 작성", deadline: "2026-05-10T23:59:59", isSubmitted: true, source: 'lms' },
-    { id: 2, subject: "컴퓨터 구조", task: "4장 연습 문제 제출", deadline: "2026-05-25T23:59:59", isSubmitted: false, source: 'lms' },
-    { id: 3, subject: "3333", task: "3333", deadline: "2026-04-14T23:59:59", isSubmitted: false, source: 'lms' },
-    { id: 4, subject: "4444", task: "4444", deadline: "2026-04-25T23:59:59", isSubmitted: true, source: 'lms' }
-  ]);
+  // Zustand 스토어에서 상태와 함수 가져오기
+  const { 
+    assignment, 
+    isLoading, 
+    fetchAssignments,
+    addAssignment,
+    deleteAssignment, 
+    toggleSubmit
+  } = useAssignmentStore();
+
+  // 최초 렌더링 시 스토어의 API 호출 함수 실행 (store 내부에서 중복 호출 방지 처리)
+  useEffect(() => {
+    fetchAssignments();
+  }, [fetchAssignments]);
 
   // 과제 상세 설명 기능 (다른 브랜치를 통해 구현할 예정)
 
@@ -71,8 +79,8 @@ function AssignmentTab() {
   }, [showModal]);
 
 
-  // 과제 추가 로직 source : user 로 과제 생성
-  const addAssignment = (e) => {
+  // 과제 추가 로직
+  const handleAddAssignment = (e) => {
     e.preventDefault();
 
     const newItem = {
@@ -84,26 +92,9 @@ function AssignmentTab() {
       source: 'user'
     };
 
-    setAssignment([...assignment, newItem]);
+    addAssignment(newItem); // store의 추가 액션 호출
     setNewSubject(""); setNewTask(""); setNewDeadline("");
   };
-
-
-  // 삭제 로직 (source 체크)
-  const confirmDelete = () => {
-    setAssignment(prev => prev.filter(item => item.id !== targetId));
-    setShowModal(false);
-    setTargetId(null);
-  };
-
-
-  // 제출 상태 토글 함수
-  const toggleSubmit = (id) => {
-    setAssignment(prev => prev.map(item => 
-      item.id === id ? { ...item, isSubmitted: !item.isSubmitted } : item
-    ));
-  };
-
 
    // 과제 필터링 함수 : processed + filteredList
   const processed = useMemo(() => {
@@ -139,6 +130,11 @@ function AssignmentTab() {
     return [...filteredList].sort((a, b) => a.deadlineDate - b.deadlineDate);
   }, [filteredList]);
   
+  const confirmDelete = () => {
+    deleteAssignment(targetId); // 스토어의 삭제 액션 실행
+    setShowModal(false);        // 모달 닫기
+    setTargetId(null);          // 타겟 ID 초기화
+  };
 
   // 상태 변경
   const toggleTag = (tag) => {
@@ -169,7 +165,7 @@ function AssignmentTab() {
   return (
     <div className="assignment-wrapper">
 
-      <form className="add-form" onSubmit={addAssignment}> {/* 과제 생성 영역 */}
+      <form className="add-form" onSubmit={handleAddAssignment}> {/* 과제 생성 영역 */}
         <div className="input-group">
           <div className="input-field">
             <input type="text" placeholder="과목" value={newSubject} onChange={e => setNewSubject(e.target.value)} />
@@ -206,7 +202,10 @@ function AssignmentTab() {
 
     <div className="assignment-container">
       <header> <p className="tab-title">과제 목록({filteredList.length})</p></header>
-
+      {/* 로딩 중일 때와 아닐 때를 구분해서 렌더링 */}
+      {isLoading && assignment.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px' }}>데이터를 불러오는 중입니다...</div>
+      ) : (
       <ul className="mainbox"> {/* 과제 없는 경우 */}
         {sortedList.length === 0 ? <p>과제가 없습니다.</p> :
             sortedList.map(item => (
@@ -246,6 +245,7 @@ function AssignmentTab() {
               </li>
             ))}
       </ul>
+    )}
       {showModal && (<div className="modal-overlay">
           <div className="modal"><p>과제를 삭제하시겠습니까?</p>
             <div className="modal-buttons">
