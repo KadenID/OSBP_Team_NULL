@@ -264,8 +264,15 @@
   background: #0e0e0e;
 }
 
+/* 과제 생성 캘린더 영역 */
 .input-field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
+  filter: invert(0.5); 
+  cursor: pointer;
+}
+
+[data-theme='dark'] .input-field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1); 
+  cursor: pointer;
 }
 
 .add-submit-btn {
