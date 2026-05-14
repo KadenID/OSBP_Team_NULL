@@ -217,6 +217,7 @@
 /* 과제 생성창 */
 .add-form {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: 12px;
   background-color: var(--bg-card);
@@ -228,12 +229,14 @@
 
 .input-group {
   display: flex;
+  flex-wrap: wrap;
   flex: 1;
   gap: 10px;
 }
 
 .input-field {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: column;
   flex: 1;
   gap: 5px;
