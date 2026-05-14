@@ -73,13 +73,13 @@ function AssignmentTab() {
   
   // 모달 열림 상태 - hover 효과 제거 
   useEffect(() => {
-    if (showModal) document.body.classList.add('modal-open');
+    if (showModal || selectedAssignment) document.body.classList.add('modal-open');
     else document.body.classList.remove('modal-open');
 
     return () => {
      document.body.classList.remove('modal-open');
     };
-  }, [showModal]);
+  }, [showModal, selectedAssignment]);
 
 
   // 과제 추가 로직
