@@ -56,6 +56,13 @@ const useAssignmentStore = create(persist(
     assignment: state.assignment.map(item => 
       item.id === id ? { ...item, isSubmitted: !item.isSubmitted } : item
     )
+  })),
+  
+  // 커스텀 과제 설명 작성
+  updateDescription: (id, description) => set((state) => ({
+    assignment: state.assignment.map(item =>
+      item.id === id ? { ...item, description } : item
+    )
   }))
 }),
     {
