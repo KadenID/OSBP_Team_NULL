@@ -1,6 +1,8 @@
 import AlarmSettings from "./AlarmSettings";
 import "./AlarmSettings.css";
 import "./MyPage.css";
+import UserInfo from "./User-Info";
+import "./User-Info.css";
 import { FiLogOut, FiHome } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
@@ -8,7 +10,7 @@ const MY_PAGE_CARDS = [
     {
         id: "lms",
         title: "LMS 연동 상태",
-        content: "연동 여부 및 사용자 정보 표시 영역",
+        content: <UserInfo />,
     },
     {
         id: "alarm",
