@@ -1,9 +1,11 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware'; // 생성과제 로컬스토리지를 위한 persist
 
-const useAssignmentStore = create((set, get) => ({
-  assignment: [],
-  isLoading: false,
-  isFetched: false, // 데이터를 이미 불러왔는지 확인하는 플래그
+const useAssignmentStore = create(persist(
+  (set, get) => ({
+    assignment: [],
+    isLoading: false,
+    isFetched: false, // 데이터를 이미 불러왔는지 확인하는 플래그
 
   // API 통신으로 과제 불러오기
   fetchAssignments: async () => {
@@ -24,9 +26,12 @@ const useAssignmentStore = create((set, get) => ({
           isSubmitted: item.status.includes('제출 완료'),
           source: 'lms'
         }));
-        
+
         // 데이터 저장 및 호출 완료 플래그 설정
-        set({ assignment: fetchedData, isFetched: true });
+        set((state) => ({
+        assignment: [...fetchedData, ...state.assignment.filter(a => a.source === 'user')], // get()에서 콜백 방식으로 수정
+        isFetched: true
+      }));
       } else {
         console.error("데이터를 불러오지 못했습니다:", result.message);
       } 
@@ -52,7 +57,22 @@ const useAssignmentStore = create((set, get) => ({
     assignment: state.assignment.map(item => 
       item.id === id ? { ...item, isSubmitted: !item.isSubmitted } : item
     )
+  })),
+  
+  // 커스텀 과제 설명 작성
+  updateDescription: (id, description) => set((state) => ({
+    assignment: state.assignment.map(item =>
+      item.id === id ? { ...item, description } : item
+    )
   }))
-}));
-
+}),
+    {
+      name: 'assignment-storage',
+      // user 과제만 저장, 새로고침마다 LMS 갱신
+      partialize: (state) => ({
+        assignment: state.assignment.filter(item => item.source === 'user')
+      }),
+    }
+  )
+);
 export default useAssignmentStore;

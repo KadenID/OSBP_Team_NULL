@@ -14,7 +14,7 @@ function MainPage() {
     const saved = localStorage.getItem('theme');
     if (saved) return saved;
 
-    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const systemDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
     return systemDark ? 'dark' : 'light';
     });
   

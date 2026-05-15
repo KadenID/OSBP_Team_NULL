@@ -50,10 +50,12 @@
 
 .dashboard {
   display: flex;
+  flex-direction: row;
   gap: 25px;
   margin: 20px auto;
   min-height: 70vh;
   max-width: 1400px;
+  flex-wrap: wrap;
 }
 
 .right, .left {
@@ -71,7 +73,17 @@
   display: flex;
   flex-direction: column;
   gap: 25px;
+  min-width: 0;
+  flex-basis: 600px;
+  flex-grow: 2;
 }
+
+.right {
+  flex: 1;
+  min-width: 200px; 
+  flex-basis: 280px;
+  flex-grow: 1;
+} 
 
 .right:hover, .left:hover {
   box-shadow: 0 10px 26px var(--shadow-hover);
@@ -123,6 +135,18 @@ header h1 {
   font-size: 13px;
   font-weight: 600;
   gap: 8px;
+}
+
+@media screen and (max-width: 1300px) {
+  .left-section {
+    flex-basis: 100%;  /* 과제탭이 전체 너비 차지 */
+    min-width: 0;
+  }
+
+  .right {
+    flex-basis: 100%;  /* AI탭도 전체 너비로 아래 배치 */
+    min-width: 0;
+  }
 }
 
 @media screen and (max-width: 768px) {

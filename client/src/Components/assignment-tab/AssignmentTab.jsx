@@ -1,6 +1,8 @@
 import React, {useState, useMemo, useEffect} from 'react';
+import { createPortal } from 'react-dom';
 import './AssignmentTab.css';
 import useAssignmentStore from '../../store/useAssignmentStore';
+import AssignmentDetail from './AssignmentDetail';
 
 const STATUS = {
   UNSUBMITTED: 'UNSUBMITTED',
@@ -45,7 +47,8 @@ function AssignmentTab() {
     fetchAssignments,
     addAssignment,
     deleteAssignment, 
-    toggleSubmit
+    toggleSubmit,
+    updateDescription
   } = useAssignmentStore();
 
   // 최초 렌더링 시 스토어의 API 호출 함수 실행 (store 내부에서 중복 호출 방지 처리)
@@ -67,16 +70,18 @@ function AssignmentTab() {
   const [showModal, setShowModal] = useState(false);
   const [targetId, setTargetId] = useState(null);
 
+  const [selectedId, setSelectedId] = useState(null); // ID만 저장
+
   
   // 모달 열림 상태 - hover 효과 제거 
   useEffect(() => {
-    if (showModal) document.body.classList.add('modal-open');
+    if (showModal || selectedId) document.body.classList.add('modal-open');
     else document.body.classList.remove('modal-open');
 
     return () => {
      document.body.classList.remove('modal-open');
     };
-  }, [showModal]);
+  }, [showModal, selectedId]);
 
 
   // 과제 추가 로직
@@ -135,6 +140,11 @@ function AssignmentTab() {
     setShowModal(false);        // 모달 닫기
     setTargetId(null);          // 타겟 ID 초기화
   };
+
+  // 선택된 과제 데이터를 최신으로 참조
+  const selectedAssignment = useMemo(() => 
+    assignment.find(item => item.id === selectedId) ?? null,
+  [assignment, selectedId]);
 
   // 상태 변경
   const toggleTag = (tag) => {
@@ -212,6 +222,8 @@ function AssignmentTab() {
              <li
                 className={`assignment-item ${getItemClass(item.isExpired, item.isSubmitted)}`}
                 key={item.id}
+                onClick={() => setSelectedId(item.id)}
+                style={{ cursor: 'pointer' }} 
                 >
 
               <div className="info"> {/* lms 과제인지 생성 과제인지 라벨링 */}
@@ -231,10 +243,10 @@ function AssignmentTab() {
                 <div className="item-actions"> {/* 생성과제 - 삭제, 완료 처리 버튼 영역 */}
                     {item.source === 'user' ? (
                       <>
-                        <button onClick={() => toggleSubmit(item.id)} className="action-btn toggle">
+                        <button onClick={(e) => { e.stopPropagation(); toggleSubmit(item.id); }} className="action-btn toggle">
                           {item.isSubmitted ? '진행으로 변경' : '완료 처리'}
                         </button>
-                        <button onClick={() => {setTargetId(item.id); setShowModal(true);}} className="action-btn delete">삭제</button>
+                        <button onClick={(e) => {e.stopPropagation(); setTargetId(item.id); setShowModal(true); }} className="action-btn delete">삭제</button>
                       </>
                     ) : (
                       <span className="lock-msg">시스템 관리항목</span>
@@ -246,14 +258,27 @@ function AssignmentTab() {
             ))}
       </ul>
     )}
-      {showModal && (<div className="modal-overlay">
-          <div className="modal"><p>과제를 삭제하시겠습니까?</p>
+      {showModal && createPortal(
+        <div className="modal-overlay">
+          <div className="modal">
+            <p>과제를 삭제하시겠습니까?</p>
             <div className="modal-buttons">
-            <button onClick={confirmDelete}>삭제</button>
-            <button onClick={() => setShowModal(false)}>취소</button>
+              <button onClick={confirmDelete}>삭제</button>
+              <button onClick={() => setShowModal(false)}>취소</button>
             </div>
-          </div >
-        </div>)}
+          </div>
+        </div>,
+        document.body
+      )}
+        
+        {selectedAssignment && createPortal(
+          <AssignmentDetail
+            assignment={selectedAssignment}
+            onClose={() => setSelectedId(null)} 
+            updateDescription={updateDescription}
+          />,
+          document.body
+        )}
       </div>
     </div>
   );

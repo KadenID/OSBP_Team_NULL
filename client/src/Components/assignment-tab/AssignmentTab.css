@@ -23,13 +23,17 @@
 .assignment-item {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
   padding: 11px;
   height: 110px;
+  min-width: 0;
+  min-height: 150px;
   background-color: var(--bg-card); 
   border: 1px solid var(--border);
   border-radius: 12px;
   transition: transform 0.2s;
+  box-sizing: border-box;
 }
 
 .assignment-item:hover {
@@ -94,6 +98,7 @@
   align-items: flex-end; 
   gap: 5px; 
   text-align: right;
+  flex-shrink: 0;  
 }
 
 /* 제출 상태 라벨 */
@@ -217,6 +222,7 @@
 /* 과제 생성창 */
 .add-form {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: 12px;
   background-color: var(--bg-card);
@@ -228,12 +234,14 @@
 
 .input-group {
   display: flex;
+  flex-wrap: wrap;
   flex: 1;
   gap: 10px;
 }
 
 .input-field {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: column;
   flex: 1;
   gap: 5px;
@@ -254,15 +262,24 @@
   background: var(--bg-card); 
   color: var(--text-main);       
   outline: none;
+  color-scheme: light;
 }
 
 [data-theme='dark'] .input-field input {
   border-color: #707070;
   background: #0e0e0e;
+  color-scheme: dark;
 }
 
+/* 과제 생성 캘린더 영역 */
 .input-field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
+  filter: invert(0.5); 
+  cursor: pointer;
+}
+
+[data-theme='dark'] .input-field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: none; 
+  cursor: pointer;
 }
 
 .add-submit-btn {
@@ -352,5 +369,12 @@ body.modal-open .left:hover {
     flex-direction: column;
     align-items: flex-end;
     justify-content: space-between;
+  }
+}
+
+@media screen and (max-width: 1300px) {
+  .assignment-item {
+    height: auto;        /* 고정 높이 해제 */
+    min-height: 110px;
   }
 }
