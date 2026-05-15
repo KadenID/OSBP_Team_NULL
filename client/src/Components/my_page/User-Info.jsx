@@ -5,13 +5,26 @@ function UserInfo() {
         name: "",
         studentId: "",
         department: "",
+        lmsConnected: false,
     };
 
     return (
         <section className="user-info-card">
             <div className="user-info-header">
-                <p className="user-info-subtitle">User Information</p>
-                <h2 className="user-info-title">사용자 정보</h2>
+                <div>
+                    <p className="user-info-subtitle">User Information</p>
+                    <h2 className="user-info-title">사용자 정보</h2>
+                </div>
+                
+                <span className={userInfo.lmsConnected? "lms-status connected": "lms-status disconnected"}>
+                    {userInfo.lmsConnected ? "LMS 연동 완료" : "LMS 미연동"}
+                </span>
+            </div>
+
+            <div className="user-info-content">
+                <div calssName="user-profile-icon">
+                    {userInfo.name? userInfo.name.charAt(0): "?"}
+                </div>
             </div>
 
             <div className="user-info-list">
