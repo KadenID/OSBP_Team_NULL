@@ -1,4 +1,5 @@
 import React, {useState, useMemo, useEffect} from 'react';
+import { createPortal } from 'react-dom';
 import './AssignmentTab.css';
 import useAssignmentStore from '../../store/useAssignmentStore';
 import AssignmentDetail from './AssignmentDetail';
@@ -251,21 +252,26 @@ function AssignmentTab() {
             ))}
       </ul>
     )}
-      {showModal && (<div className="modal-overlay">
-          <div className="modal"><p>과제를 삭제하시겠습니까?</p>
+      {showModal && createPortal(
+        <div className="modal-overlay">
+          <div className="modal">
+            <p>과제를 삭제하시겠습니까?</p>
             <div className="modal-buttons">
-            <button onClick={confirmDelete}>삭제</button>
-            <button onClick={() => setShowModal(false)}>취소</button>
+              <button onClick={confirmDelete}>삭제</button>
+              <button onClick={() => setShowModal(false)}>취소</button>
             </div>
-          </div >
-        </div>)}
+          </div>
+        </div>,
+        document.body
+      )}
         
-        {selectedAssignment && (
+        {selectedAssignment && createPortal(
           <AssignmentDetail
             assignment={selectedAssignment}
             onClose={() => setSelectedAssignment(null)}
-            />
-      )}
+          />,
+          document.body
+        )}
       </div>
     </div>
   );
