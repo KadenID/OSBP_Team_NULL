@@ -1,11 +1,11 @@
-from crypto import encrypt, decrypt
-from password import hash_password, compare_password
+from security.storage import save_user, load_user
 
-data = encrypt("test")
-print(data)
-print(decrypt(data))
+save_user(
+    "20201234",
+    "my_password"
+)
 
-pw = hash_password("1234")
-print(pw)
-print(compare_password("1234", pw))
+student_id, password = load_user()
 
+print(student_id)
+print(password)
