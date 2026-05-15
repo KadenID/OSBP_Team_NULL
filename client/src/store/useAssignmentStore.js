@@ -27,10 +27,11 @@ const useAssignmentStore = create(persist(
           source: 'lms'
         }));
 
-        // 로컬에 저장된 user 과제 유지하기 위한 로컬스토리지
-        const userAssignments = get().assignment.filter(item => item.source === 'user');
         // 데이터 저장 및 호출 완료 플래그 설정
-        set({ assignment: [...fetchedData, ...userAssignments], isFetched: true });
+        set((state) => ({
+        assignment: [...fetchedData, ...state.assignment.filter(a => a.source === 'user')], // get()에서 콜백 방식으로 수정
+        isFetched: true
+      }));
       } else {
         console.error("데이터를 불러오지 못했습니다:", result.message);
       } 
