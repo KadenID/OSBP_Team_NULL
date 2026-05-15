@@ -47,7 +47,8 @@ function AssignmentTab() {
     fetchAssignments,
     addAssignment,
     deleteAssignment, 
-    toggleSubmit
+    toggleSubmit,
+    updateDescription
   } = useAssignmentStore();
 
   // 최초 렌더링 시 스토어의 API 호출 함수 실행 (store 내부에서 중복 호출 방지 처리)
@@ -138,6 +139,12 @@ function AssignmentTab() {
     deleteAssignment(targetId); // 스토어의 삭제 액션 실행
     setShowModal(false);        // 모달 닫기
     setTargetId(null);          // 타겟 ID 초기화
+  };
+
+  // 상세 모달에서 설명 저장 시 selectedAssignment 동기화
+  const handleUpdateDescription = (id, text) => {
+    updateDescription(id, text);
+    setSelectedAssignment(prev => ({ ...prev, description: text }));
   };
 
   // 상태 변경
@@ -269,6 +276,7 @@ function AssignmentTab() {
           <AssignmentDetail
             assignment={selectedAssignment}
             onClose={() => setSelectedAssignment(null)}
+            updateDescription={handleUpdateDescription}
           />,
           document.body
         )}

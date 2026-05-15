@@ -23,13 +23,17 @@
 .assignment-item {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
   padding: 11px;
   height: 110px;
+  min-width: 0;
+  min-height: 150px;
   background-color: var(--bg-card); 
   border: 1px solid var(--border);
   border-radius: 12px;
   transition: transform 0.2s;
+  box-sizing: border-box;
 }
 
 .assignment-item:hover {
@@ -94,6 +98,7 @@
   align-items: flex-end; 
   gap: 5px; 
   text-align: right;
+  flex-shrink: 0;  
 }
 
 /* 제출 상태 라벨 */
@@ -364,5 +369,12 @@ body.modal-open .left:hover {
     flex-direction: column;
     align-items: flex-end;
     justify-content: space-between;
+  }
+}
+
+@media screen and (max-width: 1300px) {
+  .assignment-item {
+    height: auto;        /* 고정 높이 해제 */
+    min-height: 110px;
   }
 }
