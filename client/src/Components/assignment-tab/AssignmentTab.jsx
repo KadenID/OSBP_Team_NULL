@@ -70,18 +70,18 @@ function AssignmentTab() {
   const [showModal, setShowModal] = useState(false);
   const [targetId, setTargetId] = useState(null);
 
-  const [selectedAssignment, setSelectedAssignment] = useState(null); // 과제 상세보기
+  const [selectedId, setSelectedId] = useState(null); // ID만 저장
 
   
   // 모달 열림 상태 - hover 효과 제거 
   useEffect(() => {
-    if (showModal || selectedAssignment) document.body.classList.add('modal-open');
+    if (showModal || selectedId) document.body.classList.add('modal-open');
     else document.body.classList.remove('modal-open');
 
     return () => {
      document.body.classList.remove('modal-open');
     };
-  }, [showModal, selectedAssignment]);
+  }, [showModal, selectedId]);
 
 
   // 과제 추가 로직
@@ -141,11 +141,10 @@ function AssignmentTab() {
     setTargetId(null);          // 타겟 ID 초기화
   };
 
-  // 상세 모달에서 설명 저장 시 selectedAssignment 동기화
-  const handleUpdateDescription = (id, text) => {
-    updateDescription(id, text);
-    setSelectedAssignment(prev => ({ ...prev, description: text }));
-  };
+  // 선택된 과제 데이터를 최신으로 참조
+  const selectedAssignment = useMemo(() => 
+    assignment.find(item => item.id === selectedId) ?? null,
+  [assignment, selectedId]);
 
   // 상태 변경
   const toggleTag = (tag) => {
@@ -223,7 +222,7 @@ function AssignmentTab() {
              <li
                 className={`assignment-item ${getItemClass(item.isExpired, item.isSubmitted)}`}
                 key={item.id}
-                onClick={() => setSelectedAssignment(item)}
+                onClick={() => setSelectedId(item.id)}
                 style={{ cursor: 'pointer' }} 
                 >
 
@@ -275,8 +274,8 @@ function AssignmentTab() {
         {selectedAssignment && createPortal(
           <AssignmentDetail
             assignment={selectedAssignment}
-            onClose={() => setSelectedAssignment(null)}
-            updateDescription={handleUpdateDescription}
+            onClose={() => setSelectedId(null)} 
+            updateDescription={updateDescription}
           />,
           document.body
         )}

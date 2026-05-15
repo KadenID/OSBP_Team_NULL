@@ -1,41 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import './AssignmentDetail.css';
-import useAssignmentStore from '../../store/useAssignmentStore';
 
 function AssignmentDetail({ assignment, onClose, updateDescription }) {
 
-  const [description, setDescription] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
 
-  useEffect(() => {
-    setDescription("");
-    setIsEditing(false);
-
-  if (assignment?.source === 'lms') {
-    const mockDescriptions = {
-      default: "현재 상세 설명을 불러올 수 없습니다.\nLMS 페이지에서 직접 확인해주세요."
-    };
-    setDescription(mockDescriptions[assignment.id] ?? mockDescriptions.default);
-  } else if (assignment?.source === 'user') {
-      // 스토어에 저장된 description 불러오기
-      setDescription(assignment.description ?? "");
-  }
-}, [assignment]);
-
+  // 객체 직접 참조
+  const description = assignment.source === 'lms'
+    ? "현재 상세 설명을 불러올 수 없습니다.\nLMS 페이지에서 직접 확인해주세요."
+    : (assignment.description ?? "");
 
   if (!assignment) return null;
 
   // 생성 과제 편집
   const handleEditStart = () => {
-    setEditText(description);
+    setEditText(assignment.description || "");
     setIsEditing(true);
   };
 
   // 생성 과제 저장
   const handleSave = () => {
     updateDescription(assignment.id, editText);
-    setDescription(editText);
     setIsEditing(false);
   };
 
