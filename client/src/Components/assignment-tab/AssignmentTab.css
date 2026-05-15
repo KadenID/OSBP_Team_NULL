@@ -257,11 +257,13 @@
   background: var(--bg-card); 
   color: var(--text-main);       
   outline: none;
+  color-scheme: light;
 }
 
 [data-theme='dark'] .input-field input {
   border-color: #707070;
   background: #0e0e0e;
+  color-scheme: dark;
 }
 
 /* 과제 생성 캘린더 영역 */
@@ -271,7 +273,7 @@
 }
 
 [data-theme='dark'] .input-field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: invert(1); 
+  filter: none; 
   cursor: pointer;
 }
 
