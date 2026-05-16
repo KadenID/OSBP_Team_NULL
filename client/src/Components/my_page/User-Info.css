@@ -101,3 +101,31 @@
   font-size: 28px;
   font-weight: 800;
 }
+
+.user-info-card {
+  --user-card-bg: #ffffff;
+  --user-card-border: #dce3ee;
+  --user-card-shadow: rgba(23, 32, 51, 0.08);
+
+  --user-text-main: #111827;
+  --user-text-sub: #6b7280;
+
+  --user-profile-bg: #2563eb;
+  --user-profile-text: #ffffff;
+
+  --lms-connected-bg: #e7f7ef;
+  --lms-connected-text: #137a44;
+
+  --lms-disconnected-bg: #fff1f0;
+  --lms-disconnected-text: #bd2f24;
+
+  box-shadow: 0 8px 24px var(--user-card-shadow);
+}
+
+.user-info-item {
+  min-width: 0;
+}
+
+.user-info-value {
+  overflow-wrap: break-word;
+}
