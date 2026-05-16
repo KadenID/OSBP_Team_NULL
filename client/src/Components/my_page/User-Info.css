@@ -47,8 +47,9 @@
   letter-spacing: 0.02em;
 }
 
-/* LMS 연동 상태 */
+/* LMS 연동 상태 배지 */
 .lms-status {
+  position: static;
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
@@ -70,14 +71,6 @@
 }
 
 /* 사용자 상세 정보 */
-.user-info-content {
-  width: 100%;
-}
-
-.user-profile-icon {
-  display: none;
-}
-
 .user-info-list {
   width: 100%;
   display: grid;
@@ -130,17 +123,21 @@
   }
 
   .user-info-header {
-    flex-direction: column;
-    gap: 12px;
+    position: relative;
+    display: block;
+    padding-right: 92px;
     margin-bottom: 20px;
   }
 
   .user-info-title {
-    margin-bottom: 0;
-    font-size: 20px;
+    margin: 0;
+    font-size: 14px;
   }
 
   .lms-status {
+    position: absolute;
+    top: 0;
+    right: 0;
     padding: 6px 10px;
     font-size: 12px;
   }
