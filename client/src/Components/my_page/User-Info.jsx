@@ -1,53 +1,50 @@
 import "./User-Info.css";
 
+const EMPTY_USER_INFO = {
+    name: "",
+    studentId: "",
+    department: "",
+    lmsConnected: false,
+};
+
 function UserInfo() {
-    const userInfo = {
-        name: "",
-        studentId: "",
-        department: "",
-        lmsConnected: false,
-    };
+    // TODO: 추후 API를 통해 받아온 사용자 정보로 교체 예정
+    const userInfo = EMPTY_USER_INFO;
+
+    const emptyText = "연동 후 표시됩니다";
+    const statusClass = userInfo.lmsConnected ? "connected" : "disconnected";
+    const statusText = userInfo.lmsConnected ? "LMS 연동 완료" : "LMS 미연동";
+
+    const userInfoItems = [
+        { id: "name", label: "이름", value: userInfo.name },
+        { id: "studentId", label: "학번", value: userInfo.studentId },
+        { id: "department", label: "학과", value: userInfo.department },
+    ];
 
     return (
         <section className="user-info-card">
+            {/* 사용자 정보 헤더 */}
             <div className="user-info-header">
-                <div>
-                    <p className="user-info-subtitle">User Information</p>
-                    <h2 className="user-info-title">사용자 정보</h2>
-                </div>
-                
-                <span className={userInfo.lmsConnected? "lms-status connected": "lms-status disconnected"}>
-                    {userInfo.lmsConnected ? "LMS 연동 완료" : "LMS 미연동"}
+                <h2 className="user-info-title">사용자 정보</h2>
+
+                <span
+                    className={`lms-status ${statusClass}`}
+                    aria-label={`LMS 상태: ${statusText}`}
+                >
+                    {statusText}
                 </span>
             </div>
 
-            <div className="user-info-content">
-                <div calssName="user-profile-icon">
-                    {userInfo.name? userInfo.name.charAt(0): "?"}
-                </div>
-            </div>
-
+            {/* 사용자 상세 정보 */}
             <div className="user-info-list">
-                <div className="user-info-item">
-                    <span className="user-info-label">이름</span>
-                    <strong className="user-info-value">
-                        {userInfo.name || "연동 후 표시됩니다"}
-                    </strong>
-                </div>
-
-                <div className="user-info-item">
-                    <span className="user-info-label">학번</span>
-                    <strong className="user-info-value">
-                        {userInfo.studentId || "연동 후 표시됩니다"}
-                    </strong>
-                </div>
-
-                <div className="user-info-item">
-                    <span className="user-info-label">학과</span>
-                    <strong className="user-info-value">
-                        {userInfo.department || "연동 후 표시됩니다"}
-                    </strong>
-                </div>
+                {userInfoItems.map((item) => (
+                    <div className="user-info-item" key={item.id}>
+                        <span className="user-info-label">{item.label}</span>
+                        <strong className="user-info-value">
+                            {item.value || emptyText}
+                        </strong>
+                    </div>
+                ))}
             </div>
         </section>
     );

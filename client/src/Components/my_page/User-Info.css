@@ -1,107 +1,4 @@
-.user-info-card {
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
-  padding: 24px;
-  border: 1px solid #dce3ee;
-  border-radius: 12px;
-  background-color: #ffffff;
-  color: #111827;
-}
-
-.user-info-card *,
-.user-info-card *::before,
-.user-info-card *::after {
-  box-sizing: border-box;
-}
-
-.user-info-header {
-  margin-bottom: 24px;
-}
-
-.user-info-subtitle {
-  margin: 0 0 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #6b7280;
-}
-
-.user-info-title {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.user-info-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(120px, 1fr));
-  gap: 16px;
-}
-
-.user-info-label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #6b7280;
-}
-
-.user-info-value {
-  display: block;
-  font-size: 17px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.user-info-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.lms-status {
-  display: inline-flex;
-  align-items: center;
-  padding: 7px 12px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.lms-status.connected {
-  background-color: #e7f7ef;
-  color: #137a44;
-}
-
-.lms-status.disconnected {
-  background-color: #fff1f0;
-  color: #bd2f24;
-}
-
-.user-info-content {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.user-profile-icon {
-  width: 72px;
-  height: 72px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background-color: #2563eb;
-  color: #ffffff;
-  font-size: 28px;
-  font-weight: 800;
-}
-
+/* 사용자 정보 카드 */
 .user-info-card {
   --user-card-bg: #ffffff;
   --user-card-border: #dce3ee;
@@ -110,79 +7,162 @@
   --user-text-main: #111827;
   --user-text-sub: #6b7280;
 
-  --user-profile-bg: #2563eb;
-  --user-profile-text: #ffffff;
-
   --lms-connected-bg: #e7f7ef;
   --lms-connected-text: #137a44;
 
   --lms-disconnected-bg: #fff1f0;
   --lms-disconnected-text: #bd2f24;
 
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  padding: 24px;
+  border: 1px solid var(--user-card-border);
+  border-radius: 12px;
+  background-color: var(--user-card-bg);
+  color: var(--user-text-main);
   box-shadow: 0 8px 24px var(--user-card-shadow);
+}
+
+.user-info-card *,
+.user-info-card *::before,
+.user-info-card *::after {
+  box-sizing: border-box;
+}
+
+/* 헤더 영역 */
+.user-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.user-info-title {
+  margin: 0 0 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--user-text-sub);
+  letter-spacing: 0.02em;
+}
+
+/* LMS 연동 상태 */
+.lms-status {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.lms-status.connected {
+  background-color: var(--lms-connected-bg);
+  color: var(--lms-connected-text);
+}
+
+.lms-status.disconnected {
+  background-color: var(--lms-disconnected-bg);
+  color: var(--lms-disconnected-text);
+}
+
+/* 사용자 상세 정보 */
+.user-info-content {
+  width: 100%;
+}
+
+.user-profile-icon {
+  display: none;
+}
+
+.user-info-list {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 16px;
 }
 
 .user-info-item {
   min-width: 0;
 }
 
+.user-info-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--user-text-sub);
+}
+
 .user-info-value {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--user-text-main);
   overflow-wrap: break-word;
 }
 
+/* 다크모드 */
 @media (prefers-color-scheme: dark) {
   .user-info-card {
-    --user-card-bg: #111827;
-    --user-card-border: #26344f;
-    --user-card-shadow: rgba(0, 0, 0, 0.28);
+    --user-card-bg: #1f2937;
+    --user-card-border: #3b4658;
+    --user-card-shadow: rgba(0, 0, 0, 0.22);
 
     --user-text-main: #f9fafb;
-    --user-text-sub: #9ca3af;
+    --user-text-sub: #c4ccd8;
 
-    --lms-connected-bg: rgba(34, 197, 94, 0.16);
+    --lms-connected-bg: rgba(34, 197, 94, 0.18);
     --lms-connected-text: #86efac;
 
-    --lms-disconnected-bg: rgba(239, 68, 68, 0.16);
+    --lms-disconnected-bg: rgba(248, 113, 113, 0.16);
     --lms-disconnected-text: #fca5a5;
   }
 }
 
-@media (max-width: 768px) {
+/* 좁은 화면 */
+@media (max-width: 640px) {
   .user-info-card {
     padding: 20px;
   }
 
   .user-info-header {
+    flex-direction: column;
     gap: 12px;
+    margin-bottom: 20px;
   }
 
-  .user-info-content {
-    gap: 20px;
+  .user-info-title {
+    margin-bottom: 0;
+    font-size: 20px;
   }
 
-  .user-info-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 480px) {
-  .user-info-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .user-info-content {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .user-profile-icon {
-    width: 64px;
-    height: 64px;
-    font-size: 24px;
+  .lms-status {
+    padding: 6px 10px;
+    font-size: 12px;
   }
 
   .user-info-list {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .user-info-item {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .user-info-label {
+    margin-bottom: 0;
+    font-size: 13px;
+  }
+
+  .user-info-value {
+    font-size: 15px;
   }
 }
