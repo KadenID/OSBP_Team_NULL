@@ -92,7 +92,10 @@ def get_refresh_token(student_id):
     """
     conn = get_connection()
     try:
-        pass
+        with conn.cursor() as cur:
+            sql = "SELECT token_value, expires_at FROM refresh_tokens WHERE student_id = %s;"
+            cur.execute(sql, (student_id,))
+            return cur.fetchone()
     except Exception as e:
         print(f"Error getting refresh token from Supabase: {e}")
         return None
