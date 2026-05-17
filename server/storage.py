@@ -85,3 +85,16 @@ def save_refresh_token(student_id, token_value, expires_at):
         conn.rollback()
     finally:
         conn.close()
+
+def get_refresh_token(student_id):
+    """
+    DB에서 해당 사용자의 리프레시 토큰 정보를 가져옵니다.
+    """
+    conn = get_connection()
+    try:
+        pass
+    except Exception as e:
+        print(f"Error getting refresh token from Supabase: {e}")
+        return None
+    finally:
+        conn.close()
