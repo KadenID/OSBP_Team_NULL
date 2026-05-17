@@ -8,11 +8,6 @@ import { useNavigate } from "react-router-dom";
 
 const MY_PAGE_CARDS = [
     {
-        id: "lms",
-        title: "LMS 연동 상태",
-        content: <UserInfo />,
-    },
-    {
         id: "alarm",
         title: "알림 설정",
         content: <AlarmSettings />,
@@ -61,6 +56,8 @@ function MyPage() {
 
             {/* 마이페이지 주요 카드 영역 */}
             <div className="mypage-grid">
+                <UserInfo />
+                
                 {MY_PAGE_CARDS.map((card) => (
                     <MyPageCard
                         key={card.id}

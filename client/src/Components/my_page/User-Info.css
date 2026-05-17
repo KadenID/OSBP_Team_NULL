@@ -4,6 +4,8 @@
   --user-card-border: #dce3ee;
   --user-card-shadow: rgba(23, 32, 51, 0.08);
 
+  --user-accent: #6c63ff;
+
   --user-text-main: #111827;
   --user-text-sub: #6b7280;
 
@@ -13,15 +15,27 @@
   --lms-disconnected-bg: #fff1f0;
   --lms-disconnected-text: #bd2f24;
 
+  position: relative;
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
-  padding: 24px;
+  padding: 28px 36px;
   border: 1px solid var(--user-card-border);
   border-radius: 12px;
   background-color: var(--user-card-bg);
   color: var(--user-text-main);
   box-shadow: 0 8px 24px var(--user-card-shadow);
+}
+
+.user-info-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 26px;
+  bottom: 26px;
+  width: 4px;
+  border-radius: 0 999px 999px 0;
+  background-color: var(--user-accent);
 }
 
 .user-info-card *,
@@ -36,27 +50,25 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
 }
 
 .user-info-title {
-  margin: 0 0 18px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--user-text-sub);
-  letter-spacing: 0.02em;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--user-text-main);
 }
 
 /* LMS 연동 상태 배지 */
 .lms-status {
-  position: static;
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  padding: 7px 12px;
+  padding: 8px 13px;
   border-radius: 999px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   white-space: nowrap;
 }
 
@@ -75,7 +87,7 @@
   width: 100%;
   display: grid;
   grid-template-columns: repeat(3, minmax(120px, 1fr));
-  gap: 16px;
+  gap: 20px;
 }
 
 .user-info-item {
@@ -84,15 +96,15 @@
 
 .user-info-label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--user-text-sub);
 }
 
 .user-info-value {
   display: block;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--user-text-main);
   overflow-wrap: break-word;
@@ -101,9 +113,11 @@
 /* 다크모드 */
 @media (prefers-color-scheme: dark) {
   .user-info-card {
-    --user-card-bg: #1f2937;
+    --user-card-bg: #2a3446;
     --user-card-border: #3b4658;
     --user-card-shadow: rgba(0, 0, 0, 0.22);
+
+    --user-accent: #8b82ff;
 
     --user-text-main: #f9fafb;
     --user-text-sub: #c4ccd8;
@@ -111,7 +125,7 @@
     --lms-connected-bg: rgba(34, 197, 94, 0.18);
     --lms-connected-text: #86efac;
 
-    --lms-disconnected-bg: rgba(248, 113, 113, 0.16);
+    --lms-disconnected-bg: rgba(248, 113, 113, 0.2);
     --lms-disconnected-text: #fca5a5;
   }
 }
@@ -119,25 +133,23 @@
 /* 좁은 화면 */
 @media (max-width: 640px) {
   .user-info-card {
-    padding: 20px;
+    padding: 24px 20px;
+  }
+
+  .user-info-card::before {
+    top: 22px;
+    bottom: 22px;
   }
 
   .user-info-header {
-    position: relative;
-    display: block;
-    padding-right: 92px;
-    margin-bottom: 20px;
+    margin-bottom: 22px;
   }
 
   .user-info-title {
-    margin: 0;
-    font-size: 14px;
+    font-size: 17px;
   }
 
   .lms-status {
-    position: absolute;
-    top: 0;
-    right: 0;
     padding: 6px 10px;
     font-size: 12px;
   }
