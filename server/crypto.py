@@ -8,12 +8,16 @@ load_dotenv()
 
 # 환경 변수에서 암호화 키 로드
 SECRET_KEY_RAW = os.getenv("AES_SECRET_KEY")
+
+if SECRET_KEY_RAW is None:
+    raise EnvironmentError("AES_SECRET_KEY 환경 변수가 설정되지 않았습니다. .env 파일을 확인하세요.")
+
 SECRET_KEY = SECRET_KEY_RAW.encode("utf-8")
 
-# AES-256을 위해 최종적으로 32바이트인지 확인
+# AES-256을 위해 정확히 32바이트인지 확인
 if len(SECRET_KEY) != 32:
-    import hashlib
-    SECRET_KEY = hashlib.sha256(SECRET_KEY).digest()
+    raise ValueError(f"AES_SECRET_KEY는 정확히 32바이트여야 합니다. 현재 길이: {len(SECRET_KEY)}바이트. "
+                     "설정을 확인해주세요.")
 
 aesgcm = AESGCM(SECRET_KEY)
 
