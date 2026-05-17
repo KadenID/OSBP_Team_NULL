@@ -43,4 +43,14 @@ def save_user(student_id, password):
         conn.close()
 
 def load_user(student_id):
-    pass
+    """
+    저장된 사용자 정보를 DB에서 불러옵니다. 비밀번호는 복호화하여 반환합니다.
+    """
+    conn = get_connection()
+    try:
+        pass
+    except Exception as e:
+        print(f"Error loading user data from Supabase: {e}")
+        return None, None
+    finally:
+        conn.close()
