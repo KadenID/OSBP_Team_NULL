@@ -3,7 +3,7 @@ html{
   color-scheme: light dark;
 }
 
-:root {
+.mypage-container {
   --bg: #f7f7fb;
   --title: #222;
   --subtitle: #777;
@@ -19,11 +19,15 @@ html{
   --focus: #6366f1;
   --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
   --card-hover-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 70px 24px;
+  color: var(--title);
 }
 
 /* 다크 모드 색상 변수 */
 @media (prefers-color-scheme: dark) {
-  :root {
+  .mypage-container {
     --bg: #1e2430;
     --title: #f3f4f6;
     --subtitle: #c4c7cf;
@@ -45,24 +49,23 @@ html{
 /* 기본 설정 */
 body {
   margin: 0;
-  background: var(--bg);
-}
-
-
-/* 마이페이지 전체 컨테이너 */
-.mypage-container {
-  max-width: 900px;          
-  margin: 0 auto;            
-  padding: 70px 24px;        
 }
 
 /* 상단 헤더 영역 */
 .mypage-header {
-  margin-bottom: 30px;       
+  margin-bottom: 30px;
+}
+
+.mypage-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
 }
 
 .mypage-title {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: clamp(24px, 4vw, 34px);
   font-weight: 700;
   color: var(--title);
@@ -72,14 +75,6 @@ body {
   margin: 0;
   font-size: 15px;
   color: var(--subtitle);
-}
-
-
-/* 우측 상단 메뉴 (메인 버튼) */
-.top-right-menu {
-  display: flex;
-  justify-content: flex-end; 
-  margin-bottom: 10px;
 }
 
 /* 버튼 공통 */
@@ -99,6 +94,7 @@ body {
   background-color: var(--btn-bg);
   color: var(--btn-text);
   font-size: 13px;
+  transform: translateY(2px);
 }
 
 .main-button:hover {
@@ -106,7 +102,7 @@ body {
 }
 
 .main-icon {
-  font-size: 15px;
+  font-size: 13px;
 }
 
 
@@ -224,8 +220,12 @@ body {
   .mypage-card-content {
     font-size: 14px;
   }
-
-  .main-button,
+  
+  .main-button {
+    font-size: 13px;
+    padding: 7px 13px;
+  }
+  
   .logout-button {
     font-size: 14px;
     padding: 10px 14px;
