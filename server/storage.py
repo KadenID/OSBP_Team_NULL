@@ -108,7 +108,10 @@ def delete_refresh_token(student_id):
     """
     conn = get_connection()
     try:
-        pass
+        with conn.cursor() as cur:
+            sql = "DELETE FROM refresh_tokens WHERE student_id = %s;"
+            cur.execute(sql, (student_id,))
+        conn.commit()
     except Exception as e:
         print(f"Error deleting refresh token from Supabase: {e}")
         conn.rollback()
