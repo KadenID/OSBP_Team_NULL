@@ -48,7 +48,17 @@ def load_user(student_id):
     """
     conn = get_connection()
     try:
-        pass
+        with conn.cursor() as cur:
+            sql = "SELECT lms_password FROM users WHERE student_id = %s;"
+            cur.execute(sql, (student_id,))
+            result = cur.fetchone()
+            
+            if result:
+                encrypted_pw = result[0]
+                password = decrypt(encrypted_pw)
+                return student_id, password
+            else:
+                return None, None
     except Exception as e:
         print(f"Error loading user data from Supabase: {e}")
         return None, None
