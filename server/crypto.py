@@ -52,3 +52,13 @@ def decrypt(encrypted_base64: str) -> str:
     decrypted_data = aesgcm.decrypt(iv, ciphertext, None)
     
     return decrypted_data.decode("utf-8")
+
+if __name__ == "__main__":
+    LMS_ID = os.getenv("LMS_ID")
+    LMS_PW = os.getenv("LMS_PW")
+
+    b64_encrypted_PW = encrypt(LMS_PW)
+    print(b64_encrypted_PW)
+    plain_PW = decrypt(b64_encrypted_PW)
+    if LMS_PW == plain_PW:
+        print("정상 암복호화")
