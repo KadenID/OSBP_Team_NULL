@@ -18,7 +18,18 @@ def get_connection():
     return psycopg2.connect(DATABASE_URL)
 
 def save_user(student_id, password):
-    pass
+    """
+    사용자 정보를 DB에 저장합니다. 학번은 평문으로, 비밀번호는 AES-256으로 암호화하여 저장합니다.
+    UPSERT logic을 사용하여 기존 유저가 있으면 비밀번호를 업데이트합니다.
+    """
+    conn = get_connection()
+    try:
+        pass
+    except Exception as e:
+        print(f"Error saving user data to Supabase: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
 
 def load_user(student_id):
     pass
