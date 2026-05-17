@@ -22,9 +22,20 @@ def save_user(student_id, password):
     사용자 정보를 DB에 저장합니다. 학번은 평문으로, 비밀번호는 AES-256으로 암호화하여 저장합니다.
     UPSERT logic을 사용하여 기존 유저가 있으면 비밀번호를 업데이트합니다.
     """
+    # 평문 password를 암호화하여 encrypted_pw에 할당
+    encrypted_pw = encrypt(password)
+    
     conn = get_connection()
     try:
-        pass
+        with conn.cursor() as cur:
+            sql = """
+            INSERT INTO users (student_id, lms_password)
+            VALUES (%s, %s)
+            ON CONFLICT (student_id)
+            DO UPDATE SET lms_password = EXCLUDED.lms_password;
+            """
+            cur.execute(sql, (student_id, encrypted_pw))
+        conn.commit()
     except Exception as e:
         print(f"Error saving user data to Supabase: {e}")
         conn.rollback()
