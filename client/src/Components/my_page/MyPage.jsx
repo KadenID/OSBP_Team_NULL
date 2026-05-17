@@ -1,15 +1,12 @@
 import AlarmSettings from "./AlarmSettings";
 import "./AlarmSettings.css";
 import "./MyPage.css";
+import UserInfo from "./User-Info";
+import "./User-Info.css";
 import { FiLogOut, FiHome } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
 const MY_PAGE_CARDS = [
-    {
-        id: "lms",
-        title: "LMS 연동 상태",
-        content: "연동 여부 및 사용자 정보 표시 영역",
-    },
     {
         id: "alarm",
         title: "알림 설정",
@@ -42,23 +39,25 @@ function MyPage() {
 
     return(
         <div className="mypage-container">
-            
-            {/* 메인화면 전환 버튼 */}
-            <div className="top-right-menu">
-                <button type="button" className="main-button" onClick={() => navigate("/")}>
-                    <FiHome className="main-icon" />
-                    메인
-                </button>
-            </div>
 
             {/* 마이페이지 상단 영역 */}
             <header className="mypage-header">
-                <h1 className="mypage-title">마이페이지</h1>
+                <div className="mypage-title-row">
+                    <h1 className="mypage-title">마이페이지</h1>
+                    
+                    <button type="button" className="main-button" onClick={() => navigate("/")}>
+                        <FiHome className="main-icon" />
+                        메인
+                    </button>
+                </div>
+                
                 <p className="mypage-subtitle">사용자 정보를 확인하세요</p>
-            </header>
+                </header>
 
             {/* 마이페이지 주요 카드 영역 */}
             <div className="mypage-grid">
+                <UserInfo />
+                
                 {MY_PAGE_CARDS.map((card) => (
                     <MyPageCard
                         key={card.id}
