@@ -1,19 +1,21 @@
 /* 사용자 정보 카드 */
 .user-info-card {
-  --user-card-bg: #ffffff;
-  --user-card-border: #dce3ee;
-  --user-card-shadow: rgba(23, 32, 51, 0.08);
+  --user-card-bg: var(--card-bg);
+  --user-card-border: var(--card-border);
+  --user-card-shadow: var(--card-shadow);
 
-  --user-accent: #6c63ff;
+  --user-accent: var(--primary);
 
-  --user-text-main: #111827;
-  --user-text-sub: #6b7280;
+  --user-text-main: var(--card-title);
+  --user-text-sub: var(--card-content);
 
   --lms-connected-bg: #e7f7ef;
   --lms-connected-text: #137a44;
 
   --lms-disconnected-bg: #fff1f0;
   --lms-disconnected-text: #bd2f24;
+
+  font-family: inherit;
 
   position: relative;
   box-sizing: border-box;
@@ -55,7 +57,7 @@
 
 .user-info-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--user-text-main);
 }
@@ -65,10 +67,11 @@
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  padding: 8px 13px;
+  padding: 7px 12px;
   border-radius: 999px;
+  font-family: "Noto Sans CJK KR", "Noto Sans KR", system-ui, sans-serif;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -98,7 +101,7 @@
   display: block;
   margin-bottom: 8px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--user-text-sub);
 }
 
@@ -106,6 +109,7 @@
   display: block;
   font-size: 16px;
   font-weight: 700;
+  line-height: 1.4;
   color: var(--user-text-main);
   overflow-wrap: break-word;
 }
@@ -113,15 +117,6 @@
 /* 다크모드 */
 @media (prefers-color-scheme: dark) {
   .user-info-card {
-    --user-card-bg: #2a3446;
-    --user-card-border: #3b4658;
-    --user-card-shadow: rgba(0, 0, 0, 0.22);
-
-    --user-accent: #8b82ff;
-
-    --user-text-main: #f9fafb;
-    --user-text-sub: #c4ccd8;
-
     --lms-connected-bg: rgba(34, 197, 94, 0.18);
     --lms-connected-text: #86efac;
 
