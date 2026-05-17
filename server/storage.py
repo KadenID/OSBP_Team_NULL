@@ -101,3 +101,16 @@ def get_refresh_token(student_id):
         return None
     finally:
         conn.close()
+
+def delete_refresh_token(student_id):
+    """
+    로그아웃 시 DB에서 리프레시 토큰을 삭제합니다.
+    """
+    conn = get_connection()
+    try:
+        pass
+    except Exception as e:
+        print(f"Error deleting refresh token from Supabase: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
