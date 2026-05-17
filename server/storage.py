@@ -64,3 +64,16 @@ def load_user(student_id):
         return None, None
     finally:
         conn.close()
+
+def save_refresh_token(student_id, token_value, expires_at):
+    """
+    리프레시 토큰을 DB에 저장하거나 업데이트합니다. (RTR 및 화이트리스트 전략)
+    """
+    conn = get_connection()
+    try:
+        pass
+    except Exception as e:
+        print(f"Error saving refresh token to Supabase: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
