@@ -1,0 +1,164 @@
+.detail-overlay {
+  position: fixed;
+  top: 0;     
+  left: 0;
+
+  width: 100%;
+  height: 100%;
+
+  background: rgba(0, 0, 0, 0.5);
+
+  display: grid;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 99999;
+}
+
+.detail-modal {
+  place-self: center;
+  width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+
+  background: var(--bg-card);
+  border-radius: 20px;
+  padding: 28px;
+  position: relative;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  color: var(--text-main);
+}
+
+.detail-text {
+  white-space: pre-wrap;
+  line-height: 1.7;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text-main);
+}
+
+.close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+
+  width: 36px;
+  height: 36px;
+
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(0,0,0,0.08);
+
+  font-size: 20px;
+  font-weight: bold;
+
+  cursor: pointer;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 10;
+}
+
+.close-btn:hover {
+  background: rgba(0,0,0,0.15);
+}
+
+.detail-info {
+  margin-bottom: 15px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.detail-footer {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.edit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.detail-section-title {
+  font-size: 0.9em;
+  font-weight: bold;
+  color: #888;
+}
+
+.edit-btn {
+  font-size: 13px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.edit-btn:hover { background: rgba(0,0,0,0.06); }
+
+.edit-area {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  background: var(--bg-card);
+  color: var(--text-main);
+  box-sizing: border-box;
+}
+
+.detail-textarea:focus { outline: none; border-color: #1890ff; }
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.save-btn {
+  padding: 6px 16px;
+  background: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.save-btn:hover { background: #40a9ff; }
+
+.cancel-btn {
+  padding: 6px 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.cancel-btn:hover { background: rgba(0,0,0,0.06); }
+
+@media screen and (max-width: 768px) {
+  .detail-modal {
+    width: 90vw;
+    padding: 20px;
+    max-height: 90vh;
+  }
+}

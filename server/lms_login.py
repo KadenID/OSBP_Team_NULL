@@ -4,15 +4,15 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
 load_dotenv()
-USER_ID = os.getenv("LMS_ID")
-USER_PW = os.getenv("LMS_PW")
-
-if not USER_ID or not USER_PW:
-    raise ValueError(".env 파일에 LMS_ID와 LMS_PW가 설정되지 않았습니다")
 
 LOGIN_URL = "https://lms.chungbuk.ac.kr/login/index.php"
 
 def login_to_lms():
+    user_id = os.getenv("LMS_ID")
+    user_pw = os.getenv("LMS_PW")
+    
+    if not user_id or not user_pw:
+        return None, ".env 파일에 LMS_ID 또는 LMS_PW가 설정되지 않았습니다."
     # 쿠키를 유지할 세션 생성
     session = requests.Session()
     
@@ -31,8 +31,8 @@ def login_to_lms():
             
         # 데이터 전송 (로그인 시도)
         payload = {
-            "username": USER_ID,
-            "password": USER_PW,
+            "username": user_id,
+            "password": user_pw,
             "logintoken": logintoken
         }
         post_resp = session.post(LOGIN_URL, data=payload, timeout=10)
