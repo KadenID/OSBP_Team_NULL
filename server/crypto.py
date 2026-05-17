@@ -35,4 +35,20 @@ def encrypt(plain_text: str) -> str:
     return base64.b64encode(iv + encrypted_data).decode("utf-8")
 
 def decrypt(encrypted_base64: str) -> str:
-    pass
+    """
+    base64로 인코딩된 암호문을 받아 복호화하여 평문을 반환합니다.
+    """
+    if not encrypted_base64:
+        return ""
+    
+    # base64 디코딩
+    decoded_data = base64.b64decode(encrypted_base64)
+    
+    # IV(12바이트)와 실제 암호문 분리
+    iv = decoded_data[:12]
+    ciphertext = decoded_data[12:]
+    
+    # 복호화 수행
+    decrypted_data = aesgcm.decrypt(iv, ciphertext, None)
+    
+    return decrypted_data.decode("utf-8")
