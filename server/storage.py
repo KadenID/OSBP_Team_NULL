@@ -71,7 +71,15 @@ def save_refresh_token(student_id, token_value, expires_at):
     """
     conn = get_connection()
     try:
-        pass
+        with conn.cursor() as cur:
+            sql = """
+            INSERT INTO refresh_tokens (student_id, token_value, expires_at)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (student_id)
+            DO UPDATE SET token_value = EXCLUDED.token_value, expires_at = EXCLUDED.expires_at;
+            """
+            cur.execute(sql, (student_id, token_value, expires_at))
+        conn.commit()
     except Exception as e:
         print(f"Error saving refresh token to Supabase: {e}")
         conn.rollback()
