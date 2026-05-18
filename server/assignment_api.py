@@ -122,6 +122,19 @@ def refresh_token(response: Response, refresh_token: Optional[str] = Cookie(None
     if not student_id:
         raise HTTPException(status_code=401, detail="토큰 정보가 부정확합니다.")
 
+    # DB 화이트리스트 대조
+    stored_token_data = storage.get_refresh_token(student_id)
+    if not stored_token_data:
+        raise HTTPException(status_code=401, detail="등록된 토큰이 없습니다. 다시 로그인해주세요.")
+    
+    stored_token, expires_at = stored_token_data
+    
+    # DB에 저장된 토큰과 현재 쿠키의 토큰이 일치하는지 확인 (화이트리스트)
+    if refresh_token != stored_token:
+        # 토큰 탈취 의심 정황 (이미 사용된 토큰으로 재요청)
+        storage.delete_refresh_token(student_id)
+        raise HTTPException(status_code=401, detail="비정상적인 접근입니다. 다시 로그인해주세요.")
+
 @app.get("/api/assignments", response_model=APIResponse)
 def get_lms_assignments():
     """
