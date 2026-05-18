@@ -57,8 +57,9 @@ def save_user(student_id, password):
                 cur.execute(sql, (student_id, encrypted_pw))
             conn.commit()
         except Exception as e:
-            logger.error(f"사용자 정보 저장 중 오류 발생 (student_id: {student_id}): {e}")
             conn.rollback()
+            logger.error(f"사용자 정보 저장 중 오류 발생 (student_id: {student_id}): {e}")
+            raise  # 예외를 상위로 전달
 
 def load_user(student_id):
     """
@@ -79,7 +80,7 @@ def load_user(student_id):
                     return None, None
         except Exception as e:
             logger.error(f"사용자 정보 로드 중 오류 발생 (student_id: {student_id}): {e}")
-            return None, None
+            raise
 
 def save_refresh_token(student_id, token_value, expires_at):
     """
@@ -97,8 +98,9 @@ def save_refresh_token(student_id, token_value, expires_at):
                 cur.execute(sql, (student_id, token_value, expires_at))
             conn.commit()
         except Exception as e:
-            logger.error(f"리프레시 토큰 저장 중 오류 발생 (student_id: {student_id}): {e}")
             conn.rollback()
+            logger.error(f"리프레시 토큰 저장 중 오류 발생 (student_id: {student_id}): {e}")
+            raise
 
 def get_refresh_token(student_id):
     """
@@ -112,7 +114,7 @@ def get_refresh_token(student_id):
                 return cur.fetchone()
         except Exception as e:
             logger.error(f"리프레시 토큰 조회 중 오류 발생 (student_id: {student_id}): {e}")
-            return None
+            raise
 
 def delete_refresh_token(student_id):
     """
@@ -125,5 +127,6 @@ def delete_refresh_token(student_id):
                 cur.execute(sql, (student_id,))
             conn.commit()
         except Exception as e:
-            logger.error(f"리프레시 토큰 삭제 중 오류 발생 (student_id: {student_id}): {e}")
             conn.rollback()
+            logger.error(f"리프레시 토큰 삭제 중 오류 발생 (student_id: {student_id}): {e}")
+            raise

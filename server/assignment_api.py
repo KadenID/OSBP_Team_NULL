@@ -5,11 +5,16 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, timedelta, timezone
 import uvicorn
+import logging
 
 from lms_login import login_to_lms
 from lms_crawler import crawl_all_assignments
 import auth
 import storage
+
+# 로깅 설정
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="LMS Assignment API", 
@@ -92,7 +97,8 @@ def login(request: LoginRequest, response: Response):
     try:
         storage.save_user(request.student_id, request.password)
     except Exception as e:
-        print(f"DB 저장 오류: {e}")
+        logger.error(f"DB 저장 오류: {e}")
+        raise HTTPException(status_code=500, detail="사용자 정보 저장 중 서버 오류가 발생했습니다.")
 
     # 토큰 생성
     user_data = {"sub": request.student_id}
@@ -104,8 +110,8 @@ def login(request: LoginRequest, response: Response):
     try:
         storage.save_refresh_token(request.student_id, refresh_token, expires_at)
     except Exception as e:
-        print(f"리프레시 토큰 DB 저장 오류: {e}")
-        raise HTTPException(status_code=500, detail="인증 서버 오류")
+        logger.error(f"리프레시 토큰 DB 저장 오류: {e}")
+        raise HTTPException(status_code=500, detail="인증 데이터 저장 중 서버 오류가 발생했습니다.")
     
     # HttpOnly 쿠키에 리프레시 토큰 설정
     response.set_cookie(
@@ -166,7 +172,7 @@ def refresh_token(response: Response, refresh_token_cookie: Optional[str] = Cook
     try:
         storage.save_refresh_token(student_id, new_refresh_token, new_expires_at)
     except Exception as e:
-        print(f"리프레시 토큰 갱신 중 DB 오류: {e}")
+        logger.error(f"리프레시 토큰 갱신 중 DB 오류: {e}")
         raise HTTPException(status_code=500, detail="인증 서버 오류")
 
     # 새 리프레시 토큰 쿠키 설정
