@@ -28,3 +28,16 @@ def create_access_token(data: Dict[str, Any]) -> str:
         "iat": datetime.now(timezone.utc)   #토큰 발급 시간
     })
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def create_refresh_token(data: Dict[str, Any]) -> str:
+    """
+    리프레시 토큰 생성
+    """
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode.update({
+        "exp": expire,                      #토큰 만료 시간
+        "type": "refresh",                  #토큰 타입
+        "iat": datetime.now(timezone.utc)   #토큰 발급 시간
+    })
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
