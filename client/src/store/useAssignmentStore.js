@@ -14,7 +14,9 @@ const useAssignmentStore = create(persist(
     
     set({ isLoading: true });
     try {
-      const response = await fetch('http://localhost:8000/api/assignments');
+      const response = await fetch('http://localhost:8000/api/assignments', {
+        credentials: 'include'
+      });
       const result = await response.json();
       
       if (result.success) {
