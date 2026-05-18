@@ -6,6 +6,7 @@ import uvicorn
 
 from lms_login import login_to_lms
 from lms_crawler import crawl_all_assignments
+import storage
 
 app = FastAPI(
     title="LMS Assignment API", 
@@ -63,6 +64,12 @@ def login(request: LoginRequest, response: Response):
     session, message = login_to_lms(request.student_id, request.password)
     if not session:
         raise HTTPException(status_code=401, detail=message)
+    
+    # 계정 정보 DB 저장
+    try:
+        storage.save_user(request.student_id, request.password)
+    except Exception as e:
+        print(f"DB 저장 오류: {e}")
     
     return LoginResponse(success=True, message="로그인 성공")
 
