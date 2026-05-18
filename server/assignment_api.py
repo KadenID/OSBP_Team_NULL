@@ -113,6 +113,15 @@ def refresh_token(response: Response, refresh_token: Optional[str] = Cookie(None
     if not refresh_token:
         raise HTTPException(status_code=401, detail="리프레시 토큰이 없습니다.")
 
+    # 토큰 검증 및 페이로드 추출
+    payload = auth.decode_token(refresh_token)
+    if not payload or not auth.verify_token_type(payload, "refresh"):
+        raise HTTPException(status_code=401, detail="유효하지 않거나 만료된 리프레시 토큰입니다.")
+    
+    student_id = payload.get("sub")
+    if not student_id:
+        raise HTTPException(status_code=401, detail="토큰 정보가 부정확합니다.")
+
 @app.get("/api/assignments", response_model=APIResponse)
 def get_lms_assignments():
     """
