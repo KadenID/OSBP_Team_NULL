@@ -41,3 +41,20 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
         "iat": datetime.now(timezone.utc)   #토큰 발급 시간
     })
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def decode_token(token: str) -> Optional[Dict[str, Any]]:
+    """
+    토큰의 서명을 검증하고 페이로드를 반환. 유효하지 않거나 만료된 경우 None 반환.
+    """
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        # 토큰 만료
+        return None
+    except jwt.InvalidTokenError:
+        # 유효하지 않은 토큰
+        return None
+    except Exception:
+        # 기타 예외
+        return None
