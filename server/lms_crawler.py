@@ -49,7 +49,7 @@ def get_enrolled_courses(session):
         return courses
 
     except Exception as e:
-        print(f"[{course_name}] 과목 목록 추출 중 오류 발생: {e}")
+        print(f"과목 목록 추출 중 오류 발생: {e}")
         return {}
 
 def get_assignments_for_course(session, course_id, course_name):
@@ -77,9 +77,22 @@ def get_assignments_for_course(session, course_id, course_name):
                     parsed_assign_url = urllib.parse.urlparse(a_url)
                     a_id = urllib.parse.parse_qs(parsed_assign_url.query).get('id', [None])[0]
                     
-                    # 'yyyy-mm-d h:m' -> 'yyyy-mm-ddThh:mm:ss' 형태로 정규화
-                    a_due = re.sub(r'(?<!\d)(\d)(?!\d)', r'0\1', a_due)
-                    a_due = a_due.replace(" ", "T") + ":00"
+                    # 날짜 형식 정규화 (예: 2024-05-18 23:59 -> 2024-05-18T23:59:00)
+                    try:
+                        # 한글 날짜 처리 (필요시) 및 공백 처리
+                        clean_due = a_due.replace("년 ", "-").replace("월 ", "-").replace("일", "")
+                        # 숫자 패딩 (1 -> 01)
+                        clean_due = re.sub(r'(?<!\d)(\d)(?!\d)', r'0\1', clean_due)
+                        # ISO 형식 변환
+                        if " " in clean_due:
+                            parts = clean_due.split()
+                            date_part = parts[0]
+                            time_part = parts[1] if len(parts) > 1 else "00:00"
+                            a_due_iso = f"{date_part}T{time_part}:00"
+                        else:
+                            a_due_iso = clean_due
+                    except Exception:
+                        a_due_iso = a_due # 실패 시 원본 유지
 
                     # 데이터 반환을 위해 리스트에 저장
                     assignments.append({
@@ -87,7 +100,7 @@ def get_assignments_for_course(session, course_id, course_name):
                         'course_name': course_name,
                         'assignment_id': a_id,
                         'assignment_name': a_name,
-                        'due_date': a_due,
+                        'due_date': a_due_iso,
                         'status': a_status,
                         'url': a_url
                     })

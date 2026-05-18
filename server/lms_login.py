@@ -7,12 +7,14 @@ load_dotenv()
 
 LOGIN_URL = "https://lms.chungbuk.ac.kr/login/index.php"
 
-def login_to_lms():
-    user_id = os.getenv("LMS_ID")
-    user_pw = os.getenv("LMS_PW")
+def login_to_lms(user_id=None, user_pw=None):
+    if not user_id:
+        user_id = os.getenv("LMS_ID")
+    if not user_pw:
+        user_pw = os.getenv("LMS_PW")
     
     if not user_id or not user_pw:
-        return None, ".env 파일에 LMS_ID 또는 LMS_PW가 설정되지 않았습니다."
+        return None, "ID 또는 PW가 제공되지 않았습니다."
     # 쿠키를 유지할 세션 생성
     session = requests.Session()
     
