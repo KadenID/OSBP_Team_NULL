@@ -86,6 +86,16 @@ def login(request: LoginRequest, response: Response):
         print(f"리프레시 토큰 DB 저장 오류: {e}")
         raise HTTPException(status_code=500, detail="인증 서버 오류")
     
+    # HttpOnly 쿠키에 리프레시 토큰 설정
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True, # HTTPS 환경에서만 전송
+        samesite="lax",
+        max_age=auth.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+    )
+    
     return LoginResponse(
         success=True,
         message="로그인 성공",
