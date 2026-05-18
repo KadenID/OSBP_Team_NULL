@@ -148,6 +148,22 @@ def refresh_token(response: Response, refresh_token: Optional[str] = Cookie(None
         print(f"리프레시 토큰 갱신 중 DB 오류: {e}")
         raise HTTPException(status_code=500, detail="인증 서버 오류")
 
+    # 새 리프레시 토큰 쿠키 설정
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=auth.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+    )
+    
+    return LoginResponse(
+        success=True,
+        message="토큰 갱신 성공",
+        access_token=new_access_token
+    )
+
 @app.get("/api/assignments", response_model=APIResponse)
 def get_lms_assignments():
     """
