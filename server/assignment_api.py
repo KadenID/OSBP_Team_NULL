@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Cookie
 from fastapi.middleware.cors import CORSMiddleware  # CORS 미들웨어 추가
 from pydantic import BaseModel
 from typing import List, Optional
@@ -102,7 +102,16 @@ def login(request: LoginRequest, response: Response):
         access_token=access_token
     )
 
-
+@app.post("/auth/refresh", response_model=LoginResponse)
+def refresh_token(response: Response, refresh_token: Optional[str] = Cookie(None)):
+    """
+    토큰 갱신 API (RTR 전략)
+    1. 쿠키 내 리프레시 토큰 검증
+    2. DB의 화이트리스트 토큰과 대조
+    3. 일치 시 새로운 토큰들 발급 및 DB 업데이트
+    """
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="리프레시 토큰이 없습니다.")
 
 @app.get("/api/assignments", response_model=APIResponse)
 def get_lms_assignments():
