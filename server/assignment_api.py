@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware  # CORS 미들웨어 추가
 from pydantic import BaseModel
 from typing import List, Optional
@@ -32,7 +32,7 @@ class LoginResponse(BaseModel):
     success: bool
     message: str
     access_token: Optional[str] = None
-    
+
 class AssignmentItem(BaseModel):
     course_id: str
     course_name: str
@@ -47,6 +47,24 @@ class APIResponse(BaseModel):
     message: str
     total_count: int
     data: List[AssignmentItem] = []
+
+# ---------------------------------------------------------
+# 인증 API
+# ---------------------------------------------------------
+@app.post("/auth/login", response_model=LoginResponse)
+def login(request: LoginRequest, response: Response):
+    """
+    사용자 로그인 API
+    1. LMS 로그인 시도
+    2. 성공 시 학번/비밀번호 DB 저장 (비밀번호 암호화)
+    3. 토큰 발급 및 리프레시 토큰 쿠키 설정
+    """
+    # LMS 로그인 테스트
+    session, message = login_to_lms(request.student_id, request.password)
+    if not session:
+        raise HTTPException(status_code=401, detail=message)
+    
+    return LoginResponse(success=True, message="로그인 성공")
 
 @app.get("/api/assignments", response_model=APIResponse)
 def get_lms_assignments():
