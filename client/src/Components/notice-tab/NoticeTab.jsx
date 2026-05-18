@@ -140,4 +140,4 @@ function NoticeTab() {
   );
 }
 
-export default NoticeSection;
+export default NoticeTab;

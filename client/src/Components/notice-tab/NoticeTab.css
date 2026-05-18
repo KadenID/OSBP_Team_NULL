@@ -1,4 +1,4 @@
-/* 공지사항 전체 섹션 카드 (기존 레이아웃 유지) */
+/* 공지사항 전체 섹션 카드 */
 .notice-section {
   background: var(--bg-card);
   color: var(--text-main);
@@ -67,27 +67,46 @@
   margin-bottom: 20px;
 }
 
+/* 필터 버튼 */
 .filter-tag-btn {
   padding: 6px 12px;
-  border: 1px solid var(--button-card-border);
-  font-size: 12px;
-  font-weight: 600;
-  background-color: var(--btn-bg);
-  color: var(--btn-text);
+  border: 1px solid var(--border);
+  font-size: 14px;
+  background-color: var(--be-card);
+  color: var(--text-main);
   border-radius: 20px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.1s ease;
 }
 
 .filter-tag-btn:hover {
-  background-color: var(--btn-bg-hover);
+  background-color: var(--shadow-hover);
   transform: translateY(-1px);
 }
 
+/* 활성화 태그 */
 .filter-tag-btn.active {
-  background-color: var(--text-header);
-  color: var(--bg-card);
-  border-color: var(--text-header);
+  background-color: #1890ff;
+  color: white;
+  border-color: #1890ff;
+  font-weight: 500;
+}
+
+[data-theme='dark'] .filter-tag-btn {
+  background: #3b3b3b;
+  border-color: #525252;
+  color: #c7c7c7;
+}
+
+[data-theme='dark'] .filter-tag-btn:hover {
+  background-color: #4a4a4a;
+}
+
+[data-theme='dark'] .filter-tag-btn.active {
+  background-color: #1890ff;
+  color: white;
+  border-color: #1890ff;
+  font-weight: 500;
 }
 
 .notice-list {
@@ -99,10 +118,12 @@
   gap: 2px;
 }
 
+/* 공지 아이템 */
 .notice-item {
   border-bottom: 1px solid var(--button-card-border);
   padding: 12px 0;
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .notice-item:first-child {
@@ -155,4 +176,35 @@
   color: var(--text-main);
   opacity: 0.5;
   font-size: 0.9rem;
+}
+
+@media screen and (max-width: 1300px) {
+  .notice-section {
+    padding: 22px; 
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .notice-section {
+    padding: 20px;
+    border-radius: 16px; 
+  }
+
+  .notice-header {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+
+  /* 제목, 에모지, 버튼 크기 일괄 축소 */
+  .notice-title-group h2 { font-size: 1.15rem; }
+  .notice-emoji { font-size: 1.2rem; }
+  .notice-more-btn { padding: 4px 8px; font-size: 11px; }
+
+  /* 필터 버튼 영역 축소 */
+  .notice-filter-tags { gap: 6px; margin-bottom: 14px; }
+  .filter-tag-btn { padding: 5px 10px; font-size: 11px; }
+
+  /* 리스트 텍스트 크기 및 간격 일괄 조정 */
+  .notice-item { padding: 10px 0; }
+  .notice-course-tag, .notice-item-title { font-size: 0.85rem; }
 }
