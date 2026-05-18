@@ -33,3 +33,34 @@ const MOCK_NOTICES = [
 const useNoticeStore = create((set) => ({
   notices: MOCK_NOTICES,
 }));
+
+
+function NoticeTab() {
+
+  const { notices } = useNoticeStore(); // 스토어 데이터 구독
+  const [selectedCourse, setSelectedCourse] = useState('all'); // 선택 과목 ID 상태
+  const [selectedNotice, setSelectedNotice] = useState(null); // 상세보기 모달 상태 (객체 저장)
+
+
+  // 모달 오픈 시 백그라운드 스크롤 방지
+  useEffect(() => {
+    document.body.classList.toggle('modal-open', !!selectedNotice);
+    return () => document.body.classList.remove('modal-open');
+  }, [selectedNotice]);
+
+
+  // 과목 태그 목록 생성 (중복 제거)
+  const courses = useMemo(() => [
+    { id: 'all', name: '전체' },
+    ...Array.from(
+      new Map(notices.map(n => [n.course_id, n.course_name])).entries()
+    ).map(([id, name]) => ({ id, name }))
+  ], [notices]);
+
+
+  // 선택한 과목 필터링 리스트
+  const filtered = useMemo(() =>
+    selectedCourse === 'all'
+      ? notices
+      : notices.filter(n => n.course_id === selectedCourse),
+  [notices, selectedCourse]);
