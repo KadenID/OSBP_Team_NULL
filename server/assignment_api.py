@@ -6,6 +6,7 @@ import uvicorn
 
 from lms_login import login_to_lms
 from lms_crawler import crawl_all_assignments
+import auth
 import storage
 
 app = FastAPI(
@@ -70,8 +71,17 @@ def login(request: LoginRequest, response: Response):
         storage.save_user(request.student_id, request.password)
     except Exception as e:
         print(f"DB 저장 오류: {e}")
+
+    # 토큰 생성
+    user_data = {"sub": request.student_id}
+    access_token = auth.create_access_token(user_data)
+    refresh_token = auth.create_refresh_token(user_data)
     
-    return LoginResponse(success=True, message="로그인 성공")
+    return LoginResponse(
+        success=True,
+        message="로그인 성공",
+        access_token=access_token
+    )
 
 @app.get("/api/assignments", response_model=APIResponse)
 def get_lms_assignments():
