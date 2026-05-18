@@ -135,6 +135,19 @@ def refresh_token(response: Response, refresh_token: Optional[str] = Cookie(None
         storage.delete_refresh_token(student_id)
         raise HTTPException(status_code=401, detail="비정상적인 접근입니다. 다시 로그인해주세요.")
 
+    # 새로운 토큰 발급 (RTR)
+    user_data = {"sub": student_id}
+    new_access_token = auth.create_access_token(user_data)
+    new_refresh_token = auth.create_refresh_token(user_data)
+    
+    # DB 덮어쓰기 및 수명 연장 (슬라이딩 윈도우)
+    new_expires_at = datetime.now(timezone.utc) + timedelta(days=auth.REFRESH_TOKEN_EXPIRE_DAYS)
+    try:
+        storage.save_refresh_token(student_id, new_refresh_token, new_expires_at)
+    except Exception as e:
+        print(f"리프레시 토큰 갱신 중 DB 오류: {e}")
+        raise HTTPException(status_code=500, detail="인증 서버 오류")
+
 @app.get("/api/assignments", response_model=APIResponse)
 def get_lms_assignments():
     """
