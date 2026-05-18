@@ -1,0 +1,158 @@
+/* 공지사항 전체 섹션 카드 (기존 레이아웃 유지) */
+.notice-section {
+  background: var(--bg-card);
+  color: var(--text-main);
+  box-shadow: 0 6px 18px var(--shadow);
+  padding: 25px;
+  border-radius: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.notice-section:hover {
+  box-shadow: 0 10px 26px var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* 상단 헤더 영역 */
+.notice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--button-card-border);
+}
+
+.notice-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notice-title-group h2 {
+  color: var(--text-header);
+  font-weight: 700;
+  font-size: 1.35rem;
+  margin: 0;
+}
+
+.notice-emoji {
+  font-size: 1.4rem;
+}
+
+.notice-more-btn {
+  padding: 5px 10px;
+  border: 1px solid var(--button-card-border);
+  font-size: 12px;
+  font-weight: 600;
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.notice-more-btn:hover {
+  transform: translateY(-1px);
+  background-color: var(--btn-bg-hover);
+}
+
+/* 필터 태그 영역 */
+.notice-filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.filter-tag-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--button-card-border);
+  font-size: 12px;
+  font-weight: 600;
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-tag-btn:hover {
+  background-color: var(--btn-bg-hover);
+  transform: translateY(-1px);
+}
+
+.filter-tag-btn.active {
+  background-color: var(--text-header);
+  color: var(--bg-card);
+  border-color: var(--text-header);
+}
+
+.notice-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notice-item {
+  border-bottom: 1px solid var(--button-card-border);
+  padding: 12px 0;
+  cursor: pointer;
+}
+
+.notice-item:first-child {
+  padding-top: 4px;
+}
+
+.notice-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.notice-title-area {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.notice-course-tag {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-header); 
+  margin-right: 8px; 
+  flex-shrink: 0; 
+}
+
+.notice-item-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-main);
+  
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
+  flex: 1; 
+  min-width: 0;
+}
+
+.notice-item:hover .notice-item-title {
+  text-decoration: underline;
+}
+
+/* JSX 코드 내의 인라인 스타일 대체하는 빈 화면 전용 클래스 추가 */
+.notice-empty {
+  text-align: center;
+  padding: 20px 0;
+  color: var(--text-main);
+  opacity: 0.5;
+  font-size: 0.9rem;
+}
