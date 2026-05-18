@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware  # CORS 미들웨어 추가
 from pydantic import BaseModel
 from typing import List, Optional
+from datetime import datetime, timedelta, timezone
 import uvicorn
 
 from lms_login import login_to_lms
@@ -77,11 +78,21 @@ def login(request: LoginRequest, response: Response):
     access_token = auth.create_access_token(user_data)
     refresh_token = auth.create_refresh_token(user_data)
     
+    # 리프레시 토큰 DB 저장 (RTR 및 화이트리스트)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=auth.REFRESH_TOKEN_EXPIRE_DAYS)
+    try:
+        storage.save_refresh_token(request.student_id, refresh_token, expires_at)
+    except Exception as e:
+        print(f"리프레시 토큰 DB 저장 오류: {e}")
+        raise HTTPException(status_code=500, detail="인증 서버 오류")
+    
     return LoginResponse(
         success=True,
         message="로그인 성공",
         access_token=access_token
     )
+
+
 
 @app.get("/api/assignments", response_model=APIResponse)
 def get_lms_assignments():
