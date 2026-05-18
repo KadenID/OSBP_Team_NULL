@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware  # CORS 미들웨어 추가
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 import uvicorn
 
 from lms_login import login_to_lms
@@ -24,6 +24,15 @@ app.add_middleware(
 # ---------------------------------------------------------
 # Pydantic 모델: 프론트엔드 전달용 JSON 스키마 정의
 # ---------------------------------------------------------
+class LoginRequest(BaseModel):
+    student_id: str
+    password: str
+
+class LoginResponse(BaseModel):
+    success: bool
+    message: str
+    access_token: Optional[str] = None
+    
 class AssignmentItem(BaseModel):
     course_id: str
     course_name: str
