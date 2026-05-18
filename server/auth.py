@@ -58,3 +58,31 @@ def decode_token(token: str) -> Optional[Dict[str, Any]]:
     except Exception:
         # 기타 예외
         return None
+    
+def verify_token_type(payload: Dict[str, Any], expected_type: str) -> bool:
+    """
+    디코딩된 페이로드의 토큰 타입(access/refresh)이 일치하는지 확인
+    """
+    return payload.get("type") == expected_type
+
+if __name__ == "__main__":
+    # 간단한 테스트 로직
+    test_data = {"sub": "2025123456"}
+    
+    # 액세스 토큰 테스트
+    access_token = create_access_token(test_data)
+    print(f"Access Token: {access_token}")
+    
+    decoded_access = decode_token(access_token)
+    print(f"Decoded Access: {decoded_access}")
+    if decoded_access and verify_token_type(decoded_access, "access"):
+        print("Access Token Verification Success")
+        
+    # 리프레시 토큰 테스트
+    refresh_token = create_refresh_token(test_data)
+    print(f"Refresh Token: {refresh_token}")
+    
+    decoded_refresh = decode_token(refresh_token)
+    print(f"Decoded Refresh: {decoded_refresh}")
+    if decoded_refresh and verify_token_type(decoded_refresh, "refresh"):
+        print("Refresh Token Verification Success")
