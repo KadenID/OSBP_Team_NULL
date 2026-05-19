@@ -45,7 +45,7 @@ function MyPage() {
                 <div className="mypage-title-row">
                     <h1 className="mypage-title">마이페이지</h1>
                     
-                    <button type="button" className="main-button" onClick={() => navigate("/")}>
+                    <button type="button" className="main-button" onClick={() => navigate("/main")}>
                         <FiHome className="main-icon" />
                         메인
                     </button>
