@@ -23,8 +23,8 @@
   justify-content: center;
   padding: 32px 20px;
   box-sizing: border-box;
-  background: var(--login-bg);
   overflow: hidden;
+  background: var(--login-bg);
   font-family: "Noto Sans CJK KR", "Noto Sans KR", system-ui, sans-serif;
 }
 
@@ -59,4 +59,103 @@
   margin: 10px 0 0;
   color: var(--login-sub-text);
   font-size: 15px;
+}
+
+.login-form,
+.login-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-form {
+  gap: 16px;
+}
+
+.login-field {
+  gap: 8px;
+}
+
+.login-field label {
+  color: var(--login-label-text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.login-field input {
+  height: 48px;
+  border: 1px solid var(--login-input-border);
+  border-radius: 12px;
+  padding: 0 14px;
+  color: var(--login-text);
+  font-size: 15px;
+  background: var(--login-input-bg);
+  outline: none;
+}
+
+.login-field input:focus {
+  border-color: var(--login-primary);
+  box-shadow: 0 0 0 4px var(--login-focus-shadow);
+}
+
+.remember-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--login-muted-text);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.remember-row input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--login-primary);
+}
+
+.login-button {
+  width: 100%;
+  height: 52px;
+  margin-top: 6px;
+  border: none;
+  border-radius: 14px;
+  background: var(--login-primary);
+  color: var(--login-white);
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-button:not(:disabled):hover {
+  background: var(--login-primary-hover);
+  box-shadow: 0 10px 22px var(--login-button-shadow);
+  transform: translateY(-1px);
+}
+
+.login-button:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.login-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.login-error {
+  margin: -4px 0 0;
+  color: var(--login-error);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 28px 22px;
+    border-radius: 20px;
+  }
+
+  .login-title-area h1 {
+    font-size: 26px;
+  }
 }
