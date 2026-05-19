@@ -47,6 +47,14 @@ function LoginPage({ onLogin }) {
         }));
     };
 
+    const parseLoginResponse = async (response) => {
+        try {
+            return await response.json();
+        } catch {
+            return null;
+        }
+    };
+
     const handleLogin = async (e) => {
         e.preventDefault();
 
@@ -73,15 +81,15 @@ function LoginPage({ onLogin }) {
                     password,
                 }),
             });
-
-            const data = await response.json();
+                  
+            const data = await parseLoginResponse(response);
 
             if (!response.ok) {
-                setErrorMessage(data.detail || "로그인에 실패했습니다.");
+                setErrorMessage(data?.detail || "로그인에 실패했습니다.");
                 return;
             }
 
-            if (!data.access_token) {
+            if (!data?.access_token) {
                 setErrorMessage("Access Token을 받지 못했습니다.");
                 return;
             }
