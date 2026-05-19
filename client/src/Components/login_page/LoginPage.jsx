@@ -5,6 +5,8 @@ import "./LoginPage.css";
 const API_BASE_URL =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
+const REMEMBERED_STUDENT_ID_KEY = "rememberedStudentId";
+
 const loginFields = [
     {
         id: "student_id",
@@ -25,14 +27,14 @@ const loginFields = [
 function LoginPage({ onLogin }) {
     const navigate = useNavigate();
 
-    const rememberedStudentId = localStorage.getItem("rememberedStudentId") || "";
-
-    const [loginForm, setLoginForm] = useState({
-        student_id: rememberedStudentId,
+    const [loginForm, setLoginForm] = useState(() => ({
+        student_id: localStorage.getItem(REMEMBERED_STUDENT_ID_KEY) || "",
         password: "",
-    });
+    }));
 
-    const [rememberId, setRememberId] = useState(Boolean(rememberedStudentId));
+    const [rememberId, setRememberId] = useState(() =>
+        Boolean(localStorage.getItem(REMEMBERED_STUDENT_ID_KEY))
+    );
     const [errorMessage, setErrorMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
@@ -85,9 +87,9 @@ function LoginPage({ onLogin }) {
             }
 
             if (rememberId) {
-                localStorage.setItem("rememberedStudentId", student_id);
+                localStorage.setItem(REMEMBERED_STUDENT_ID_KEY, student_id);
             } else {
-                localStorage.removeItem("rememberedStudentId");
+                localStorage.removeItem(REMEMBERED_STUDENT_ID_KEY);
             }
 
             onLogin?.(data.access_token);
