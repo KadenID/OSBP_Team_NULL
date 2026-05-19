@@ -1,4 +1,5 @@
 .login-page {
+  /* 로그인 페이지 전용 색상 변수 */
   --login-bg: #f7f7fb;
   --login-card-bg: #ffffff;
   --login-primary: #2196f3;
@@ -28,6 +29,7 @@
   font-family: "Noto Sans CJK KR", "Noto Sans KR", system-ui, sans-serif;
 }
 
+/* 로그인 카드 영역 */
 .login-card {
   width: 100%;
   max-width: 460px;
@@ -61,6 +63,7 @@
   font-size: 15px;
 }
 
+/* 로그인 입력 폼 */
 .login-form,
 .login-field {
   display: flex;
@@ -112,6 +115,7 @@
   accent-color: var(--login-primary);
 }
 
+/* 로그인 버튼과 상태 표시 */
 .login-button {
   width: 100%;
   height: 52px;
@@ -149,6 +153,7 @@
   font-weight: 600;
 }
 
+/* 모바일 화면 대응 */
 @media (max-width: 480px) {
   .login-card {
     padding: 28px 22px;

@@ -7,6 +7,7 @@ const API_BASE_URL =
 
 const REMEMBERED_STUDENT_ID_KEY = "rememberedStudentId";
 
+// 로그인 폼에서 렌더링할 입력 필드 목록
 const loginFields = [
     {
         id: "student_id",
@@ -27,6 +28,7 @@ const loginFields = [
 function LoginPage({ onLogin }) {
     const navigate = useNavigate();
 
+    // 저장된 아이디가 있으면 로그인 폼 초기값으로 사용
     const [loginForm, setLoginForm] = useState(() => ({
         student_id: localStorage.getItem(REMEMBERED_STUDENT_ID_KEY) || "",
         password: "",
@@ -38,6 +40,7 @@ function LoginPage({ onLogin }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
+    // 입력값 변경 시 로그인 폼 상태를 갱신
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -51,6 +54,7 @@ function LoginPage({ onLogin }) {
         }
     };
 
+    // 로그인 실패 시 비밀번호 입력값만 초기화
     const clearPassword = () => {
         setLoginForm((prevForm) => ({
             ...prevForm,
@@ -58,6 +62,7 @@ function LoginPage({ onLogin }) {
         }));
     };
 
+    // 서버 응답이 JSON이 아닐 경우를 대비해 안전하게 파싱
     const parseLoginResponse = async (response) => {
         try {
             return await response.json();
@@ -66,6 +71,7 @@ function LoginPage({ onLogin }) {
         }
     };
 
+    // 백엔드 로그인 API 호출 후 성공 시 메인 페이지로 이동
     const handleLogin = async (e) => {
         e.preventDefault();
 
