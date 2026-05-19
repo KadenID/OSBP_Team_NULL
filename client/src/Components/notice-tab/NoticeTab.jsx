@@ -66,7 +66,7 @@ function NoticeTab() {
   [notices, selectedCourse]);
 
   return (
-    <div className="notice-section">
+    <div>
       <div className="notice-header">
         <div className="notice-title-group">
           <span className="notice-emoji">📖</span>

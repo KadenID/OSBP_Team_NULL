@@ -168,6 +168,7 @@
 
 .tag-container button:hover {
   background: #f0f0f0;
+  transform: translateY(-2px);
 }
 
 .tag-container button.on {
