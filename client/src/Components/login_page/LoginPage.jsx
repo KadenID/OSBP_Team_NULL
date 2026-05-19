@@ -25,11 +25,14 @@ const loginFields = [
 function LoginPage({ onLogin }) {
     const navigate = useNavigate();
 
+    const rememberedStudentId = localStorage.getItem("rememberedStudentId") || "";
+
     const [loginForm, setLoginForm] = useState({
-        student_id: "",
+        student_id: rememberedStudentId,
         password: "",
     });
 
+    const [rememberId, setRememberId] = useState(Boolean(rememberedStudentId));
     const [errorMessage, setErrorMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
@@ -81,6 +84,12 @@ function LoginPage({ onLogin }) {
                 return;
             }
 
+            if (rememberId) {
+                localStorage.setItem("rememberedStudentId", student_id);
+            } else {
+                localStorage.removeItem("rememberedStudentId");
+            }
+
             onLogin?.(data.access_token);
             navigate("/main");
         } catch (error) {
@@ -118,6 +127,15 @@ function LoginPage({ onLogin }) {
                             />
                         </div>
                     ))}
+
+                    <label className="remember-row">
+                        <input
+                            type="checkbox"
+                            checked={rememberId}
+                            onChange={(e) => setRememberId(e.target.checked)}
+                        />
+                        <span>아이디 기억하기</span>
+                    </label>
 
                     {errorMessage && <p className="login-error">{errorMessage}</p>}
 
