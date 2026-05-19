@@ -56,8 +56,7 @@ function AssignmentTab() {
     fetchAssignments();
   }, [fetchAssignments]);
 
-  // 과제 상세 설명 기능 (다른 브랜치를 통해 구현할 예정)
-
+  
   const [newSubject, setNewSubject] = useState("");
   const [newTask, setNewTask] = useState("");
   const [newDeadline, setNewDeadline] = useState("");

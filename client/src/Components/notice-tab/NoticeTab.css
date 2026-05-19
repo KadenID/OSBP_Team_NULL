@@ -1,0 +1,192 @@
+/* 상단 헤더 영역 */
+.notice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--button-card-border);
+}
+
+.notice-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notice-title-group h2 {
+  color: var(--text-header);
+  font-weight: 700;
+  font-size: 1.35rem;
+  margin: 0;
+}
+
+.notice-emoji {
+  font-size: 1.4rem;
+}
+
+.notice-more-btn {
+  padding: 6px 10px;
+  border: 1px solid #1890ff;
+  font-size: 12px;
+  font-weight: 500;
+  background-color: #1890ff;
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.notice-more-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* 필터 태그 영역 */
+.notice-filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+/* 필터 버튼 */
+.filter-tag-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  background-color: var(--be-card);
+  color: var(--text-main);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.filter-tag-btn:hover {
+  background-color: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+
+/* 활성화 태그 */
+.filter-tag-btn.active {
+  background-color: #1890ff;
+  color: white;
+  border-color: #1890ff;
+  font-weight: 500;
+}
+
+[data-theme='dark'] .filter-tag-btn {
+  background: #3b3b3b;
+  border-color: #525252;
+  color: #c7c7c7;
+}
+
+[data-theme='dark'] .filter-tag-btn:hover {
+  background-color: #4a4a4a;
+}
+
+[data-theme='dark'] .filter-tag-btn.active {
+  background-color: #1890ff;
+  color: white;
+  border-color: #1890ff;
+  font-weight: 500;
+}
+
+.notice-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* 공지 아이템 */
+.notice-item {
+  border-bottom: 1px solid var(--button-card-border);
+  padding: 12px 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.notice-item:first-child {
+  padding-top: 4px;
+}
+
+.notice-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.notice-title-area {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.notice-course-tag {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-header); 
+  margin-right: 8px; 
+  flex-shrink: 0; 
+}
+
+.notice-item-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-main);
+  
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
+  flex: 1; 
+  min-width: 0;
+}
+
+.notice-item:hover .notice-item-title {
+  text-decoration: underline;
+}
+
+/* JSX 코드 내의 인라인 스타일 대체하는 빈 화면 전용 클래스 추가 */
+.notice-empty {
+  text-align: center;
+  padding: 20px 0;
+  color: var(--text-main);
+  opacity: 0.5;
+  font-size: 0.9rem;
+}
+
+@media screen and (max-width: 1300px) {
+  .notice-section {
+    padding: 22px; 
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .notice-section {
+    padding: 20px;
+    border-radius: 16px; 
+  }
+
+  .notice-header {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+
+  /* 제목, 에모지, 버튼 크기 일괄 축소 */
+  .notice-title-group h2 { font-size: 1.15rem; }
+  .notice-emoji { font-size: 1.2rem; }
+  .notice-more-btn { padding: 4px 8px; font-size: 11px; }
+
+  /* 필터 버튼 영역 축소 */
+  .notice-filter-tags { gap: 6px; margin-bottom: 14px; }
+  .filter-tag-btn { padding: 5px 10px; font-size: 11px; }
+
+  /* 리스트 텍스트 크기 및 간격 일괄 조정 */
+  .notice-item { padding: 10px 0; }
+  .notice-course-tag, .notice-item-title { font-size: 0.85rem; }
+}

@@ -163,19 +163,19 @@
   border-radius: 15px;
   cursor: pointer;
   font-size: 0.85rem;
-  transition: all 0.2s ease;
-  color: #666;
+  transition: all 0.1s ease;
 }
 
 .tag-container button:hover {
   background: #f0f0f0;
+  transform: translateY(-2px);
 }
 
 .tag-container button.on {
   background-color: #1890ff;
   color: white;
   border-color: #1890ff;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* 상세 필터 태그 */
@@ -186,7 +186,7 @@
 }
 
 [data-theme='dark'] .tag-container button.on {
-  background-color: #188fffa9;
+  background-color: #1890ff;
   color: #fff;
 }
 

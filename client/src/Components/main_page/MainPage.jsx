@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './MainPage.css';
 import AssignmentTab from "../assignment-tab/AssignmentTab.jsx";
+import NoticeTab from "../notice-tab/NoticeTab.jsx";
 import { useNavigate } from "react-router-dom";
 import { FiHome } from "react-icons/fi";
 
@@ -60,7 +61,7 @@ function MainPage() {
 
           <div className="left-section">
             <div className="left"><AssignmentTab/></div>
-            <div className="left">알림탭</div>
+            <div className="left"><NoticeTab/></div>
           </div>
 
           <div className="right">Ai 기능</div>
