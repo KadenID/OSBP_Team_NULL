@@ -45,6 +45,10 @@ function LoginPage({ onLogin }) {
             ...prevForm,
             [name]: value,
         }));
+
+        if (errorMessage) {
+            setErrorMessage("");
+        }
     };
 
     const clearPassword = () => {
@@ -63,9 +67,9 @@ function LoginPage({ onLogin }) {
     };
 
     const handleLogin = async (e) => {
-        if (isLoading) return;
-
         e.preventDefault();
+
+        if (isLoading) return;
 
         const student_id = loginForm.student_id.trim();
         const password = loginForm.password.trim();
@@ -101,7 +105,7 @@ function LoginPage({ onLogin }) {
 
             if (!data?.access_token) {
                 clearPassword();
-                setErrorMessage("Access Token을 받지 못했습니다.");
+                setErrorMessage("로그인 응답을 확인할 수 없습니다. 다시 시도해주세요.");
                 return;
             }
 
