@@ -137,7 +137,7 @@ function LoginPage({ onLogin }) {
                 <div className="login-title-area">
                     <p className="login-label">충북대 LMS 학습 대시보드</p>
                     <h1>로그인</h1>
-                    <p>과제와 공지사항을 확인하려면 로그인해주세요.</p>
+                    <p>학습 대시보드를 이용하려면 로그인해주세요.</p>
                 </div>
 
                 <form className="login-form" onSubmit={handleLogin}>
