@@ -15,6 +15,7 @@ const loginFields = [
         label: "아이디",
         type: "text",
         placeholder: "아이디를 입력하세요",
+        autoComplete: "username",
     },
     {
         id: "password",
@@ -22,6 +23,7 @@ const loginFields = [
         label: "비밀번호",
         type: "password",
         placeholder: "비밀번호를 입력하세요",
+        autoComplete: "current-password",
     },
 ];
 
@@ -78,7 +80,7 @@ function LoginPage({ onLogin }) {
         if (isLoading) return;
 
         const student_id = loginForm.student_id.trim();
-        const password = loginForm.password.trim();
+        const password = loginForm.password;
 
         if (!student_id || !password) {
             setErrorMessage("아이디와 비밀번호를 입력해주세요.");
@@ -151,11 +153,8 @@ function LoginPage({ onLogin }) {
                                 placeholder={field.placeholder}
                                 value={loginForm[field.name]}
                                 onChange={handleChange}
-                                autoComplete={
-                                    field.name === "password"
-                                        ? "current-password"
-                                        : "username"
-                                }
+                                autoComplete={field.autoComplete}
+                                disabled={isLoading}
                             />
                         </div>
                     ))}
