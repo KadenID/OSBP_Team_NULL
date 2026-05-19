@@ -1,0 +1,28 @@
+.login-page {
+  --login-bg: #f7f7fb;
+  --login-card-bg: #ffffff;
+  --login-primary: #2196f3;
+  --login-primary-hover: #1687e0;
+  --login-text: #222222;
+  --login-sub-text: #6b7280;
+  --login-label-text: #333333;
+  --login-muted-text: #555555;
+  --login-input-bg: #fbfdff;
+  --login-input-border: #dce5ef;
+  --login-focus-shadow: rgba(33, 150, 243, 0.12);
+  --login-button-shadow: rgba(33, 150, 243, 0.25);
+  --login-card-shadow: rgba(20, 40, 70, 0.1);
+  --login-error: #e53935;
+  --login-white: #ffffff;
+
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  box-sizing: border-box;
+  background: var(--login-bg);
+  overflow: hidden;
+}
