@@ -47,6 +47,13 @@ function LoginPage({ onLogin }) {
         }));
     };
 
+    const clearPassword = () => {
+        setLoginForm((prevForm) => ({
+            ...prevForm,
+            password: "",
+        }));
+    };
+
     const parseLoginResponse = async (response) => {
         try {
             return await response.json();
@@ -56,6 +63,8 @@ function LoginPage({ onLogin }) {
     };
 
     const handleLogin = async (e) => {
+        if (isLoading) return;
+
         e.preventDefault();
 
         const student_id = loginForm.student_id.trim();
@@ -81,15 +90,17 @@ function LoginPage({ onLogin }) {
                     password,
                 }),
             });
-                  
+
             const data = await parseLoginResponse(response);
 
             if (!response.ok) {
+                clearPassword();
                 setErrorMessage(data?.detail || "로그인에 실패했습니다.");
                 return;
             }
 
             if (!data?.access_token) {
+                clearPassword();
                 setErrorMessage("Access Token을 받지 못했습니다.");
                 return;
             }
@@ -103,6 +114,7 @@ function LoginPage({ onLogin }) {
             onLogin?.(data.access_token);
             navigate("/main");
         } catch (error) {
+            clearPassword();
             setErrorMessage("서버에 연결할 수 없습니다.");
         } finally {
             setIsLoading(false);
