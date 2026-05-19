@@ -25,4 +25,38 @@
   box-sizing: border-box;
   background: var(--login-bg);
   overflow: hidden;
+  font-family: "Noto Sans CJK KR", "Noto Sans KR", system-ui, sans-serif;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 460px;
+  padding: 40px;
+  border-radius: 24px;
+  background: var(--login-card-bg);
+  box-shadow: 0 24px 60px var(--login-card-shadow);
+}
+
+.login-title-area {
+  margin-bottom: 28px;
+}
+
+.login-label {
+  margin: 0 0 10px;
+  color: var(--login-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.login-title-area h1 {
+  margin: 0;
+  color: var(--login-text);
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.login-title-area p:last-child {
+  margin: 10px 0 0;
+  color: var(--login-sub-text);
+  font-size: 15px;
 }
