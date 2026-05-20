@@ -28,15 +28,8 @@ const loginFields = [
     },
 ];
 
-function LoginPage({ onLogin, accessToken }) {
+function LoginPage({ onLogin }) {
     const navigate = useNavigate();
-
-    // 이미 로그인이 되어 있다면 메인으로 이동 (자동 로그인 처리)
-    useEffect(() => {
-        if (accessToken) {
-            navigate("/main");
-        }
-    }, [accessToken, navigate]);
 
     // 저장된 아이디가 있으면 로그인 폼 초기값으로 사용
     const [loginForm, setLoginForm] = useState(() => ({

@@ -5,7 +5,7 @@ import NoticeTab from "../notice-tab/NoticeTab.jsx";
 import { useNavigate } from "react-router-dom";
 import { FiHome } from "react-icons/fi";
 
-function MainPage({ accessToken }) {
+function MainPage({ accessToken, onLogout }) {
 
   const navigate = useNavigate();
 
