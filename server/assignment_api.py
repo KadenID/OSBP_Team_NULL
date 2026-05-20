@@ -29,7 +29,7 @@ app = FastAPI(
 # 프론트엔드 서버와 백엔드 서버의 도메인이 다를 경우 통신을 허용하기 위해 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],    # 실제 운영 환경에서는 허용할 도메인을 특정해야 함
+    allow_origins=["http://localhost:5173"],    # 실제 운영 환경에서는 허용할 도메인을 특정해야 함
     allow_credentials=True, # 쿠키(HttpOnly 등)를 주고받기 위해 필수
     allow_methods=["*"],    # 모든 HTTP 메서드(GET, POST 등) 허용
     allow_headers=["*"],    # 모든 헤더 허용

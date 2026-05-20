@@ -5,7 +5,7 @@ import NoticeTab from "../notice-tab/NoticeTab.jsx";
 import { useNavigate } from "react-router-dom";
 import { FiHome } from "react-icons/fi";
 
-function MainPage() {
+function MainPage({ accessToken }) {
 
   const navigate = useNavigate();
 
@@ -60,7 +60,7 @@ function MainPage() {
         <main className="dashboard">
 
           <div className="left-section">
-            <div className="left"><AssignmentTab/></div>
+            <div className="left"><AssignmentTab accessToken={accessToken}/></div>
             <div className="left"><NoticeTab/></div>
           </div>
 

@@ -38,7 +38,7 @@ const CountdownText = ({ deadlineDate }) => {
 };
 
 
-function AssignmentTab() {
+function AssignmentTab({ accessToken }) {
 
   // Zustand 스토어에서 상태와 함수 가져오기
   const { 
@@ -53,8 +53,8 @@ function AssignmentTab() {
 
   // 최초 렌더링 시 스토어의 API 호출 함수 실행 (store 내부에서 중복 호출 방지 처리)
   useEffect(() => {
-    fetchAssignments();
-  }, [fetchAssignments]);
+    fetchAssignments(accessToken);
+  }, [fetchAssignments, accessToken]);
 
   
   const [newSubject, setNewSubject] = useState("");
