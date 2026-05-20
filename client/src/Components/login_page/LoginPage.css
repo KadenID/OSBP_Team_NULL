@@ -1,0 +1,217 @@
+.login-page {
+  /* 로그인 페이지 전용 색상 변수 */
+  --login-bg: #f7f7fb;
+  --login-card-bg: #ffffff;
+  --login-primary: #2196f3;
+  --login-primary-hover: #1687e0;
+  --login-text: #222222;
+  --login-sub-text: #6b7280;
+  --login-label-text: #333333;
+  --login-muted-text: #555555;
+  --login-input-bg: #fbfdff;
+  --login-input-border: #dce5ef;
+  --login-placeholder: #8a94a6;
+  --login-focus-shadow: rgba(33, 150, 243, 0.12);
+  --login-button-shadow: rgba(33, 150, 243, 0.25);
+  --login-card-shadow: rgba(20, 40, 70, 0.1);
+  --login-error: #e53935;
+  --login-white: #ffffff;
+
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: var(--login-bg);
+  font-family: "Noto Sans CJK KR", "Noto Sans KR", system-ui, sans-serif;
+}
+
+/* 로그인 카드 영역 */
+.login-card {
+  width: min(100%, 430px);
+  padding: 38px 36px;
+  border-radius: 24px;
+  background: var(--login-card-bg);
+  box-shadow: 0 24px 60px var(--login-card-shadow);
+}
+
+.login-title-area {
+  margin-bottom: 28px;
+}
+
+.login-label {
+  margin: 0 0 10px;
+  color: var(--login-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.login-title-area h1 {
+  margin: 0;
+  color: var(--login-text);
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.login-title-area p:last-child {
+  margin: 10px 0 0;
+  color: var(--login-sub-text);
+  font-size: 15px;
+}
+
+/* 로그인 입력 폼 */
+.login-form,
+.login-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-form {
+  gap: 16px;
+}
+
+.login-field {
+  gap: 8px;
+}
+
+.login-field label {
+  color: var(--login-label-text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.login-field input {
+  height: 48px;
+  border: 1px solid var(--login-input-border);
+  border-radius: 12px;
+  padding: 0 14px;
+  color: var(--login-text);
+  font-size: 15px;
+  background: var(--login-input-bg);
+  outline: none;
+}
+
+.login-field input::placeholder {
+  color: var(--login-placeholder);
+}
+
+.login-field input:focus {
+  border-color: var(--login-primary);
+  box-shadow: 0 0 0 4px var(--login-focus-shadow);
+}
+
+.remember-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--login-muted-text);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.remember-row input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--login-primary);
+}
+
+/* 로그인 버튼과 상태 표시 */
+.login-button {
+  width: 100%;
+  height: 52px;
+  margin-top: 6px;
+  border: none;
+  border-radius: 14px;
+  background: var(--login-primary);
+  color: var(--login-white);
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-button:not(:disabled):hover {
+  background: var(--login-primary-hover);
+  box-shadow: 0 10px 22px var(--login-button-shadow);
+  transform: translateY(-1px);
+}
+
+.login-button:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.login-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.login-error {
+  margin: -4px 0 0;
+  color: var(--login-error);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 모바일 화면 대응 */
+@media (max-width: 480px) {
+  .login-page {
+    padding: 24px 18px;
+  }
+
+  .login-card {
+    width: min(100%, 340px);
+    padding: 30px 24px;
+    border-radius: 20px;
+  }
+
+  .login-title-area {
+    margin-bottom: 24px;
+  }
+
+  .login-label {
+    font-size: 13px;
+  }
+
+  .login-title-area h1 {
+    font-size: 28px;
+  }
+
+  .login-title-area p:last-child {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .login-field input {
+    height: 50px;
+  }
+
+  .login-button {
+    height: 52px;
+  }
+}
+
+/* 다크 모드 색상 변수 */
+@media (prefers-color-scheme: dark) {
+  .login-page {
+    --login-bg: #1e2430;
+    --login-card-bg: #2a3142;
+    --login-primary: #60a5fa;
+    --login-primary-hover: #3b82f6;
+    --login-text: #f3f4f6;
+    --login-sub-text: #c4c7cf;
+    --login-label-text: #f3f4f6;
+    --login-muted-text: #c2c8d1;
+    --login-input-bg: #242c3b;
+    --login-input-border: #465168;
+    --login-placeholder: #8f9bad;
+    --login-focus-shadow: rgba(96, 165, 250, 0.22);
+    --login-button-shadow: rgba(96, 165, 250, 0.25);
+    --login-card-shadow: rgba(0, 0, 0, 0.28);
+    --login-error: #ff7b7b;
+    --login-white: #ffffff;
+  }
+}
