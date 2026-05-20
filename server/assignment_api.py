@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Response, Cookie, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime, timedelta, timezone
 import uvicorn
@@ -34,8 +34,8 @@ app.add_middleware(
 )
 
 class LoginRequest(BaseModel):
-    student_id: str
-    password: str
+    student_id: str = Field(..., max_length=20)
+    password: str = Field(..., max_length=20)
 
 class LoginResponse(BaseModel):
     success: bool
@@ -80,11 +80,58 @@ def set_refresh_cookie(response: Response, refresh_token: str, request: Request)
         path="/"
     )
 
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Pydantic 검증 에러 발생 시 사용자 친화적인 메시지 반환
+    """
+    for error in exc.errors():
+        if error['type'] == 'value_error.any_str.max_length':
+            limit = error['ctx']['limit_value']
+            field = "아이디" if error['loc'][-1] == "student_id" else "비밀번호"
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": f"{field}는 최대 {limit}자까지 가능합니다."}
+            )
+    return JSONResponse(
+        status_code=422,
+        content={"success": False, "message": "입력 데이터 형식이 올바르지 않습니다."}
+    )
+
 @app.post("/auth/login", response_model=LoginResponse)
 def login(request_data: LoginRequest, response: Response, request: Request):
+    # IP 기반 시도 횟수 제한 체크
+    client_ip = request.headers.get("X-Forwarded-For")
+    if client_ip:
+        client_ip = client_ip.split(",")[0]
+    else:
+        client_ip = request.client.host
+
+    if not redis_cache.check_ip_rate_limit(client_ip):
+        raise HTTPException(
+            status_code=429,
+            detail="비정상적인 로그인 시도가 감지되었습니다. 잠시 후 다시 시도해주세요."
+        )
+
+    # 계정(학번) 기반 시도 횟수 제한 체크
+    if not redis_cache.check_login_rate_limit(request_data.student_id):
+        raise HTTPException(
+            status_code=429, 
+            detail="로그인 시도가 너무 많습니다. 10분 후에 다시 시도해주세요."
+        )
+
+    # LMS 로그인 시도
     session, message = login_to_lms(request_data.student_id, request_data.password)
+    
     if not session:
+        # 특정 에러 메시지(길이 제한 등)는 그대로 전달, 일반 로그인 실패는 기존 메시지 유지
         raise HTTPException(status_code=401, detail=message)
+    
+    # 로그인 성공 시 시도 횟수 초기화
+    redis_cache.reset_login_attempts(request_data.student_id)
     
     storage.save_user(request_data.student_id, request_data.password)
 

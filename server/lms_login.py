@@ -15,6 +15,9 @@ def login_to_lms(user_id=None, user_pw=None):
     
     if not user_id or not user_pw:
         return None, "ID 또는 PW가 제공되지 않았습니다."
+    
+    if len(user_id) > 20 or len(user_pw) > 20:
+        return None, "ID 또는 PW는 최대 20자까지 가능합니다."
     # 쿠키를 유지할 세션 생성
     session = requests.Session()
     
