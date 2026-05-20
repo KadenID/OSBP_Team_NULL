@@ -42,12 +42,14 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
     })
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-def decode_token(token: str) -> Optional[Dict[str, Any]]:
+def decode_token(token: str, verify_exp: bool = True) -> Optional[Dict[str, Any]]:
     """
     토큰의 서명을 검증하고 페이로드를 반환. 유효하지 않거나 만료된 경우 None 반환.
+    verify_exp가 False인 경우 만료된 토큰이어도 서명이 유효하면 페이로드를 반환.
     """
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        options = {"verify_exp": verify_exp}
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options=options)
         return payload
     except jwt.ExpiredSignatureError:
         # 토큰 만료

@@ -158,10 +158,10 @@ def refresh_token(response: Response, refresh_token_cookie: Optional[str] = Cook
     if not refresh_token_cookie:
         raise HTTPException(status_code=401, detail="리프레시 토큰이 없습니다.")
 
-    # 토큰 서명 및 만료 검증
-    payload = auth.decode_token(refresh_token_cookie)
+    # 토큰 서명 검증 (만료 여부는 나중에 체크하여 RTR 방어 로직이 작동하게 함)
+    payload = auth.decode_token(refresh_token_cookie, verify_exp=False)
     if not payload or not auth.verify_token_type(payload, "refresh"):
-        raise HTTPException(status_code=401, detail="유효하지 않거나 만료된 리프레시 토큰입니다.")
+        raise HTTPException(status_code=401, detail="유효하지 않은 리프레시 토큰입니다.")
     
     student_id = payload.get("sub")
     
@@ -172,6 +172,11 @@ def refresh_token(response: Response, refresh_token_cookie: Optional[str] = Cook
         if student_id:
             storage.delete_refresh_token(student_id)
         raise HTTPException(status_code=401, detail="비정상적인 접근입니다. 다시 로그인해주세요.")
+
+    # 최신 토큰임이 확인된 후, 실제 만료 여부 체크
+    exp = payload.get("exp")
+    if exp and datetime.now(timezone.utc).timestamp() > exp:
+        raise HTTPException(status_code=401, detail="만료된 리프레시 토큰입니다. 다시 로그인해주세요.")
 
     # 새로운 토큰 쌍 발급 (Refresh Token Rotation)
     user_data = {"sub": student_id}
