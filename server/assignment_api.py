@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Response, Cookie, Depends
+from fastapi import FastAPI, HTTPException, Response, Cookie, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
@@ -29,7 +29,10 @@ app = FastAPI(
 # 프론트엔드 서버와 백엔드 서버의 도메인이 다를 경우 통신을 허용하기 위해 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],    # 실제 운영 환경에서는 허용할 도메인을 특정해야 함
+    allow_origins=[
+        "http://localhost:5173",
+        "https://osbp-team-null.vercel.app"
+    ],    # 로컬 테스트 및 배포 환경 허용
     allow_credentials=True, # 쿠키(HttpOnly 등)를 주고받기 위해 필수
     allow_methods=["*"],    # 모든 HTTP 메서드(GET, POST 등) 허용
     allow_headers=["*"],    # 모든 헤더 허용
@@ -96,7 +99,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 # ---------------------------------------------------------
 
 @app.post("/auth/login", response_model=LoginResponse)
-def login(request: LoginRequest, response: Response):
+def login(request_data: LoginRequest, response: Response, request: Request):
     """
     사용자 로그인 및 토큰 발급 API
     1. LMS 로그인 테스트 수행
@@ -104,42 +107,45 @@ def login(request: LoginRequest, response: Response):
     3. 액세스 및 리프레시 토큰 발급
     """
     # LMS 로그인 테스트 (유효한 계정인지 확인)
-    session, message = login_to_lms(request.student_id, request.password)
+    session, message = login_to_lms(request_data.student_id, request_data.password)
     if not session:
         raise HTTPException(status_code=401, detail=message)
     
     # 계정 정보 DB 저장 (비밀번호는 내부에서 암호화 처리됨)
     try:
-        storage.save_user(request.student_id, request.password)
+        storage.save_user(request_data.student_id, request_data.password)
     except Exception as e:
         logger.error(f"DB 저장 오류: {e}")
         raise HTTPException(status_code=500, detail="사용자 정보 저장 중 서버 오류가 발생했습니다.")
 
     # JWT 토큰 생성
-    user_data = {"sub": request.student_id}
+    user_data = {"sub": request_data.student_id}
     access_token = auth.create_access_token(user_data)
     refresh_token = auth.create_refresh_token(user_data)
     
     # 리프레시 토큰 DB 저장 (RTR 전략: 기존 토큰 무효화 및 갱신)
     expires_at = datetime.now(timezone.utc) + timedelta(days=auth.REFRESH_TOKEN_EXPIRE_DAYS)
     try:
-        storage.save_refresh_token(request.student_id, refresh_token, expires_at)
+        storage.save_refresh_token(request_data.student_id, refresh_token, expires_at)
     except Exception as e:
         logger.error(f"리프레시 토큰 DB 저장 오류: {e}")
         raise HTTPException(status_code=500, detail="인증 데이터 저장 중 서버 오류가 발생했습니다.")
     
+    # 호스트 확인 (로컬 테스트 환경 대응)
+    is_local = request.url.hostname in ["localhost", "127.0.0.1"]
+
     # HttpOnly 쿠키에 리프레시 토큰 설정 (보안 강화)
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
-        httponly=True,   # JavaScript에서 접근 불가 (XSS 방지)
-        secure=True,     # HTTPS 환경에서만 전송
-        samesite="lax",  # CSRF 방어
+        httponly=True,
+        secure=not is_local,
+        samesite="lax",
         max_age=auth.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     )
     
     # 최적화: 로그인 성공 시점의 세션을 Redis에 즉시 캐싱
-    redis_cache.set_lms_session(request.student_id, session.cookies.get_dict())
+    redis_cache.set_lms_session(request_data.student_id, session.cookies.get_dict())
     
     return LoginResponse(
         success=True,
@@ -148,7 +154,7 @@ def login(request: LoginRequest, response: Response):
     )
 
 @app.post("/auth/refresh", response_model=LoginResponse)
-def refresh_token(response: Response, refresh_token_cookie: Optional[str] = Cookie(None, alias="refresh_token")):
+def refresh_token(request: Request, response: Response, refresh_token_cookie: Optional[str] = Cookie(None, alias="refresh_token")):
     """
     리프레시 토큰을 이용한 액세스 토큰 갱신 API (RTR 전략)
     1. 쿠키의 리프레시 토큰 검증
@@ -187,12 +193,15 @@ def refresh_token(response: Response, refresh_token_cookie: Optional[str] = Cook
     new_expires_at = datetime.now(timezone.utc) + timedelta(days=auth.REFRESH_TOKEN_EXPIRE_DAYS)
     storage.save_refresh_token(student_id, new_refresh_token, new_expires_at)
 
+    # 호스트 확인 (로컬 테스트 환경 대응)
+    is_local = request.url.hostname in ["localhost", "127.0.0.1"]
+
     # 새 리프레시 토큰 쿠키 재설정
     response.set_cookie(
         key="refresh_token",
         value=new_refresh_token,
         httponly=True,
-        secure=True,
+        secure=not is_local,
         samesite="lax",
         max_age=auth.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     )

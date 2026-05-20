@@ -1,9 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./LoginPage.css";
-
-const API_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+import { API_BASE_URL } from "../../apiConfig";
 
 const REMEMBERED_STUDENT_ID_KEY = "rememberedStudentId";
 const MAX_LOGIN_INPUT_LENGTH = 20;
@@ -30,8 +28,15 @@ const loginFields = [
     },
 ];
 
-function LoginPage({ onLogin }) {
+function LoginPage({ onLogin, accessToken }) {
     const navigate = useNavigate();
+
+    // 이미 로그인이 되어 있다면 메인으로 이동 (자동 로그인 처리)
+    useEffect(() => {
+        if (accessToken) {
+            navigate("/main");
+        }
+    }, [accessToken, navigate]);
 
     // 저장된 아이디가 있으면 로그인 폼 초기값으로 사용
     const [loginForm, setLoginForm] = useState(() => ({

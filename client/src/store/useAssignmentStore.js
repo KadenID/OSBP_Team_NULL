@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware'; // 생성과제 로컬스토리지를 위한 persist
+import { API_BASE_URL } from '../apiConfig';
 
 const useAssignmentStore = create(persist(
   (set, get) => ({
@@ -14,7 +15,7 @@ const useAssignmentStore = create(persist(
     
     set({ isLoading: true });
     try {
-      const response = await fetch('http://localhost:8000/api/assignments', {
+      const response = await fetch(`${API_BASE_URL}/api/assignments`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         },
