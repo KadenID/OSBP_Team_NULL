@@ -6,6 +6,7 @@ const API_BASE_URL =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 const REMEMBERED_STUDENT_ID_KEY = "rememberedStudentId";
+const MAX_LOGIN_INPUT_LENGTH = 20;
 
 // 로그인 폼에서 렌더링할 입력 필드 목록
 const loginFields = [
@@ -16,6 +17,7 @@ const loginFields = [
         type: "text",
         placeholder: "아이디를 입력하세요",
         autoComplete: "username",
+        maxLength: MAX_LOGIN_INPUT_LENGTH,
     },
     {
         id: "password",
@@ -24,6 +26,7 @@ const loginFields = [
         type: "password",
         placeholder: "비밀번호를 입력하세요",
         autoComplete: "current-password",
+        maxLength: MAX_LOGIN_INPUT_LENGTH,
     },
 ];
 
@@ -84,6 +87,15 @@ function LoginPage({ onLogin }) {
 
         if (!student_id || !password) {
             setErrorMessage("아이디와 비밀번호를 입력해주세요.");
+            return;
+        }
+
+        if (
+            student_id.length > MAX_LOGIN_INPUT_LENGTH ||
+            password.length > MAX_LOGIN_INPUT_LENGTH
+        ) {
+            setErrorMessage("아이디와 비밀번호는 20자 이하로 입력해주세요.");
+            clearPassword();
             return;
         }
 
@@ -154,6 +166,7 @@ function LoginPage({ onLogin }) {
                                 value={loginForm[field.name]}
                                 onChange={handleChange}
                                 autoComplete={field.autoComplete}
+                                maxLength={field.maxLength}
                                 disabled={isLoading}
                             />
                         </div>
