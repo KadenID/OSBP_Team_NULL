@@ -5,8 +5,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# LMS 로그인 주소
 LOGIN_URL = "https://lms.chungbuk.ac.kr/login/index.php"
 
+# 입력: user_id (학번), user_pw (비밀번호)
+# 기능: LMS 로그인 페이지에 접속하여 인증을 수행하고 세션을 획득
+# 반환: (requests.Session 객체, 메시지) 튜플
 def login_to_lms(user_id=None, user_pw=None):
     if not user_id:
         user_id = os.getenv("LMS_ID")
@@ -15,7 +19,11 @@ def login_to_lms(user_id=None, user_pw=None):
     
     if not user_id or not user_pw:
         return None, "ID 또는 PW가 제공되지 않았습니다."
-    # 쿠키를 유지할 세션 생성
+    
+    if len(user_id) > 20 or len(user_pw) > 20:
+        return None, "ID 또는 PW는 최대 20자까지 가능합니다."
+    
+    # 세션 생성
     session = requests.Session()
     
     try:
@@ -31,7 +39,7 @@ def login_to_lms(user_id=None, user_pw=None):
         
         logintoken = token_input.get('value')
             
-        # 데이터 전송 (로그인 시도)
+        # 로그인 요청 페이로드
         payload = {
             "username": user_id,
             "password": user_pw,
@@ -39,14 +47,12 @@ def login_to_lms(user_id=None, user_pw=None):
         }
         post_resp = session.post(LOGIN_URL, data=payload, timeout=10)
         
-        # URL에 'login'이 없으면 성공으로 간주
+        # 성공 판별
         if "login" not in post_resp.url:
             return session, "로그인 성공"
-        # 로그인 실패 시 None 반환
         else:
             return None, "로그인 실패: 아이디 또는 비밀번호를 확인하세요."
             
-    # 예외 처리
     except requests.exceptions.ConnectionError:
         return None, "네트워크 연결 오류가 발생했습니다."
     except requests.exceptions.Timeout:

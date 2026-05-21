@@ -3,10 +3,12 @@ import requests                 #서버 통신
 import re                       #과목명 정제
 from bs4 import BeautifulSoup   #html > python 객체로 변환하여 탐색
 
-class SessionExpiredError(Exception):
-    """LMS 세션이 만료되었을 때 발생하는 예외"""
+class SessionExpiredError(Exception): # 세션 만료 예외
     pass
 
+# 입력: session (로그인된 세션 객체)
+# 기능: 대시보드 페이지에서 수강 중인 과목 목록 및 ID 추출
+# 반환: {과목ID: 과목명} 딕셔너리
 def get_enrolled_courses(session):
     dashboard_url = "https://lms.chungbuk.ac.kr/"
     courses = {}
@@ -15,7 +17,7 @@ def get_enrolled_courses(session):
         # 대시보드 접근
         resp = session.get(dashboard_url, timeout=10, allow_redirects=False)
         
-        # 302 리다이렉트 발생 시 (로그인 페이지로 튕김) 세션 만료로 간주
+        # 302 리다이렉트 발생 시 세션 만료로 간주
         if resp.status_code == 302 or "login" in resp.headers.get("Location", ""):
             raise SessionExpiredError("LMS 세션이 만료되었습니다. (302 Redirect)")
             
@@ -26,11 +28,10 @@ def get_enrolled_courses(session):
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, 'html.parser')
 
-        # 페이지 내 모든 앵커에서 개별 과목 페이지 특유의 URL 구조 탐색
+        # 개별 과목 페이지 URL 구조 탐색
         for link in soup.find_all('a', href=True):
             href = link['href']
             if 'course/view.php?id=' in href:
-                # 주소 뒤의 쿼리 스트링에서 강의별 ID 추출하여 딕셔너리로 저장
                 parsed_url = urllib.parse.urlparse(href)
                 course_id = urllib.parse.parse_qs(parsed_url.query).get('id', [None])[0]
                 
@@ -44,7 +45,6 @@ def get_enrolled_courses(session):
                     if not course_name:
                         lines = [line.strip() for line in raw_text.split('\n') if line.strip()]
                         for line in lines:
-                            #(5110007-01) 형태의 과목코드 탐색
                             if re.search(r'\([0-9]+-[0-9]+\)', line):
                                 course_name = line
                                 break
@@ -65,15 +65,17 @@ def get_enrolled_courses(session):
         print(f"과목 목록 추출 중 오류 발생: {e}")
         return {}
 
+# 입력: session (세션 객체), course_id (과목 ID), course_name (과목명)
+# 기능: 특정 과목의 과제 목록 페이지를 크롤링하여 상세 정보 추출
+# 반환: 과제 정보 딕셔너리 리스트
 def get_assignments_for_course(session, course_id, course_name):
-    # 과제 목록 페이지 URL 생성
+    # 과제 목록 페이지 URL
     assign_index_url = f"https://lms.chungbuk.ac.kr/mod/assign/index.php?id={course_id}"
     assignments = []
 
     try:
         resp = session.get(assign_index_url, timeout=10, allow_redirects=False)
         
-        # 여기서도 세션 만료 체크
         if resp.status_code in [302, 401]:
              raise SessionExpiredError("LMS 세션이 만료되었습니다.")
              
@@ -122,12 +124,14 @@ def get_assignments_for_course(session, course_id, course_name):
     except SessionExpiredError:
         raise
     except Exception as e:
-        error_msg = f"과목 목록 추출 중 오류 발생: {str(e)}"
+        error_msg = f"과제 추출 중 오류 발생: {str(e)}"
         print(error_msg)
         raise Exception(error_msg)
 
+# 입력: session (세션 객체)
+# 기능: 모든 수강 과목의 과제를 통합하여 크롤링하고 마감일 순으로 정렬
+# 반환: 정렬된 과제 리스트
 def crawl_all_assignments(session):
-    # 모든 과제 데이터를 하나의 리스트로 통합
     all_assignments = []
 
     courses = get_enrolled_courses(session)
@@ -136,7 +140,7 @@ def crawl_all_assignments(session):
         assign_list = get_assignments_for_course(session, course_id, course_name)
         all_assignments.extend(assign_list)
     
-    # 마감일을 기준으로 오름차순 정렬
+    # 마감일 기준 오름차순 정렬
     all_assignments.sort(key=lambda x: x['due_date'])
 
     return all_assignments

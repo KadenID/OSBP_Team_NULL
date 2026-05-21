@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import AlarmSettings from "./AlarmSettings";
 import "./AlarmSettings.css";
 import "./MyPage.css";
@@ -29,12 +30,14 @@ function MyPageCard({ title = "", content = "" }) {
     );
 }
 
-function MyPage() {
+function MyPage({ accessToken, onLogout }) {
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        // TODO: 로그인 기능 구현 후 실제 로그아웃 로직 연결
-        navigate("/");
+    const handleLogout = async () => {
+        if (onLogout) {
+            await onLogout();
+            navigate("/");
+        }
     };
 
     return(

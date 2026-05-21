@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware'; // 생성과제 로컬스토리지를 위한 persist
+import { API_BASE_URL } from '../apiConfig';
 
 const useAssignmentStore = create(persist(
   (set, get) => ({
@@ -8,13 +9,16 @@ const useAssignmentStore = create(persist(
     isFetched: false, // 데이터를 이미 불러왔는지 확인하는 플래그
 
   // API 통신으로 과제 불러오기
-  fetchAssignments: async () => {
-    // 이미 데이터를 불러온 적이 있다면 추가 호출 방지
-    if (get().isFetched) return;
+  fetchAssignments: async (accessToken) => {
+    // 이미 데이터를 불러온 적이 있거나 토큰이 없으면 중단
+    if (get().isFetched || !accessToken) return;
     
     set({ isLoading: true });
     try {
-      const response = await fetch('http://localhost:8000/api/assignments', {
+      const response = await fetch(`${API_BASE_URL}/api/assignments`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        },
         credentials: 'include'
       });
       const result = await response.json();

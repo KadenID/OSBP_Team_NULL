@@ -1,9 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./LoginPage.css";
-
-const API_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+import { API_BASE_URL } from "../../apiConfig";
 
 const REMEMBERED_STUDENT_ID_KEY = "rememberedStudentId";
 const MAX_LOGIN_INPUT_LENGTH = 20;
