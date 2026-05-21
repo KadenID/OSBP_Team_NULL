@@ -41,43 +41,44 @@ function MyPage({ accessToken, onLogout }) {
     };
 
     return(
-        <div className="mypage-container">
+        <div className="mypage-page">
+            <div className="mypage-container">
 
-            {/* 마이페이지 상단 영역 */}
-            <header className="mypage-header">
-                <div className="mypage-title-row">
-                    <h1 className="mypage-title">마이페이지</h1>
+                {/* 마이페이지 상단 영역 */}
+                <header className="mypage-header">
+                    <div className="mypage-title-row">
+                        <h1 className="mypage-title">마이페이지</h1>
                     
-                    <button type="button" className="main-button" onClick={() => navigate("/main")}>
-                        <FiHome className="main-icon" />
-                        메인
+                        <button type="button" className="main-button" onClick={() => navigate("/main")}>
+                            <FiHome className="main-icon" />
+                            메인
+                        </button>
+                    </div>
+                
+                    <p className="mypage-subtitle">사용자 정보를 확인하세요</p>
+                    </header>
+
+                {/* 마이페이지 주요 카드 영역 */}
+                <div className="mypage-grid">
+                    <UserInfo />
+                
+                    {MY_PAGE_CARDS.map((card) => (
+                        <MyPageCard
+                            key={card.id}
+                            title={card.title}
+                            content={card.content}
+                        />
+                    ))}
+                </div>
+               
+                    {/* 로그아웃 버튼 영역 */}
+                <div className="mypage-footer">
+                    <button type="button" className="logout-button" onClick={handleLogout}>
+                        <FiLogOut className="logout-icon" />
+                        로그아웃
                     </button>
                 </div>
-                
-                <p className="mypage-subtitle">사용자 정보를 확인하세요</p>
-                </header>
-
-            {/* 마이페이지 주요 카드 영역 */}
-            <div className="mypage-grid">
-                <UserInfo />
-                
-                {MY_PAGE_CARDS.map((card) => (
-                    <MyPageCard
-                        key={card.id}
-                        title={card.title}
-                        content={card.content}
-                    />
-                ))}
             </div>
-               
-                {/* 로그아웃 버튼 영역 */}
-            <div className="mypage-footer">
-                <button type="button" className="logout-button" onClick={handleLogout}>
-                    <FiLogOut className="logout-icon" />
-                    로그아웃
-                </button>
-            </div>
-
         </div>
     );
 }
