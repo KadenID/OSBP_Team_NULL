@@ -75,17 +75,16 @@ def check_login_rate_limit(student_id: str, max_attempts: int = 5, window_second
     
     try:
         key = f"login_attempts:{student_id}"
-        attempts = redis_client.get(key)
+        # 원자적으로 1 증가시키고 새로운 값을 가져옴
+        current_attempts = redis_client.incr(key)
         
-        if attempts is None:
-            redis_client.set(key, 1, ex=window_seconds)
-            return True
+        # 첫 번째 시도일 경우 만료 시간 설정
+        if current_attempts == 1:
+            redis_client.expire(key, window_seconds)
         
-        attempts = int(attempts)
-        if attempts >= max_attempts:
+        if current_attempts > max_attempts:
             return False
             
-        redis_client.incr(key)
         return True
     except Exception as e:
         logger.error(f"Rate limit 체크 중 오류 발생: {e}")
@@ -113,17 +112,16 @@ def check_ip_rate_limit(ip_address: str, max_attempts: int = 10, window_seconds:
     
     try:
         key = f"ip_attempts:{ip_address}"
-        attempts = redis_client.get(key)
+        # 원자적으로 1 증가시키고 새로운 값을 가져옴
+        current_attempts = redis_client.incr(key)
         
-        if attempts is None:
-            redis_client.set(key, 1, ex=window_seconds)
-            return True
-        
-        attempts = int(attempts)
-        if attempts >= max_attempts:
+        # 첫 번째 시도일 경우 만료 시간 설정
+        if current_attempts == 1:
+            redis_client.expire(key, window_seconds)
+            
+        if current_attempts > max_attempts:
             return False
             
-        redis_client.incr(key)
         return True
     except Exception as e:
         logger.error(f"IP Rate limit 체크 중 오류 발생: {e}")
