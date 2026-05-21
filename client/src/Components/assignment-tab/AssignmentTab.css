@@ -141,10 +141,9 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 20px;
-  padding: 10px;
-  background-color: var(--bg-layout);
+  padding: 0;
+  background: transparent;
   color: var(--text-main);
-  border-radius: 8px;
 }
 
 .tag-container p {
@@ -155,11 +154,11 @@
 }
 
 .tag-container button {
+  height: 34px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   color: var(--text-main);
-
-  padding: 6px 14px;
+  padding: 0 14px;
   border-radius: 15px;
   cursor: pointer;
   font-size: 0.85rem;
@@ -223,13 +222,13 @@
 .add-form {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   gap: 12px;
-  background-color: var(--bg-card);
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
+  padding: 0;
   margin-bottom: 17px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .input-group {
@@ -237,14 +236,15 @@
   flex-wrap: wrap;
   flex: 1;
   gap: 10px;
+  align-items: center;
 }
 
 .input-field {
   display: flex;
-  flex-wrap: wrap;
   flex-direction: column;
   flex: 1;
   gap: 5px;
+  min-width: 140px;
 }
 
 .input-field label {
@@ -255,14 +255,17 @@
 }
 
 .input-field input {
-  padding: 8px 9px;
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
-  background: var(--bg-card); 
-  color: var(--text-main);       
+  background: var(--bg-card);
+  color: var(--text-main);
   outline: none;
   color-scheme: light;
+  box-sizing: border-box;
 }
 
 [data-theme='dark'] .input-field input {
@@ -283,7 +286,7 @@
 }
 
 .add-submit-btn {
-  height: 32px;
+  height: 36px;
   padding: 0 15px;
   background-color: #1890ff;
   color: white;

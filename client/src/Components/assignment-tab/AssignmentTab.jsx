@@ -172,7 +172,7 @@ function AssignmentTab({ accessToken }) {
 
 
   return (
-    <div className="assignment-wrapper">
+    <>
 
       <form className="add-form" onSubmit={handleAddAssignment}> {/* 과제 생성 영역 */}
         <div className="input-group">
@@ -192,7 +192,7 @@ function AssignmentTab({ accessToken }) {
           <button type="submit" className="add-submit-btn">새 과제 추가</button>
       </form>
 
-        <div className="tag-container"><p>상세 필터:</p> {/* 필터링 태그 */}
+        <div className="tag-container"><p>필터</p> {/* 필터링 태그 */}
           {[
             { id: STATUS.UNSUBMITTED, label: '미제출' },
             { id: STATUS.SUBMITTED,   label: '제출' },
@@ -279,7 +279,7 @@ function AssignmentTab({ accessToken }) {
           document.body
         )}
       </div>
-    </div>
+    </>
   );
 }
 export default AssignmentTab;
