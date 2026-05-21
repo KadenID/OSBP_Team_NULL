@@ -61,26 +61,32 @@ function App() {
     return refreshPromise.current;
   }, []);
 
-  // 초기화 및 자동 갱신 예약
+  // 초기화: 마운트 시점에 silent refresh 시도
+  useEffect(() => {
+    const initAuth = async () => {
+      await refresh();
+      setIsInitializing(false);
+    };
+    initAuth();
+  }, [refresh]);
+
+  // 자동 갱신 예약: accessToken 상태에 따라 타이머 관리
   useEffect(() => {
     let refreshTimer;
 
-    const initAuth = async () => {
-      const token = await refresh();
-      setIsInitializing(false);
-
-      if (token) {
-        // 25분마다 갱신 예약
-        refreshTimer = setInterval(refresh, 25 * 60 * 1000);
-      }
-    };
-
-    initAuth();
+    if (accessToken) {
+      // 25분마다 갱신 예약
+      refreshTimer = setInterval(() => {
+        refresh();
+      }, 25 * 60 * 1000);
+    }
 
     return () => {
-      if (refreshTimer) clearInterval(refreshTimer);
+      if (refreshTimer) {
+        clearInterval(refreshTimer);
+      }
     };
-  }, [refresh]);
+  }, [accessToken, refresh]);
 
   // 로그아웃 함수
   const handleLogout = useCallback(async () => {
