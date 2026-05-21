@@ -4,67 +4,63 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 
-# .env 파일 로드
+# .env 로드
 load_dotenv()
 
-# 환경 변수 설정
-SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-REFRESH_TOKEN_EXPIRE_DAYS = 30
+# 환경 변수
+SECRET_KEY = os.getenv("JWT_SECRET_KEY") # JWT 비밀키
+ALGORITHM = "HS256" # 암호화 알고리즘
+ACCESS_TOKEN_EXPIRE_MINUTES = 30 # 액세스 토큰 만료(분)
+REFRESH_TOKEN_EXPIRE_DAYS = 30 # 리프레시 토큰 만료(일)
 
 if not SECRET_KEY:
     raise ValueError("JWT_SECRET_KEY가 .env 파일에 설정되지 않았습니다.")
 
+# 입력: data (토큰에 담을 정보)
+# 기능: JWT 액세스 토큰 생성
+# 반환: 토큰 문자열
 def create_access_token(data: Dict[str, Any]) -> str:
-    """
-    액세스 토큰 생성
-    """
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({
-        "exp": expire,                      #토큰 만료 시간
-        "type": "access",                   #토큰 타입
-        "iat": datetime.now(timezone.utc)   #토큰 발급 시간
+        "exp": expire,                      # 만료 시간
+        "type": "access",                   # 토큰 타입
+        "iat": datetime.now(timezone.utc)   # 발급 시간
     })
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+# 입력: data (토큰에 담을 정보)
+# 기능: JWT 리프레시 토큰 생성
+# 반환: 토큰 문자열
 def create_refresh_token(data: Dict[str, Any]) -> str:
-    """
-    리프레시 토큰 생성
-    """
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode.update({
-        "exp": expire,                      #토큰 만료 시간
-        "type": "refresh",                  #토큰 타입
-        "iat": datetime.now(timezone.utc)   #토큰 발급 시간
+        "exp": expire,                      # 만료 시간
+        "type": "refresh",                  # 토큰 타입
+        "iat": datetime.now(timezone.utc)   # 발급 시간
     })
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+# 입력: token (JWT 토큰), verify_exp (만료 검증 여부)
+# 기능: 토큰 검증 및 페이로드 추출
+# 반환: 페이로드 딕셔너리 (실패 시 None)
 def decode_token(token: str, verify_exp: bool = True) -> Optional[Dict[str, Any]]:
-    """
-    토큰의 서명을 검증하고 페이로드를 반환. 유효하지 않거나 만료된 경우 None 반환.
-    verify_exp가 False인 경우 만료된 토큰이어도 서명이 유효하면 페이로드를 반환.
-    """
     try:
         options = {"verify_exp": verify_exp}
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options=options)
         return payload
     except jwt.ExpiredSignatureError:
-        # 토큰 만료
-        return None
+        return None # 토큰 만료
     except jwt.InvalidTokenError:
-        # 유효하지 않은 토큰
-        return None
+        return None # 유효하지 않은 토큰
     except Exception:
-        # 기타 예외
-        return None
+        return None # 기타 예외
     
+# 입력: payload (디코딩된 데이터), expected_type (기대하는 토큰 타입)
+# 기능: 토큰 타입 유효성 확인
+# 반환: 일치 여부 (bool)
 def verify_token_type(payload: Dict[str, Any], expected_type: str) -> bool:
-    """
-    디코딩된 페이로드의 토큰 타입(access/refresh)이 일치하는지 확인
-    """
     return payload.get("type") == expected_type
 
 if __name__ == "__main__":

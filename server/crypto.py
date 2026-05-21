@@ -6,25 +6,25 @@ from dotenv import load_dotenv
 # .env 파일 로드
 load_dotenv()
 
-# 환경 변수에서 암호화 키 로드
-SECRET_KEY_RAW = os.getenv("AES_SECRET_KEY")
+# 환경 변수 로드
+SECRET_KEY_RAW = os.getenv("AES_SECRET_KEY") # 암호화 키
 
 if SECRET_KEY_RAW is None:
     raise EnvironmentError("AES_SECRET_KEY 환경 변수가 설정되지 않았습니다. .env 파일을 확인하세요.")
 
-SECRET_KEY = SECRET_KEY_RAW.encode("utf-8")
+SECRET_KEY = SECRET_KEY_RAW.encode("utf-8") # 암호화 키(Byte)
 
 # AES-256을 위해 정확히 32바이트인지 확인
 if len(SECRET_KEY) != 32:
     raise ValueError(f"AES_SECRET_KEY는 정확히 32바이트여야 합니다. 현재 길이: {len(SECRET_KEY)}바이트. "
                      "설정을 확인해주세요.")
 
-aesgcm = AESGCM(SECRET_KEY)
+aesgcm = AESGCM(SECRET_KEY) # AESGCM 객체
 
+# 입력: plain_text (암호화할 평문)
+# 기능: AES-256-GCM 암호화 및 base64 인코딩
+# 반환: base64 암호문
 def encrypt(plain_text: str) -> str:
-    """
-    평문을 받아 AES-256-GCM으로 암호화하고 base64 문자열로 반환
-    """
     if not plain_text:
         return ""
     
@@ -38,10 +38,10 @@ def encrypt(plain_text: str) -> str:
     # IV와 암호화된 데이터를 합쳐서 base64로 인코딩
     return base64.b64encode(iv + encrypted_data).decode("utf-8")
 
+# 입력: encrypted_base64 (base64 암호문)
+# 기능: base64 디코딩 및 AES-256-GCM 복호화
+# 반환: 복호화된 평문
 def decrypt(encrypted_base64: str) -> str:
-    """
-    base64로 인코딩된 암호문을 받아 복호화하여 평문을 반환합니다.
-    """
     if not encrypted_base64:
         return ""
     

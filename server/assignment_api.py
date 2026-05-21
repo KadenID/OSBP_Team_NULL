@@ -19,9 +19,9 @@ import redis_cache
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="LMS Assignment API")
+app = FastAPI(title="LMS Assignment API") # FastAPI 객체
 
-# CORS 설정: 구체적인 Origin 명시 필수
+# CORS 설정
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -33,16 +33,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class LoginRequest(BaseModel):
+class LoginRequest(BaseModel): # 로그인 요청 스키마
     student_id: str = Field(..., max_length=20)
     password: str = Field(..., max_length=20)
 
-class LoginResponse(BaseModel):
+class LoginResponse(BaseModel): # 로그인 응답 스키마
     success: bool
     message: str
     access_token: Optional[str] = None
 
-class AssignmentItem(BaseModel):
+class AssignmentItem(BaseModel): # 과제 항목 스키마
     course_id: str
     course_name: str
     assignment_id: str
@@ -51,14 +51,17 @@ class AssignmentItem(BaseModel):
     status: str
     url: str
 
-class APIResponse(BaseModel):
+class APIResponse(BaseModel): # 공통 API 응답 스키마
     success: bool
     message: str
     total_count: int
     data: List[AssignmentItem] = []
 
-security = HTTPBearer()
+security = HTTPBearer() # 인증 객체
 
+# 입력: credentials (HTTP 헤더 인증 정보)
+# 기능: 현재 액세스 토큰 사용자 학번 추출
+# 반환: 학번(str)
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
     payload = auth.decode_token(token)
@@ -66,16 +69,17 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")
     return payload.get("sub")
 
+# 입력: response (응답 객체), refresh_token (리프레시 토큰), request (요청 객체)
+# 기능: 리프레시 토큰을 HTTP-only 쿠키에 설정
+# 반환: 없음
 def set_refresh_cookie(response: Response, refresh_token: str, request: Request):
     is_local = request.url.hostname in ["localhost", "127.0.0.1"]
-    # 크로스 도메인(Vercel -> Render) 대응을 위해 SameSite=None, Secure=True 설정
-    # 로컬 환경에서는 SameSite=Lax, Secure=False(또는 브라우저 허용치) 적용
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True, # HTTPS 환경 필수
-        samesite="none", # 크로스 사이트 요청 허용
+        secure=True, 
+        samesite="none", 
         max_age=auth.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         path="/"
     )
@@ -83,11 +87,11 @@ def set_refresh_cookie(response: Response, refresh_token: str, request: Request)
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+# 입력: request (요청 객체), exc (검증 예외 객체)
+# 기능: Pydantic 검증 에러 발생 시 커스텀 응답 반환
+# 반환: JSONResponse 객체
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """
-    Pydantic 검증 에러 발생 시 사용자 친화적인 메시지 반환
-    """
     for error in exc.errors():
         if error['type'] == 'value_error.any_str.max_length':
             limit = error['ctx']['limit_value']
@@ -101,6 +105,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"success": False, "message": "입력 데이터 형식이 올바르지 않습니다."}
     )
 
+# 입력: request_data (로그인 정보), response (응답 객체), request (요청 객체)
+# 기능: LMS 로그인 인증 및 JWT 발급
+# 반환: LoginResponse 객체
 @app.post("/auth/login", response_model=LoginResponse)
 def login(request_data: LoginRequest, response: Response, request: Request):
     # IP 기반 시도 횟수 제한 체크
@@ -127,7 +134,6 @@ def login(request_data: LoginRequest, response: Response, request: Request):
     session, message = login_to_lms(request_data.student_id, request_data.password)
     
     if not session:
-        # 특정 에러 메시지(길이 제한 등)는 그대로 전달, 일반 로그인 실패는 기존 메시지 유지
         raise HTTPException(status_code=401, detail=message)
     
     # 로그인 성공 시 시도 횟수 초기화
@@ -147,6 +153,9 @@ def login(request_data: LoginRequest, response: Response, request: Request):
     
     return LoginResponse(success=True, message="로그인 성공", access_token=access_token)
 
+# 입력: request (요청 객체), response (응답 객체), refresh_token_cookie (쿠키 토큰)
+# 기능: 리프레시 토큰 유효성 검증 및 신규 토큰 발급
+# 반환: LoginResponse 객체
 @app.post("/auth/refresh", response_model=LoginResponse)
 def refresh_token(request: Request, response: Response, refresh_token_cookie: Optional[str] = Cookie(None, alias="refresh_token")):
     if not refresh_token_cookie:
@@ -159,16 +168,10 @@ def refresh_token(request: Request, response: Response, refresh_token_cookie: Op
     student_id = payload.get("sub")
     stored_token_data = storage.get_refresh_token(student_id)
     
-    # stored_token_data[0]은 토큰값, [1]은 만료시간, [2]는 (만약 존재한다면) 최근 갱신 시간입니다.
-    # 여기서는 단순화를 위해 토큰이 일치하지 않을 때 즉시 삭제하는 로직을 일시적 오류 가능성을 염두에 두고 수정합니다.
-    
     if not stored_token_data:
         raise HTTPException(status_code=401, detail="인증 세션이 존재하지 않습니다.")
 
     if refresh_token_cookie != stored_token_data[0]:
-        # 보안을 위해 토큰 불일치 시 에러를 내되, 클라이언트에서 동시에 여러 번 부르는 경우를 대비해 
-        # 로그를 남기고 한 번 더 기회를 주거나, 클라이언트에서 중복 호출을 막는 것이 최선입니다.
-        # 일단은 보안을 유지하되 클라이언트 로직을 먼저 강화하겠습니다.
         logger.warning(f"Refresh token mismatch for user {student_id}. Possible concurrent request.")
         raise HTTPException(status_code=401, detail="세션 갱신 중 충돌이 발생했습니다. 다시 로그인해주세요.")
 
@@ -185,6 +188,9 @@ def refresh_token(request: Request, response: Response, refresh_token_cookie: Op
     
     return LoginResponse(success=True, message="갱신 성공", access_token=new_access_token)
 
+# 입력: response (응답 객체), student_id (학번)
+# 기능: 로그아웃 처리 및 저장된 세션 삭제
+# 반환: 성공 메시지 딕셔너리
 @app.post("/auth/logout")
 def logout(response: Response, student_id: str = Depends(get_current_user)):
     storage.delete_refresh_token(student_id)
@@ -192,9 +198,13 @@ def logout(response: Response, student_id: str = Depends(get_current_user)):
     response.delete_cookie(key="refresh_token", httponly=True, secure=True, samesite="none", path="/")
     return {"success": True, "message": "로그아웃 성공"}
 
+# 입력: student_id (학번)
+# 기능: LMS 과제 목록 크롤링 및 결과 반환
+# 반환: APIResponse 객체
 @app.get("/api/assignments", response_model=APIResponse)
 def get_lms_assignments(student_id: str = Depends(get_current_user)):
     cached_cookies = redis_cache.get_lms_session(student_id)
+
     session = requests.Session()
     if cached_cookies:
         session.cookies.update(cached_cookies)

@@ -13,36 +13,36 @@ logger = logging.getLogger(__name__)
 # .env 파일 로드
 load_dotenv()
 
-# 환경 변수에서 DB 연결 정보 로드
-DATABASE_URL = os.getenv("DATABASE_URL")
+# 환경 변수 로드
+DATABASE_URL = os.getenv("DATABASE_URL") # DB 연결 URL
 
 if not DATABASE_URL:
     logger.error("DATABASE_URL이 설정되지 않았습니다.")
     raise ValueError("DATABASE_URL이 설정되지 않았습니다.")
 
-# 전역 커넥션 풀 초기화 (최소 1개, 최대 10개 커넥션 유지)
+# 전역 커넥션 풀
 try:
-    connection_pool = pool.ThreadedConnectionPool(1, 10, DATABASE_URL)
+    connection_pool = pool.ThreadedConnectionPool(1, 10, DATABASE_URL) # DB 커넥션 풀
     logger.info("데이터베이스 커넥션 풀이 생성되었습니다.")
 except Exception as e:
     logger.error(f"커넥션 풀 생성 실패: {e}")
     raise
 
+# 입력: 없음
+# 기능: 커넥션 풀에서 DB 연결 객체를 획득하여 제공
+# 반환: DB 커넥션 객체 (ContextManager)
 @contextmanager
 def get_db_connection():
-    """
-    풀에서 커넥션을 하나 가져오고 사용 후 반납하는 컨텍스트 매니저입니다.
-    """
     conn = connection_pool.getconn()
     try:
         yield conn
     finally:
         connection_pool.putconn(conn)
 
+# 입력: student_id (학번), password (비밀번호)
+# 기능: 사용자 학번과 암호화된 비밀번호를 데이터베이스에 저장
+# 반환: 없음
 def save_user(student_id, password):
-    """
-    사용자 정보를 DB에 저장합니다. 학번은 평문으로, 비밀번호는 AES-256으로 암호화하여 저장합니다.
-    """
     encrypted_pw = encrypt(password)
     
     with get_db_connection() as conn:
@@ -59,12 +59,12 @@ def save_user(student_id, password):
         except Exception as e:
             conn.rollback()
             logger.error(f"사용자 정보 저장 중 오류 발생 (student_id: {student_id}): {e}")
-            raise  # 예외를 상위로 전달
+            raise
 
+# 입력: student_id (학번)
+# 기능: 데이터베이스에서 학번으로 사용자 정보를 조회하고 비밀번호를 복호화하여 반환
+# 반환: (학번, 복호화된 비밀번호) 튜플
 def load_user(student_id):
-    """
-    저장된 사용자 정보를 DB에서 불러옵니다. 비밀번호는 복호화하여 반환합니다.
-    """
     with get_db_connection() as conn:
         try:
             with conn.cursor() as cur:
@@ -82,10 +82,10 @@ def load_user(student_id):
             logger.error(f"사용자 정보 로드 중 오류 발생 (student_id: {student_id}): {e}")
             raise
 
+# 입력: student_id (학번), token_value (토큰), expires_at (만료 시간)
+# 기능: 리프레시 토큰 정보를 데이터베이스에 저장하거나 업데이트
+# 반환: 없음
 def save_refresh_token(student_id, token_value, expires_at):
-    """
-    리프레시 토큰을 DB에 저장하거나 업데이트합니다.
-    """
     with get_db_connection() as conn:
         try:
             with conn.cursor() as cur:
@@ -102,10 +102,10 @@ def save_refresh_token(student_id, token_value, expires_at):
             logger.error(f"리프레시 토큰 저장 중 오류 발생 (student_id: {student_id}): {e}")
             raise
 
+# 입력: student_id (학번)
+# 기능: 데이터베이스에서 학번으로 저장된 리프레시 토큰 정보를 조회
+# 반환: (토큰, 만료시간) 튜플
 def get_refresh_token(student_id):
-    """
-    DB에서 해당 사용자의 리프레시 토큰 정보를 가져옵니다.
-    """
     with get_db_connection() as conn:
         try:
             with conn.cursor() as cur:
@@ -116,10 +116,10 @@ def get_refresh_token(student_id):
             logger.error(f"리프레시 토큰 조회 중 오류 발생 (student_id: {student_id}): {e}")
             raise
 
+# 입력: student_id (학번)
+# 기능: 데이터베이스에서 해당 학번의 리프레시 토큰 정보를 영구 삭제
+# 반환: 없음
 def delete_refresh_token(student_id):
-    """
-    로그아웃 시 DB에서 리프레시 토큰을 삭제합니다.
-    """
     with get_db_connection() as conn:
         try:
             with conn.cursor() as cur:
