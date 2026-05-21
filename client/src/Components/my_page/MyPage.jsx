@@ -32,6 +32,38 @@ function MyPageCard({ title = "", content = "" }) {
 
 function MyPage({ accessToken, onLogout }) {
     const navigate = useNavigate();
+    // 저장된 테마가 없으면 시스템 테마를 기준으로 마이페이지 테마 설정
+    useEffect(() => {
+        const getSystemTheme = () => {
+            const systemDark =
+                window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+            
+                return systemDark ? "dark" : "light";
+        };
+
+        const savedTheme = localStorage.getItem("theme");
+        document.documentElement.setAttribute(
+            "data-theme",
+            savedTheme || getSystemTheme()
+        );
+
+        const mediaQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
+        if (!mediaQuery) return;
+        
+        // 시스템 테마가 변경되면 저장된 테마를 초기화하고 시스템 테마를 따름
+        const handleSystemThemeChange = (event) => {
+            const systemTheme = event.matches ? "dark" : "light";
+
+            localStorage.removeItem("theme");
+            document.documentElement.setAttribute("data-theme", systemTheme);
+        };
+
+        mediaQuery.addEventListener("change", handleSystemThemeChange);
+
+        return () => {
+            mediaQuery.removeEventListener("change", handleSystemThemeChange);
+        };
+    }, []);
 
     const handleLogout = async () => {
         if (onLogout) {

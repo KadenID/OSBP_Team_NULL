@@ -28,6 +28,21 @@
   --button-card-border: #2c323c;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #1e2430;
+    --bg-layout: rgba(30, 30, 40, 0.8);
+    --bg-card: #2c2c2e;
+    --text-main: #f0f0f0;
+    --text-header: #ffffff;
+    --btn-bg: #374155;
+    --btn-bg-hover: #4b556a;
+    --btn-text: #f3f4f6;
+    --shadow: rgba(0, 0, 0, 0.3);
+    --shadow-hover: rgba(0, 0, 0, 0.5);
+    --button-card-border: #2c323c;
+  }
+}
 
 .layout {
   background: var(--bg-layout);
