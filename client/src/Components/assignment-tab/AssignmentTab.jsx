@@ -140,10 +140,9 @@ function AssignmentTab({ accessToken }) {
   };
 
   // 선택된 과제 데이터를 최신으로 참조
-  const selectedAssignment = useMemo(() => 
-    assignment.find(item => item.id === selectedId) ?? null,
+  const selectedAssignment = useMemo(() =>
+    assignment.find(item => String(item.id) === String(selectedId)) ?? null,
   [assignment, selectedId]);
-
   // 상태 변경
   const toggleTag = (tag) => {
     setActiveTags((prev) => {
