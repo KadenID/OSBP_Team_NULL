@@ -248,6 +248,8 @@ def get_my_profile(student_id: str = Depends(get_current_user)):
     else:
         loaded_id, password = storage.load_user(student_id)
         session, _ = login_to_lms(loaded_id, password)
+        if not session:
+            raise HTTPException(status_code=401, detail="LMS 세션을 생성할 수 없습니다.")
         redis_cache.set_lms_session(student_id, session.cookies.get_dict())
 
     try:

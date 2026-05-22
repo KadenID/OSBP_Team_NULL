@@ -123,7 +123,7 @@ def get_user_profile(session, student_id):
 
         if not profile_resp.text.strip():
             raise Exception("프로필 API 응답이 비어 있습니다.")
-            
+        
         profile_data = profile_resp.json()
         profile_html = profile_data.get("html", "")
 
@@ -149,8 +149,9 @@ def get_user_profile(session, student_id):
     except SessionExpiredError:
         raise
     except Exception as e:
-        print(f"사용자 프로필 추출 중 오류 발생: {e}")
-        return profile_info
+        error_msg = f"사용자 프로필 추출 중 오류 발생: {str(e)}"
+        print(error_msg)
+        raise Exception(error_msg)
 
 # 입력: session (세션 객체), course_id (과목 ID), course_name (과목명)
 # 기능: 특정 과목의 과제 목록 페이지를 크롤링하여 상세 정보 추출
