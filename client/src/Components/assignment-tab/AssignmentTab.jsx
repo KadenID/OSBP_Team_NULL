@@ -13,8 +13,19 @@ const getTodayDateString = () => {
   return `${year}-${month}-${date}`;
 };
 
+const getMaxDeadlineDateString = () => {
+  const maxDate = new Date();
+  maxDate.setFullYear(maxDate.getFullYear() + 5);
+
+  const year = maxDate.getFullYear();
+  const month = String(maxDate.getMonth() + 1).padStart(2, "0");
+  const date = String(maxDate.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${date}`;
+};
+
 const MIN_DEADLINE_DATE = getTodayDateString();
-const MAX_DEADLINE_DATE = "2099-12-31";
+const MAX_DEADLINE_DATE = getMaxDeadlineDateString();
 
 const STATUS = {
   UNSUBMITTED: 'UNSUBMITTED',
@@ -150,7 +161,7 @@ function AssignmentTab({ accessToken }) {
     }
 
     if (deadlineDate < minDate || deadlineDate > maxDate) {
-      alert("마감 날짜는 오늘부터 2099년 12월 31일까지만 입력할 수 있습니다.");
+      alert("마감 날짜는 오늘부터 5년 이내로 입력할 수 있습니다.");
       return;
     }
 
