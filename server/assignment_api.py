@@ -105,6 +105,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"success": False, "message": "입력 데이터 형식이 올바르지 않습니다."}
     )
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "message": "Server is running"}
+
 # 입력: request_data (로그인 정보), response (응답 객체), request (요청 객체)
 # 기능: LMS 로그인 인증 및 JWT 발급
 # 반환: LoginResponse 객체
