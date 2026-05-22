@@ -236,6 +236,28 @@ def logout(response: Response, student_id: str = Depends(get_current_user)):
     return {"success": True, "message": "로그아웃 성공"}
 
 # 입력: student_id (학번)
+# 기능: 로그인한 사용자의 이름, 학번, 학과 정보 조회
+# 반환: UserProfileResponse 객체
+@app.get("/api/me", response_model=UserProfileResponse)
+def get_my_profile(student_id: str = Depends(get_current_user)):
+    cached_cookies = redis_cache.get_lms_session(student_id)
+
+    session = requests.Session()
+    if cached_cookies:
+        session.cookies.update(cached_cookies)
+    else:
+        loaded_id, password = storage.load_user(student_id)
+        session, _ = login_to_lms(loaded_id, password)
+        redis_cache.set_lms_session(student_id, session.cookies.get_dict())
+
+    try:
+        profile = get_user_profile(session, student_id)
+        return UserProfileResponse(success=True, message="성공", data=profile)
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="사용자 정보 로딩 실패")
+
+# 입력: student_id (학번)
 # 기능: LMS 과제 목록 크롤링 및 결과 반환
 # 반환: LMSAPIResponse 객체
 @app.get("/api/assignments", response_model=LMSAPIResponse)
