@@ -34,8 +34,8 @@ app.add_middleware(
 )
 
 class LoginRequest(BaseModel): # 로그인 요청 스키마
-    student_id: str = Field(..., max_length=20)
-    password: str = Field(..., max_length=20)
+    student_id: str = Field(..., min_length=1, max_length=20)
+    password: str = Field(..., min_length=1, max_length=20)
 
 class LoginResponse(BaseModel): # 로그인 응답 스키마
     success: bool
