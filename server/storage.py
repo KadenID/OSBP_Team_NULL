@@ -201,7 +201,7 @@ def save_custom_assignment(student_id, assignment_data):
                         assignment_data['deadline'],
                         assignment_data.get('isSubmitted', False),
                         assignment_data.get('description', ''),
-                        assignment_data['id'],
+                        int(assignment_data['id']),
                         student_id
                     ))
                 else:
@@ -263,7 +263,7 @@ def delete_custom_assignment(student_id, assignment_id):
         try:
             with conn.cursor() as cur:
                 sql = "DELETE FROM custom_assignments WHERE id = %s AND student_id = %s;"
-                cur.execute(sql, (assignment_id, student_id))
+                cur.execute(sql, (int(assignment_id), student_id))
             conn.commit()
             return True
         except Exception as e:

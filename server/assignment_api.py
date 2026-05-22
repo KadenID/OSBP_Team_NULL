@@ -259,7 +259,7 @@ def get_custom_assignments(student_id: str = Depends(get_current_user)):
 @app.post("/api/custom-assignments")
 def create_or_update_custom_assignment(request_data: CustomAssignmentRequest, student_id: str = Depends(get_current_user)):
     try:
-        assignment_id = storage.save_custom_assignment(student_id, request_data.dict())
+        assignment_id = storage.save_custom_assignment(student_id, request_data.model_dump())
         return {"success": True, "message": "저장 성공", "id": str(assignment_id)}
     except Exception as e:
         logger.error(f"Error: {e}")

@@ -80,7 +80,7 @@ const useAssignmentStore = create((set, get) => ({
 
   // 과제 삭제
   deleteAssignment: async (targetId, accessToken) => {
-    const itemToDelete = get().assignment.find(item => item.id === targetId);
+    const itemToDelete = get().assignment.find(item => String(item.id) === String(targetId));
     if (!itemToDelete) return;
 
     if (itemToDelete.source === 'user') {
@@ -99,17 +99,17 @@ const useAssignmentStore = create((set, get) => ({
     }
 
     set((state) => ({
-      assignment: state.assignment.filter(item => item.id !== targetId)
+      assignment: state.assignment.filter(item => String(item.id) !== String(targetId))
     }));
   },
 
   // 제출 상태 토글 및 설명 업데이트 (커스텀 과제 전용)
   updateCustomAssignment: async (id, updates, accessToken) => {
-    const item = get().assignment.find(a => a.id === id);
+    const item = get().assignment.find(a => String(a.id) === String(id));
     if (!item || item.source !== 'user') {
       // LMS 과제는 메모리 상에서만 토글 (서버 저장 불가)
       set((state) => ({
-        assignment: state.assignment.map(a => a.id === id ? { ...a, ...updates } : a)
+        assignment: state.assignment.map(a => String(a.id) === String(id) ? { ...a, ...updates } : a)
       }));
       return;
     }
@@ -127,7 +127,7 @@ const useAssignmentStore = create((set, get) => ({
       });
       if (response.ok) {
         set((state) => ({
-          assignment: state.assignment.map(a => a.id === id ? updatedItem : a)
+          assignment: state.assignment.map(a => String(a.id) === String(id) ? updatedItem : a)
         }));
       }
     } catch (error) {
@@ -137,7 +137,7 @@ const useAssignmentStore = create((set, get) => ({
 
   // 기존 액션들을 updateCustomAssignment로 통합하여 사용 가능
   toggleSubmit: (id, accessToken) => {
-    const item = get().assignment.find(a => a.id === id);
+    const item = get().assignment.find(a => String(a.id) === String(id));
     if (item) {
       get().updateCustomAssignment(id, { isSubmitted: !item.isSubmitted }, accessToken);
     }
