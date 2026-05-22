@@ -4,6 +4,15 @@ import './AssignmentTab.css';
 import useAssignmentStore from '../../store/useAssignmentStore';
 import AssignmentDetail from './AssignmentDetail';
 
+const getTodayDateString = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const date = String(today.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${date}`;
+};
+
 const STATUS = {
   UNSUBMITTED: 'UNSUBMITTED',
   SUBMITTED: 'SUBMITTED',
@@ -59,7 +68,7 @@ function AssignmentTab({ accessToken }) {
   
   const [newSubject, setNewSubject] = useState("");
   const [newTask, setNewTask] = useState("");
-  const [newDeadlineDate, setNewDeadlineDate] = useState("");
+  const [newDeadlineDate, setNewDeadlineDate] = useState(getTodayDateString());
   const [newDeadlineTime, setNewDeadlineTime] = useState("23:59");
   const [showTimePicker, setShowTimePicker] = useState(false);
 
@@ -135,7 +144,7 @@ function AssignmentTab({ accessToken }) {
   addAssignment(newItem);
   setNewSubject("");
   setNewTask("");
-  setNewDeadlineDate("");
+  setNewDeadlineDate(getTodayDateString());
   setNewDeadlineTime("23:59");
   setShowTimePicker(false);
   };
