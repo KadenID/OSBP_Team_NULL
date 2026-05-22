@@ -10,7 +10,7 @@ import requests
 
 # 내부 모듈 임포트
 from lms_login import login_to_lms
-from lms_crawler import crawl_all_assignments, SessionExpiredError
+from lms_crawler import crawl_all_assignments, SessionExpiredError, get_user_profile
 import auth
 import storage
 import redis_cache
@@ -41,6 +41,16 @@ class LoginResponse(BaseModel): # 로그인 응답 스키마
     success: bool
     message: str
     access_token: Optional[str] = None
+
+class UserProfileItem(BaseModel): # 사용자 정보 항목 스키마
+    name: str
+    student_id: str
+    department: str
+
+class UserProfileResponse(BaseModel): # 사용자 정보 API 응답 스키마
+    success: bool
+    message: str
+    data: UserProfileItem
 
 class LMSAssignmentItem(BaseModel): # LMS 과제 항목 스키마
     course_id: str
