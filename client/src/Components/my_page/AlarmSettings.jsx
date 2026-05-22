@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "../../apiConfig";
 
 /* 과목 목록 */
 const courses = [
@@ -22,10 +23,11 @@ const createReminderId = () => {
     return `${Date.now()}-${Math.random()}`;
 };
 
-function AlarmSettings() {
+function AlarmSettings({ accessToken }) {
     /* 전체 알림 상태 */
     const [isAlarmEnabled, setIsAlarmEnabled] = useState(true);
     const [saveMessage, setSaveMessage] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
     
     /* 과목별 알림 추가 상태 */
     const [selectedCourseId, setSelectedCourseId] = useState("all");
@@ -39,6 +41,74 @@ function AlarmSettings() {
 
     const isAddButtonDisabled =
     !isAlarmEnabled || !selectedCourseId || isReminderValueInvalid;
+
+    /* 초기 설정 불러오기 */
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            if (!accessToken) {
+                // 부모 컴포넌트(App -> MyPage)에서 토큰이 아직 안 왔을 수 있음
+                return;
+            }
+            try {
+                console.log("알림 설정 불러오는 중...");
+                const response = await fetch(`${API_BASE_URL}/api/user-settings`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const result = await response.json();
+                if (result.success && result.data) {
+                    console.log("불러온 설정:", result.data);
+                    setIsAlarmEnabled(result.data.isAlarmEnabled ?? true);
+                    setCourseReminders(result.data.courseReminders ?? []);
+                }
+            } catch (error) {
+                console.error("설정 로드 중 오류 발생:", error);
+            } finally {
+                setTimeout(() => setIsInitialLoad(false), 100);
+            }
+        };
+        fetchSettings();
+    }, [accessToken]);
+
+    /* 자동 저장 로직 (디바운싱) */
+    useEffect(() => {
+        if (isInitialLoad || !accessToken) return;
+
+        console.log("변경 감지, 자동 저장 예약...");
+        setIsSaving(true);
+        setSaveMessage("변경사항 저장 중...");
+        
+        const saveTimer = setTimeout(async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/user-settings`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        isAlarmEnabled,
+                        courseReminders,
+                    }),
+                });
+                const result = await response.json();
+                if (result.success) {
+                    console.log("자동 저장 완료");
+                    setSaveMessage("모든 변경사항이 저장되었습니다.");
+                } else {
+                    setSaveMessage("저장에 실패했습니다.");
+                }
+            } catch (error) {
+                console.error("자동 저장 중 오류 발생:", error);
+                setSaveMessage("저장 중 서버 오류 발생");
+            } finally {
+                setIsSaving(false);
+            }
+        }, 500);
+
+        return () => clearTimeout(saveTimer);
+    }, [isAlarmEnabled, courseReminders, accessToken, isInitialLoad]);
 
 
     /* 과목별 알림 추가 */
@@ -90,25 +160,17 @@ function AlarmSettings() {
         }
     };
 
-    /* 알림 설정 저장 */
+    /* 알림 설정 저장 메시지 타이머 */
     useEffect(() => {
-        if (!saveMessage) return;
+        // "저장 중..."일 때는 메시지를 지우지 않음
+        if (!saveMessage || isSaving) return;
 
         const timerId = setTimeout(() => {
             setSaveMessage("");
         }, 3000);
 
         return () => clearTimeout(timerId);
-    }, [saveMessage]);
-
-    const handleSaveAlarmSettings = () => {
-        console.log({
-            isAlarmEnabled,
-            courseReminders,
-        });
-
-        setSaveMessage("알림 설정이 저장되었습니다.");
-    };
+    }, [saveMessage, isSaving]);
 
     return (
         <div className="alarm-settings">
@@ -254,26 +316,18 @@ function AlarmSettings() {
                     </div>
                 </div>
 
-                {/* 알림 설정 저장 */}
-                <div className="save-alarm-wrapper">
+                {/* 자동 저장 메시지 표시 */}
+                <div className="save-alarm-wrapper" style={{ minHeight: '24px' }}>
                     {saveMessage && isAlarmEnabled && (
                         <p
                             className="alarm-save-message"
                             role="status"
                             aria-live="polite"
+                            style={{ textAlign: 'center', color: '#4caf50', fontWeight: 'bold' }}
                         >
                             {saveMessage}
                         </p>
                     )}
-
-                    <button
-                        type="button"
-                        className="save-alarm-button"
-                        onClick={handleSaveAlarmSettings}
-                        disabled={!isAlarmEnabled}
-                    >
-                        알림 설정 저장
-                    </button>
                 </div>
             </div>
         </div>

@@ -76,11 +76,53 @@ def init_db():
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """)
+                # 사용자 설정(알림 등) 테이블 추가
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS user_settings (
+                        student_id VARCHAR(20) PRIMARY KEY REFERENCES users(student_id) ON DELETE CASCADE,
+                        settings JSONB DEFAULT '{}'::jsonb,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """)
             conn.commit()
             logger.info("데이터베이스 테이블 초기화 완료")
         except Exception as e:
             conn.rollback()
             logger.error(f"데이터베이스 초기화 중 오류 발생: {e}")
+            raise
+
+# ... (기존 코드 유지) ...
+
+# --- 사용자 설정 CRUD ---
+
+def save_user_settings(student_id, settings):
+    import json
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                sql = """
+                INSERT INTO user_settings (student_id, settings, updated_at)
+                VALUES (%s, %s, CURRENT_TIMESTAMP)
+                ON CONFLICT (student_id)
+                DO UPDATE SET settings = EXCLUDED.settings, updated_at = CURRENT_TIMESTAMP;
+                """
+                cur.execute(sql, (student_id, json.dumps(settings)))
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"사용자 설정 저장 중 오류 발생 (student_id: {student_id}): {e}")
+            raise
+
+def get_user_settings(student_id):
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                sql = "SELECT settings FROM user_settings WHERE student_id = %s;"
+                cur.execute(sql, (student_id,))
+                result = cur.fetchone()
+                return result[0] if result else {}
+        except Exception as e:
+            logger.error(f"사용자 설정 조회 중 오류 발생 (student_id: {student_id}): {e}")
             raise
 
 # 모듈 로드 시 DB 초기화 실행

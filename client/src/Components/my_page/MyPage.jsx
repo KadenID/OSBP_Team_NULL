@@ -7,20 +7,6 @@ import "./User-Info.css";
 import { FiLogOut, FiHome } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
-const MY_PAGE_CARDS = [
-    {
-        id: "alarm",
-        title: "알림 설정",
-        content: <AlarmSettings />,
-    },
-    {
-        id: "timetable",
-        title: "시간표 입력",
-        content: "사용자 시간표 입력 및 관리 영역",
-    },
-];
-
-
 function MyPageCard({ title = "", content = "" }) {
     return (
         <section className="mypage-card">
@@ -39,6 +25,20 @@ function MyPage({ accessToken, onLogout }) {
             navigate("/");
         }
     };
+
+    // MY_PAGE_CARDS를 컴포넌트 내부로 이동시켜 accessToken을 주입할 수 있도록 함
+    const myPageCards = [
+        {
+            id: "alarm",
+            title: "알림 설정",
+            content: <AlarmSettings accessToken={accessToken} />,
+        },
+        {
+            id: "timetable",
+            title: "시간표 입력",
+            content: "사용자 시간표 입력 및 관리 영역",
+        },
+    ];
 
     return(
         <div className="mypage-container">
@@ -61,7 +61,7 @@ function MyPage({ accessToken, onLogout }) {
             <div className="mypage-grid">
                 <UserInfo />
                 
-                {MY_PAGE_CARDS.map((card) => (
+                {myPageCards.map((card) => (
                     <MyPageCard
                         key={card.id}
                         title={card.title}

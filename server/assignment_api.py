@@ -274,5 +274,25 @@ def delete_custom_assignment(assignment_id: str, student_id: str = Depends(get_c
         logger.error(f"Error: {e}")
         raise HTTPException(status_code=500, detail="삭제 실패")
 
+# --- 사용자 설정(알림 등) API ---
+
+@app.get("/api/user-settings")
+def get_user_settings(student_id: str = Depends(get_current_user)):
+    try:
+        settings = storage.get_user_settings(student_id)
+        return {"success": True, "data": settings}
+    except Exception as e:
+        logger.error(f"설정 로드 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail="설정 로드 실패")
+
+@app.post("/api/user-settings")
+def save_user_settings(request_data: dict, student_id: str = Depends(get_current_user)):
+    try:
+        storage.save_user_settings(student_id, request_data)
+        return {"success": True, "message": "설정 저장 완료"}
+    except Exception as e:
+        logger.error(f"설정 저장 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail="설정 저장 실패")
+
 if __name__ == "__main__":
     uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)
