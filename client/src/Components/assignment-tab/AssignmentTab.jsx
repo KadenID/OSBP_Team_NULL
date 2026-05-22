@@ -17,6 +17,7 @@ const getTodayDateString = () => {
 // 커스텀 과제 마감일 입력 범위 제한
 const MIN_DEADLINE_DATE = "2000-01-01";
 const MAX_DEADLINE_DATE = "2099-12-31";
+const TIME_ERROR_MESSAGE = "마감 시간은 00:00부터 23:59까지 입력할 수 있습니다.";
 
 // 과목 및 과제 입력 범위 제한
 const SUBJECT_MAX_LENGTH = 30;
@@ -123,28 +124,51 @@ function AssignmentTab({ accessToken }) {
   };
 
   const normalizeTimeInput = (value) => {
-    const [hour = "", minute = ""] = value.split(":");
+    const onlyNumbers = value.replace(/\D/g, "").slice(0, 4);
+
+    let hour = "";
+    let minute = "";
+
+    if (onlyNumbers.length === 0) {
+      return { value: "23:59", isValid: false };
+    }
+
+    if (onlyNumbers.length <= 2) {
+      hour = onlyNumbers.padStart(2, "0");
+      minute = "00";
+    } else if (onlyNumbers.length === 3) {
+      hour = onlyNumbers.slice(0, 2);
+      minute = `${onlyNumbers.slice(2)}0`;
+    } else {
+      hour = onlyNumbers.slice(0, 2);
+      minute = onlyNumbers.slice(2, 4);
+    }
+
     const hourNumber = Number(hour);
     const minuteNumber = Number(minute);
 
     if (
-      hour.length !== 2 ||
-      minute.length !== 2 ||
       Number.isNaN(hourNumber) ||
       Number.isNaN(minuteNumber) ||
-      hourNumber < 0 ||
-      minuteNumber < 0 ||
       hourNumber > 23 ||
       minuteNumber > 59
     ) {
-      return "23:59";
+      return { value: "23:59", isValid: false };
     }
 
-    return `${String(hourNumber).padStart(2, "0")}:${String(minuteNumber).padStart(2, "0")}`;
+    return { value: `${hour}:${minute}`, isValid: true };
   };
 
   const handleTimeBlur = () => {
-    setNewDeadlineTime((prev) => normalizeTimeInput(prev));
+    setNewDeadlineTime((prev) => {
+      const result = normalizeTimeInput(prev);
+
+      if (!result.isValid) {
+        setFormError(TIME_ERROR_MESSAGE);
+      }
+
+      return result.value;
+    });
   };
 
   const handleAddAssignment = (e) => {
@@ -174,7 +198,14 @@ function AssignmentTab({ accessToken }) {
     }
 
     const normalizedDeadlineTime = normalizeTimeInput(newDeadlineTime);
-    const deadlineValue = `${newDeadlineDate}T${normalizedDeadlineTime}:59`;
+
+    if (!normalizedDeadlineTime.isValid) {
+      setFormError(TIME_ERROR_MESSAGE);
+      setNewDeadlineTime(normalizedDeadlineTime.value);
+      return;
+    }
+
+    const deadlineValue = `${newDeadlineDate}T${normalizedDeadlineTime.value}:59`;
     const deadlineDate = new Date(deadlineValue);
     const minDate = new Date(`${MIN_DEADLINE_DATE}T00:00:00`);
     const maxDate = new Date(`${MAX_DEADLINE_DATE}T23:59:59`);
@@ -374,7 +405,8 @@ function AssignmentTab({ accessToken }) {
                             key={value}
                             className={isSelected ? "selected" : ""}
                             onClick={() => {
-                              const minute = newDeadlineTime.slice(3, 5) || "00";
+                              const normalizedTime = normalizeTimeInput(newDeadlineTime);
+                              const minute = normalizedTime.value.slice(3, 5);
                               setNewDeadlineTime(`${value}:${minute}`);
                             }}
                           >
@@ -395,7 +427,8 @@ function AssignmentTab({ accessToken }) {
                             key={value}
                             className={isSelected ? "selected" : ""}
                             onClick={() => {
-                              const hour = newDeadlineTime.slice(0, 2) || "23";
+                              const normalizedTime = normalizeTimeInput(newDeadlineTime);
+                              const hour = normalizedTime.value.slice(0, 2);
                               setNewDeadlineTime(`${hour}:${value}`);
                               setShowTimePicker(false);
                             }}
