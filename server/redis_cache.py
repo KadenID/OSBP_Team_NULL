@@ -4,7 +4,10 @@ import logging
 from upstash_redis import Redis
 from dotenv import load_dotenv
 
-load_dotenv()
+if os.path.exists("/etc/secrets/.env"):
+    load_dotenv("/etc/secrets/.env")
+else:
+    load_dotenv()
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)

@@ -5,7 +5,10 @@ from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 
 # .env 로드
-load_dotenv()
+if os.path.exists("/etc/secrets/.env"):
+    load_dotenv("/etc/secrets/.env")
+else:
+    load_dotenv()
 
 # 환경 변수
 SECRET_KEY = os.getenv("JWT_SECRET_KEY") # JWT 비밀키
