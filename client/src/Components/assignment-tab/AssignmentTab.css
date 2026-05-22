@@ -26,7 +26,6 @@
   flex-wrap: wrap;
   align-items: center;
   padding: 11px;
-  height: 110px;
   min-width: 0;
   min-height: 150px;
   background-color: var(--bg-card); 
@@ -80,9 +79,16 @@
 }
 
 /* 과목 */
+.info {
+  min-width: 0;
+  flex: 1;
+}
+
 .subject {
   font-size: 0.8rem;
   color: var(--text-main);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* 과제명 */
@@ -90,6 +96,8 @@
   font-weight: 600;
   margin: 5px 0 0 0;
   color: var(--text-main);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .status-box {
@@ -98,7 +106,8 @@
   align-items: flex-end; 
   gap: 5px; 
   text-align: right;
-  flex-shrink: 0;  
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 /* 제출 상태 라벨 */
@@ -444,6 +453,14 @@
   white-space: nowrap;
 }
 
+.add-form-error {
+  width: 100%;
+  margin: -4px 0 0;
+  color: #ff4d4f;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 /* 생성 과제 삭제창 */
 .modal-overlay {
   position: fixed;
@@ -523,7 +540,6 @@ body.modal-open .left:hover {
 
 @media screen and (max-width: 1300px) {
   .assignment-item {
-    height: auto;        /* 고정 높이 해제 */
     min-height: 110px;
   }
 }

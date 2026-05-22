@@ -74,11 +74,11 @@ class CustomAPIResponse(BaseModel): # 커스텀 API 응답 스키마
 
 class CustomAssignmentRequest(BaseModel):
     id: Optional[str] = None
-    subject: str = Field(..., max_length=100)
-    task: str = Field(..., max_length=200)
+    subject: str = Field(..., min_length=1, max_length=30)
+    task: str = Field(..., min_length=1, max_length=50)
     deadline: str = Field(..., max_length=50)
     isSubmitted: bool = False
-    description: Optional[str] = Field(None, max_length=2000)
+    description: Optional[str] = Field(None, max_length=1000)
 
 security = HTTPBearer() # 인증 객체
 
