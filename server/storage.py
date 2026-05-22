@@ -11,7 +11,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # .env 파일 로드
-load_dotenv()
+if os.path.exists("/etc/secrets/.env"):
+    load_dotenv("/etc/secrets/.env")
+else:
+    load_dotenv()
 
 # 환경 변수 로드
 DATABASE_URL = os.getenv("DATABASE_URL") # DB 연결 URL

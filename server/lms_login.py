@@ -4,7 +4,10 @@ import sys
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
-load_dotenv()
+if os.path.exists("/etc/secrets/.env"):
+    load_dotenv("/etc/secrets/.env")
+else:
+    load_dotenv()
 
 # LMS 로그인 주소
 LOGIN_URL = "https://lms.chungbuk.ac.kr/login/index.php"
