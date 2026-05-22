@@ -24,6 +24,7 @@ const getMaxDeadlineDateString = () => {
   return `${year}-${month}-${date}`;
 };
 
+// 커스텀 과제 마감일 입력 범위 제한
 const MIN_DEADLINE_DATE = getTodayDateString();
 const MAX_DEADLINE_DATE = getMaxDeadlineDateString();
 
@@ -48,8 +49,8 @@ const CountdownText = ({ deadlineDate }) => {
     return <span className="dday-text">날짜 오류</span>;
   }
 
-const diff = deadlineDate - now;
-if (diff <= 0) return <span className="dday-text">기한 종료</span>; // 기한이 지났을 경우 처리
+  const diff = deadlineDate - now;
+  if (diff <= 0) return <span className="dday-text">기한 종료</span>; // 기한이 지났을 경우 처리
 
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
