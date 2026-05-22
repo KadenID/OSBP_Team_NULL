@@ -256,7 +256,7 @@
 
 .input-field input {
   width: 100%;
-  height: 36px;
+  height: 42px;
   padding: 0 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -275,18 +275,164 @@
 }
 
 /* 과제 생성 캘린더 영역 */
-.input-field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.5); 
+.deadline-field {
+  flex: 0 0 325px;
+  min-width: 325px;
+}
+
+.deadline-control {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  box-sizing: border-box;
+}
+
+.deadline-control input[type="date"],
+.deadline-control .time-input {
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 14px;
+  line-height: 42px;
+  outline: none;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.deadline-control input[type="date"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.deadline-control .time-input {
+  width: 56px;
+  text-align: center;
+}
+
+.input-field .deadline-control .time-input {
+  width: 56px;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.time-picker-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 86px;
+  flex: none;
+}
+
+.time-picker-toggle {
+  width: 22px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+}
+
+.time-picker-toggle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid var(--text-main);
+  border-bottom: 1.5px solid var(--text-main);
+  transform: translate(-50%, -65%) rotate(45deg);
+}
+
+.deadline-control input:focus,
+.time-picker-toggle:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.time-picker-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 100;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+}
+
+.time-column {
+  width: 48px;
+  max-height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #b8b8b8 transparent;
+}
+
+.time-column::-webkit-scrollbar {
+  width: 6px;
+}
+
+.time-column::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.time-column::-webkit-scrollbar-thumb {
+  background: #b8b8b8;
+  border-radius: 999px;
+}
+
+.time-column button {
+  width: 100%;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 13px;
   cursor: pointer;
 }
 
-[data-theme='dark'] .input-field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: none; 
-  cursor: pointer;
+.time-column button:hover,
+.time-column button.selected {
+  background: #1890ff;
+  color: #fff;
+}
+
+[data-theme='dark'] .time-column {
+  scrollbar-color: #5f5f5f transparent;
+}
+
+[data-theme='dark'] .time-column::-webkit-scrollbar-thumb {
+  background: #5f5f5f;
+}
+
+[data-theme='dark'] .deadline-control,
+[data-theme='dark'] .time-picker-panel {
+  border-color: #707070;
+  background: #0e0e0e;
 }
 
 .add-submit-btn {
-  height: 36px;
+  height: 42px;
   padding: 0 15px;
   background-color: #1890ff;
   color: white;

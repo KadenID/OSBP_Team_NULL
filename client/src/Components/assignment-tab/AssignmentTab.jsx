@@ -59,7 +59,9 @@ function AssignmentTab({ accessToken }) {
   
   const [newSubject, setNewSubject] = useState("");
   const [newTask, setNewTask] = useState("");
-  const [newDeadline, setNewDeadline] = useState("");
+  const [newDeadlineDate, setNewDeadlineDate] = useState("");
+  const [newDeadlineTime, setNewDeadlineTime] = useState("23:59");
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const [activeTags, setActiveTags] = useState([
     STATUS.UNSUBMITTED,
@@ -84,20 +86,58 @@ function AssignmentTab({ accessToken }) {
 
 
   // 과제 추가 로직
+  const formatTimeInput = (value) => {
+  const onlyNumbers = value.replace(/\D/g, "").slice(0, 4);
+
+  if (onlyNumbers.length <= 2) return onlyNumbers;
+
+  return `${onlyNumbers.slice(0, 2)}:${onlyNumbers.slice(2)}`;
+  };
+
+  const handleTimeChange = (e) => {
+    setNewDeadlineTime(formatTimeInput(e.target.value));
+  };
+
+  const handleTimeBlur = () => {
+    setTimeout(() => {
+      const [hour = "", minute = ""] = newDeadlineTime.split(":");
+      const hourNumber = Number(hour);
+      const minuteNumber = Number(minute);
+
+      if (
+        hour.length !== 2 ||
+        minute.length !== 2 ||
+        hourNumber > 23 ||
+        minuteNumber > 59
+      ) {
+        setNewDeadlineTime("23:59");
+        return;
+      }
+
+      setNewDeadlineTime(
+        `${String(hourNumber).padStart(2, "0")}:${String(minuteNumber).padStart(2, "0")}`
+      );
+    }, 100);
+  };
+
   const handleAddAssignment = (e) => {
     e.preventDefault();
 
     const newItem = {
-      id: Date.now(),
-      subject: newSubject,
-      task: newTask,
-      deadline: `${newDeadline}:59`,
-      isSubmitted: false,
-      source: 'user'
-    };
+    id: Date.now(),
+    subject: newSubject,
+    task: newTask,
+    deadline: `${newDeadlineDate}T${newDeadlineTime}:59`,
+    isSubmitted: false,
+    source: 'user'
+  };
 
-    addAssignment(newItem); // store의 추가 액션 호출
-    setNewSubject(""); setNewTask(""); setNewDeadline("");
+  addAssignment(newItem);
+  setNewSubject("");
+  setNewTask("");
+  setNewDeadlineDate("");
+  setNewDeadlineTime("23:59");
+  setShowTimePicker(false);
   };
 
    // 과제 필터링 함수 : processed + filteredList
@@ -184,13 +224,94 @@ function AssignmentTab({ accessToken }) {
             <input type="text" placeholder="할 일" value={newTask} onChange={e => setNewTask(e.target.value)} />
           </div>
 
-          <div className="input-field">
-            <input type="datetime-local" value={newDeadline} onChange={e => setNewDeadline(e.target.value)} required/>
+          <div className="input-field deadline-field">
+            <div className="deadline-control">
+              <input
+                type="date"
+                value={newDeadlineDate}
+                onMouseDown={() => setShowTimePicker(false)}
+                onFocus={() => setShowTimePicker(false)}
+                onChange={e => setNewDeadlineDate(e.target.value)}
+                required
+              />
+
+              <div className="time-picker-wrap">
+                <input
+                  type="text"
+                  className="time-input"
+                  value={newDeadlineTime}
+                  onChange={handleTimeChange}
+                  onBlur={handleTimeBlur}
+                  onFocus={() => setShowTimePicker(true)}
+                  placeholder="23:59"
+                  inputMode="numeric"
+                  maxLength="5"
+                  required
+                />
+
+                <button
+                  type="button"
+                  className="time-picker-toggle"
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => setShowTimePicker(prev => !prev)}
+                  aria-label="시간 선택"
+                />
+
+                {showTimePicker && (
+                  <div
+                    className="time-picker-panel"
+                    onMouseDown={e => e.preventDefault()}
+                  >
+                    <div className="time-column">
+                      {Array.from({ length: 24 }, (_, hour) => {
+                        const value = String(hour).padStart(2, "0");
+                        const isSelected = newDeadlineTime.slice(0, 2) === value;
+
+                        return (
+                          <button
+                            type="button"
+                            key={value}
+                            className={isSelected ? "selected" : ""}
+                            onClick={() => {
+                              const minute = newDeadlineTime.slice(3, 5) || "00";
+                              setNewDeadlineTime(`${value}:${minute}`);
+                            }}
+                          >
+                            {value}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="time-column">
+                      {Array.from({ length: 60 }, (_, minute) => {
+                        const value = String(minute).padStart(2, "0");
+                        const isSelected = newDeadlineTime.slice(3, 5) === value;
+
+                        return (
+                          <button
+                            type="button"
+                            key={value}
+                            className={isSelected ? "selected" : ""}
+                            onClick={() => {
+                              const hour = newDeadlineTime.slice(0, 2) || "23";
+                              setNewDeadlineTime(`${hour}:${value}`);
+                              setShowTimePicker(false);
+                            }}
+                          >
+                            {value}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-          
-          <button type="submit" className="add-submit-btn">새 과제 추가</button>
-      </form>
+      <button type="submit" className="add-submit-btn">새 과제 추가</button>
+    </form>
 
         <div className="tag-container"><p>필터</p> {/* 필터링 태그 */}
           {[
