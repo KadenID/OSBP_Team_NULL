@@ -11,7 +11,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # .env 파일 로드
-load_dotenv()
+if os.path.exists("/etc/secrets/.env"):
+    load_dotenv("/etc/secrets/.env")
+else:
+    load_dotenv()
 
 # 환경 변수 로드
 DATABASE_URL = os.getenv("DATABASE_URL") # DB 연결 URL
@@ -38,6 +41,50 @@ def get_db_connection():
         yield conn
     finally:
         connection_pool.putconn(conn)
+
+# 초기 테이블 생성 로직
+def init_db():
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                # 사용자 테이블
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS users (
+                        student_id VARCHAR(20) PRIMARY KEY,
+                        lms_password TEXT NOT NULL,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """)
+                # 리프레시 토큰 테이블
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS refresh_tokens (
+                        student_id VARCHAR(20) PRIMARY KEY REFERENCES users(student_id) ON DELETE CASCADE,
+                        token_value TEXT NOT NULL,
+                        expires_at TIMESTAMP WITH TIME ZONE NOT NULL
+                    );
+                """)
+                # 커스텀 과제 테이블
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS custom_assignments (
+                        id SERIAL PRIMARY KEY,
+                        student_id VARCHAR(20) REFERENCES users(student_id) ON DELETE CASCADE,
+                        course_name VARCHAR(100),
+                        assignment_name VARCHAR(200),
+                        due_date VARCHAR(50),
+                        is_submitted BOOLEAN DEFAULT FALSE,
+                        description TEXT,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """)
+            conn.commit()
+            logger.info("데이터베이스 테이블 초기화 완료")
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"데이터베이스 초기화 중 오류 발생: {e}")
+            raise
+
+# 모듈 로드 시 DB 초기화 실행
+init_db()
 
 # 입력: student_id (학번), password (비밀번호)
 # 기능: 사용자 학번과 암호화된 비밀번호를 데이터베이스에 저장
@@ -129,4 +176,97 @@ def delete_refresh_token(student_id):
         except Exception as e:
             conn.rollback()
             logger.error(f"리프레시 토큰 삭제 중 오류 발생 (student_id: {student_id}): {e}")
+            raise
+
+# --- 커스텀 과제 CRUD ---
+
+# 입력: student_id (학번), assignment_data (딕셔너리)
+# 기능: 커스텀 과제를 DB에 저장하거나 수정
+# 반환: 저장된 과제의 ID
+def save_custom_assignment(student_id, assignment_data):
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                if assignment_data.get('id') and str(assignment_data['id']).isdigit():
+                    # 수정
+                    sql = """
+                    UPDATE custom_assignments 
+                    SET course_name = %s, assignment_name = %s, due_date = %s, is_submitted = %s, description = %s
+                    WHERE id = %s AND student_id = %s
+                    RETURNING id;
+                    """
+                    cur.execute(sql, (
+                        assignment_data['subject'],
+                        assignment_data['task'],
+                        assignment_data['deadline'],
+                        assignment_data.get('isSubmitted', False),
+                        assignment_data.get('description', ''),
+                        int(assignment_data['id']),
+                        student_id
+                    ))
+                else:
+                    # 신규 추가
+                    sql = """
+                    INSERT INTO custom_assignments (student_id, course_name, assignment_name, due_date, is_submitted, description)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    RETURNING id;
+                    """
+                    cur.execute(sql, (
+                        student_id,
+                        assignment_data['subject'],
+                        assignment_data['task'],
+                        assignment_data['deadline'],
+                        assignment_data.get('isSubmitted', False),
+                        assignment_data.get('description', '')
+                    ))
+                
+                result = cur.fetchone()
+                conn.commit()
+                return result[0] if result else None
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"커스텀 과제 저장 중 오류 발생 (student_id: {student_id}): {e}")
+            raise
+
+# 입력: student_id (학번)
+# 기능: 해당 사용자의 모든 커스텀 과제 조회
+# 반환: 과제 리스트
+def get_custom_assignments(student_id):
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                sql = "SELECT id, course_name, assignment_name, due_date, is_submitted, description FROM custom_assignments WHERE student_id = %s ORDER BY created_at DESC;"
+                cur.execute(sql, (student_id,))
+                rows = cur.fetchall()
+                
+                assignments = []
+                for row in rows:
+                    assignments.append({
+                        "id": str(row[0]),
+                        "subject": row[1],
+                        "task": row[2],
+                        "deadline": row[3],
+                        "isSubmitted": row[4],
+                        "description": row[5],
+                        "source": "user"
+                    })
+                return assignments
+        except Exception as e:
+            logger.error(f"커스텀 과제 조회 중 오류 발생 (student_id: {student_id}): {e}")
+            raise
+
+# 입력: student_id (학번), assignment_id (과제 ID)
+# 기능: 특정 커스텀 과제 삭제
+# 반환: 성공 여부
+def delete_custom_assignment(student_id, assignment_id):
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                sql = "DELETE FROM custom_assignments WHERE id = %s AND student_id = %s;"
+                cur.execute(sql, (int(assignment_id), student_id))
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"커스텀 과제 삭제 중 오류 발생 (id: {assignment_id}): {e}")
             raise

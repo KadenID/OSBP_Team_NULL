@@ -167,7 +167,6 @@ function AssignmentTab({ accessToken }) {
     }
 
     const newItem = {
-      id: Date.now(),
       subject: newSubject,
       task: newTask,
       deadline: deadlineValue,
@@ -175,12 +174,12 @@ function AssignmentTab({ accessToken }) {
       source: 'user'
     };
 
-    addAssignment(newItem);
-    setNewSubject("");
-    setNewTask("");
-    setNewDeadlineDate(getTodayDateString());
-    setNewDeadlineTime("23:59");
-    setShowTimePicker(false);
+  addAssignment(newItem, accessToken); // store의 추가 액션 호출
+  setNewSubject("");
+  setNewTask("");
+  setNewDeadlineDate(getTodayDateString());
+  setNewDeadlineTime("23:59");
+  setShowTimePicker(false);
   };
 
    // 과제 필터링 함수 : processed + filteredList
@@ -230,16 +229,15 @@ function AssignmentTab({ accessToken }) {
   }, [filteredList]);
   
   const confirmDelete = () => {
-    deleteAssignment(targetId); // 스토어의 삭제 액션 실행
+    deleteAssignment(targetId, accessToken); // 스토어의 삭제 액션 실행
     setShowModal(false);        // 모달 닫기
     setTargetId(null);          // 타겟 ID 초기화
   };
 
   // 선택된 과제 데이터를 최신으로 참조
-  const selectedAssignment = useMemo(() => 
-    assignment.find(item => item.id === selectedId) ?? null,
+  const selectedAssignment = useMemo(() =>
+    assignment.find(item => String(item.id) === String(selectedId)) ?? null,
   [assignment, selectedId]);
-
   // 상태 변경
   const toggleTag = (tag) => {
     setActiveTags((prev) => {
@@ -424,7 +422,7 @@ function AssignmentTab({ accessToken }) {
                 <div className="item-actions"> {/* 생성과제 - 삭제, 완료 처리 버튼 영역 */}
                     {item.source === 'user' ? (
                       <>
-                        <button onClick={(e) => { e.stopPropagation(); toggleSubmit(item.id); }} className="action-btn toggle">
+                        <button onClick={(e) => { e.stopPropagation(); toggleSubmit(item.id, accessToken); }} className="action-btn toggle">
                           {item.isSubmitted ? '진행으로 변경' : '완료 처리'}
                         </button>
                         <button onClick={(e) => {e.stopPropagation(); setTargetId(item.id); setShowModal(true); }} className="action-btn delete">삭제</button>
@@ -457,6 +455,7 @@ function AssignmentTab({ accessToken }) {
             assignment={selectedAssignment}
             onClose={() => setSelectedId(null)} 
             updateDescription={updateDescription}
+            accessToken={accessToken}
           />,
           document.body
         )}
