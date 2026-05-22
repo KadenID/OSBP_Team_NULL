@@ -5,57 +5,12 @@ import NoticeTab from "../notice-tab/NoticeTab.jsx";
 import { useNavigate } from "react-router-dom";
 import { FiHome } from "react-icons/fi";
 
-function MainPage({ accessToken, onLogout }) {
+function MainPage({ accessToken, onLogout, theme, toggleTheme }) {
 
   const navigate = useNavigate();
 
-  // 초기 테마 설정
-  // 저장된 테마가 없으면 시스템 테마를 초기값으로 사용
-  const getSystemTheme = () => {
-   const systemDark =
-      window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
-
-    return systemDark ? "dark" : "light";
-  };
-
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("theme") || getSystemTheme();
-  });
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
-    if (!mediaQuery) return;
-
-    // 시스템 테마가 변경되면 저장된 테마를 초기화하고 시스템 테마를 따름
-    const handleSystemThemeChange = (event) => {
-      const systemTheme = event.matches ? "dark" : "light";
-
-      localStorage.removeItem("theme");
-      setTheme(systemTheme);
-    };
-
-    mediaQuery.addEventListener("change", handleSystemThemeChange);
-
-    return () => {
-      mediaQuery.removeEventListener("change", handleSystemThemeChange);
-    };
-  }, []);
-
-  // 버튼으로 선택한 테마는 저장하여 재접속 시에도 유지
-  const toggleTheme = () => {
-    setTheme((prev) => {
-      const nextTheme = prev === "dark" ? "light" : "dark";
-      localStorage.setItem("theme", nextTheme);
-      return nextTheme;
-    });
-  };
-
   return (
-    <>
+    <div className="mainpage">
       <div className="layout">
 
       <header>
@@ -90,7 +45,7 @@ function MainPage({ accessToken, onLogout }) {
 
         </main>
       </div>
-    </>
+    </div>
   );
 }
 

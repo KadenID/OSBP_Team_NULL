@@ -44,6 +44,18 @@
   }
 }
 
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg);
+}
+
+.mainpage {
+  min-height: 100vh;
+}
+
 .layout {
   background: var(--bg-layout);
   color: var(--text-main);

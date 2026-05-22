@@ -28,8 +28,15 @@ const loginFields = [
     },
 ];
 
-function LoginPage({ onLogin }) {
+function LoginPage({  onLogin, theme, toggleTheme  }) {
     const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        if (onLogout) {
+            await onLogout();
+            navigate("/main");
+        }
+    };
 
     // 저장된 아이디가 있으면 로그인 폼 초기값으로 사용
     const [loginForm, setLoginForm] = useState(() => ({
@@ -40,6 +47,7 @@ function LoginPage({ onLogin }) {
     const [rememberId, setRememberId] = useState(() =>
         Boolean(localStorage.getItem(REMEMBERED_STUDENT_ID_KEY))
     );
+    
     const [errorMessage, setErrorMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
