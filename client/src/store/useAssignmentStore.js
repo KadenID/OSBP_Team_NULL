@@ -1,84 +1,151 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware'; // 생성과제 로컬스토리지를 위한 persist
 import { API_BASE_URL } from '../apiConfig';
 
-const useAssignmentStore = create(persist(
-  (set, get) => ({
-    assignment: [],
-    isLoading: false,
-    isFetched: false, // 데이터를 이미 불러왔는지 확인하는 플래그
+const useAssignmentStore = create((set, get) => ({
+  assignment: [],
+  isLoading: false,
+  isFetched: false,
 
-  // API 통신으로 과제 불러오기
+  // LMS 과제 및 DB 저장된 커스텀 과제 통합 로드
   fetchAssignments: async (accessToken) => {
-    // 이미 데이터를 불러온 적이 있거나 토큰이 없으면 중단
     if (get().isFetched || !accessToken) return;
     
     set({ isLoading: true });
     try {
-      const response = await fetch(`${API_BASE_URL}/api/assignments`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        },
+      // 1. LMS 과제 가져오기
+      const lmsResponse = await fetch(`${API_BASE_URL}/api/assignments`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
         credentials: 'include'
       });
-      const result = await response.json();
+      const lmsResult = await lmsResponse.json();
       
-      if (result.success) {
-        const fetchedData = result.data.map(item => ({
-          id: item.assignment_id,
-          subject: item.course_name,
-          task: item.assignment_name,
-          deadline: item.due_date,
-          isSubmitted: item.status.includes('제출 완료'),
+      let lmsData = [];
+      if (lmsResult.success) {
+        lmsData = lmsResult.data.map(item => ({
+          id: item.id || item.assignment_id, // 서버 응답 필드 통합
+          subject: item.subject || item.course_name,
+          task: item.task || item.assignment_name,
+          deadline: item.deadline || item.due_date,
+          isSubmitted: item.isSubmitted || (item.status && item.status.includes('제출 완료')),
           source: 'lms'
         }));
+      }
 
-        // 데이터 저장 및 호출 완료 플래그 설정
-        set((state) => ({
-        assignment: [...fetchedData, ...state.assignment.filter(a => a.source === 'user')], // get()에서 콜백 방식으로 수정
+      // 2. DB 커스텀 과제 가져오기
+      const customResponse = await fetch(`${API_BASE_URL}/api/custom-assignments`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+        credentials: 'include'
+      });
+      const customResult = await customResponse.json();
+      
+      let customData = [];
+      if (customResult.success) {
+        customData = customResult.data; // 서버에서 이미 정제된 데이터 반환
+      }
+
+      set({
+        assignment: [...lmsData, ...customData],
         isFetched: true
-      }));
-      } else {
-        console.error("데이터를 불러오지 못했습니다:", result.message);
-      } 
+      });
     } catch (error) {
-      console.error("API 호출 중 오류 발생:", error);
+      console.error("데이터 로드 중 오류 발생:", error);
     } finally {
-      set({ isLoading: false }); // 성공 여부와 관계없이 로딩 종료
+      set({ isLoading: false });
     }
   },
 
   // 새로운 사용자 과제 추가
-  addAssignment: (newItem) => set((state) => ({
-    assignment: [...state.assignment, newItem]
-  })),
+  addAssignment: async (newItem, accessToken) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/custom-assignments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify(newItem),
+        credentials: 'include'
+      });
+      const result = await response.json();
+      if (result.success) {
+        const addedItem = { ...newItem, id: result.id, source: 'user' };
+        set((state) => ({
+          assignment: [...state.assignment, addedItem]
+        }));
+      }
+    } catch (error) {
+      console.error("과제 추가 중 오류 발생:", error);
+    }
+  },
 
   // 과제 삭제
-  deleteAssignment: (targetId) => set((state) => ({
-    assignment: state.assignment.filter(item => item.id !== targetId)
-  })),
+  deleteAssignment: async (targetId, accessToken) => {
+    const itemToDelete = get().assignment.find(item => item.id === targetId);
+    if (!itemToDelete) return;
 
-  // 제출 상태 토글
-  toggleSubmit: (id) => set((state) => ({
-    assignment: state.assignment.map(item => 
-      item.id === id ? { ...item, isSubmitted: !item.isSubmitted } : item
-    )
-  })),
-  
-  // 커스텀 과제 설명 작성
-  updateDescription: (id, description) => set((state) => ({
-    assignment: state.assignment.map(item =>
-      item.id === id ? { ...item, description } : item
-    )
-  }))
-}),
-    {
-      name: 'assignment-storage',
-      // user 과제만 저장, 새로고침마다 LMS 갱신
-      partialize: (state) => ({
-        assignment: state.assignment.filter(item => item.source === 'user')
-      }),
+    if (itemToDelete.source === 'user') {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/custom-assignments/${targetId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+          credentials: 'include'
+        });
+        const result = await response.json();
+        if (!result.success) return;
+      } catch (error) {
+        console.error("과제 삭제 중 오류 발생:", error);
+        return;
+      }
     }
-  )
-);
+
+    set((state) => ({
+      assignment: state.assignment.filter(item => item.id !== targetId)
+    }));
+  },
+
+  // 제출 상태 토글 및 설명 업데이트 (커스텀 과제 전용)
+  updateCustomAssignment: async (id, updates, accessToken) => {
+    const item = get().assignment.find(a => a.id === id);
+    if (!item || item.source !== 'user') {
+      // LMS 과제는 메모리 상에서만 토글 (서버 저장 불가)
+      set((state) => ({
+        assignment: state.assignment.map(a => a.id === id ? { ...a, ...updates } : a)
+      }));
+      return;
+    }
+
+    const updatedItem = { ...item, ...updates };
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/custom-assignments`, {
+        method: 'POST', // 추가/수정 통합
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify(updatedItem),
+        credentials: 'include'
+      });
+      if (response.ok) {
+        set((state) => ({
+          assignment: state.assignment.map(a => a.id === id ? updatedItem : a)
+        }));
+      }
+    } catch (error) {
+      console.error("과제 업데이트 중 오류 발생:", error);
+    }
+  },
+
+  // 기존 액션들을 updateCustomAssignment로 통합하여 사용 가능
+  toggleSubmit: (id, accessToken) => {
+    const item = get().assignment.find(a => a.id === id);
+    if (item) {
+      get().updateCustomAssignment(id, { isSubmitted: !item.isSubmitted }, accessToken);
+    }
+  },
+
+  updateDescription: (id, description, accessToken) => {
+    get().updateCustomAssignment(id, { description }, accessToken);
+  }
+}));
+
 export default useAssignmentStore;

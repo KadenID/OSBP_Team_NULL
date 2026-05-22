@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './AssignmentDetail.css';
 
-function AssignmentDetail({ assignment, onClose, updateDescription }) {
+function AssignmentDetail({ assignment, onClose, updateDescription, accessToken }) {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
@@ -21,7 +21,7 @@ function AssignmentDetail({ assignment, onClose, updateDescription }) {
 
   // 생성 과제 저장
   const handleSave = () => {
-    updateDescription(assignment.id, editText);
+    updateDescription(assignment.id, editText, accessToken);
     setIsEditing(false);
   };
 
