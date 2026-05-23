@@ -2,16 +2,12 @@
   position: fixed;
   top: 0;     
   left: 0;
-
   width: 100%;
   height: 100%;
-
   background: rgba(0, 0, 0, 0.5);
-
   display: grid;
   justify-content: center;
   align-items: center;
-
   z-index: 99999;
 }
 
@@ -20,12 +16,12 @@
   width: 600px;
   max-height: 80vh;
   overflow-y: auto;
-
   background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 28px;
   position: relative;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  box-shadow: var(--card-shadow-hover);
   color: var(--text-main);
 }
 
@@ -41,35 +37,30 @@
   position: absolute;
   top: 16px;
   right: 16px;
-
   width: 36px;
   height: 36px;
-
   border: none;
   border-radius: 50%;
-
-  background: rgba(0,0,0,0.08);
-
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
   font-size: 20px;
   font-weight: bold;
-
   cursor: pointer;
-
   display: flex;
   justify-content: center;
   align-items: center;
-
   z-index: 10;
 }
 
 .close-btn:hover {
-  background: rgba(0,0,0,0.15);
+  background-color: var(--btn-bg-hover);
+  transform: scale(1.05);
 }
 
 .detail-info {
   margin-bottom: 15px;
   font-size: 0.9em;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .detail-footer {
@@ -87,7 +78,7 @@
 .detail-section-title {
   font-size: 0.9em;
   font-weight: bold;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .edit-btn {
@@ -123,7 +114,7 @@
   box-sizing: border-box;
 }
 
-.detail-textarea:focus { outline: none; border-color: #1890ff; }
+.detail-textarea:focus { outline: none; border-color: var(--text-muted); }
 
 .edit-actions {
   display: flex;
@@ -133,15 +124,18 @@
 
 .save-btn {
   padding: 6px 16px;
-  background: #1890ff;
-  color: white;
+  background-color: var(--accent);
+  color: #ffffff;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
+  transition: background-color 0.2s ease;
 }
 
-.save-btn:hover { background: #40a9ff; }
+.save-btn:hover { 
+  background-color: var(--accent-hover);
+}
 
 .cancel-btn {
   padding: 6px 16px;

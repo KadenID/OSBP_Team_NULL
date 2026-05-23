@@ -27,18 +27,19 @@
 
 .notice-more-btn {
   padding: 6px 10px;
-  border: 1px solid #1890ff;
+  border: 1px solid var(--accent);
   font-size: 12px;
   font-weight: 500;
-  background-color: #1890ff;
-  color: white;
+  background-color: var(--accent);
+  color: #ffffff;
   border-radius: 8px;
   text-decoration: none;
   transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-.notice-more-btn:hover {
-  transform: translateY(-2px);
+.filter-tag-btn:hover {
+  background-color: var(--btn-bg-hover); 
+  transform: translateY(-1px);
 }
 
 /* 필터 태그 영역 */
@@ -68,26 +69,9 @@
 
 /* 활성화 태그 */
 .filter-tag-btn.active {
-  background-color: #1890ff;
-  color: white;
-  border-color: #1890ff;
-  font-weight: 500;
-}
-
-[data-theme='dark'] .filter-tag-btn {
-  background: #3b3b3b;
-  border-color: #525252;
-  color: #c7c7c7;
-}
-
-[data-theme='dark'] .filter-tag-btn:hover {
-  background-color: #4a4a4a;
-}
-
-[data-theme='dark'] .filter-tag-btn.active {
-  background-color: #1890ff;
-  color: white;
-  border-color: #1890ff;
+  background-color: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
   font-weight: 500;
 }
 

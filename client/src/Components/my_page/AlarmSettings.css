@@ -1,11 +1,11 @@
 /* 알림 설정 */
 .alarm-settings {
   --alarm-section-bg: rgba(99, 102, 241, 0.035);
-  --alarm-focus-shadow: rgba(99, 102, 241, 0.16);
-  --alarm-switch-off: #d1d5db;
-  --alarm-button: #6c63ff;
-  --alarm-button-hover: #5b54e8;
-  --alarm-input-border: #d8dbe8;
+  --alarm-focus-shadow: var(--primary-focus);
+  --alarm-switch-off: var(--btn-bg-hover);      
+  --alarm-button: var(--accent);                
+  --alarm-button-hover: var(--accent-hover);
+  --alarm-input-border: var(--border);
   --alarm-white: #ffffff;
 
   display: flex;
@@ -19,7 +19,7 @@
 .alarm-toggle-row,
 .alarm-course-item,
 .custom-reminder-box {
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--border);
   border-radius: 14px;
 }
 
@@ -39,13 +39,13 @@
   margin: 0 0 14px;
   font-size: 16px;
   font-weight: 700;
-  color: var(--card-title);
+  color: var(--text-heading);
 }
 
 .alarm-description {
   margin: 4px 0 0;
   font-size: 13px;
-  color: var(--card-content);
+  color: var(--text-muted);
 }
 
 /* 전체 알림 토글 */
@@ -55,7 +55,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 18px 20px;
-  background-color: var(--card-bg);
+  background-color: var(--bg-card);
 }
 
 .alarm-switch {
@@ -112,8 +112,8 @@
   padding: 9px 10px;
   border: 1px solid var(--alarm-input-border);
   border-radius: 10px;
-  background-color: var(--card-bg);
-  color: var(--title);
+  background-color: var(--bg-card);
+  color: var(--text-main);
   font-size: 14px;
   font-weight: 500;
   outline: none;
@@ -130,7 +130,7 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  background-color: var(--sub-card-bg);
+  background-color: var(--bg);
 }
 
 .custom-reminder-box input {
@@ -189,13 +189,13 @@
   justify-content: space-between;
   gap: 16px;
   padding: 16px;
-  background-color: var(--card-bg);
+  background-color: var(--bg-card);
 }
 
 .alarm-course-name {
   font-size: 14px;
   font-weight: 700;
-  color: var(--card-title);
+  color: var(--text-heading);
 }
 
 .alarm-course-info {
@@ -207,15 +207,15 @@
 .alarm-course-time {
   font-size: 13px;
   font-weight: 500;
-  color: var(--card-content);
+  color: var(--text-muted);
 }
 
 .delete-reminder-button {
   padding: 8px 12px;
   border: none;
   border-radius: 8px;
-  background-color: #ef4444;
-  color: white;
+  background-color: var(--danger);
+  color: var(--alarm-white);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -248,7 +248,7 @@
   border: none;
   border-radius: 10px;
   background-color: var(--primary);
-  color: white;
+  color: var(--alarm-white);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -270,7 +270,7 @@
   margin: 0;
   padding: 8px 12px;
   border-radius: 8px;
-  background-color: rgba(99, 102, 241, 0.08);
+  background-color: var(--alarm-section-bg);
   color: var(--primary);
   font-size: 12px;
   font-weight: 600;
@@ -281,8 +281,8 @@
   padding: 14px 16px;
   border: 1px dashed var(--alarm-input-border);
   border-radius: 12px;
-  background-color: var(--card-bg);
-  color: var(--card-content);
+  background-color: var(--bg-card);
+  color: var(--text-muted);
   font-size: 13px;
   font-weight: 500;
 }

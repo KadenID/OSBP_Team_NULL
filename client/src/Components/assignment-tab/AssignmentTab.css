@@ -25,69 +25,52 @@
   justify-content: space-between;
   flex-wrap: wrap;
   align-items: center;
-  padding: 11px;
-  height: 110px;
+  padding: 16px;
+  height: auto;
   min-width: 0;
-  min-height: 150px;
-  background-color: var(--bg-card); 
+  min-height: 110px;
+  background-color: var(--assignment-yet-bg); 
   border: 1px solid var(--border);
   border-radius: 12px;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
 }
 
 .assignment-item:hover {
-  transform: scale(1.02); 
+  transform: translateY(-2px); 
+  box-shadow: var(--card-shadow-hover);
 }
 
 
 /* 상태 조합별 카드 배경 */
 /* 기한 지남 공통 → 회색 */
 .assignment-item.expired {
-  background-color: #e7e7e7;
-  border-color: #838383;
-  border-left: 5px solid #bbb;
+  background-color: var(--assignment-expired-bg);
+  border-color: var(--assignment-expired-border);
+  border-left: 6px solid var(--assignment-expired-accent);
 }
 
 .assignment-item.yet-ongoing {    /* 기한남음 + 미제출 */
-  background-color: #fff1f0;
-  border-color: #ffccc7;
-  border-left: 5px solid #ff4d4f;
+  background-color: var(--assignment-yet-bg);
+  border-color: var(--assignment-yet-border);
+  border-left: 6px solid var(--assignment-yet-accent);
 }
 
 .assignment-item.done-ongoing {   /* 기한남음 + 제출완료 */
-  background-color: #f6ffed;
-  border-color: #b7eb8f;
-  border-left: 5px solid #53c71a;
-}
-
-[data-theme='dark'] .assignment-item.expired {
-  background-color: #18181838;
-  border-color: #838383;
-  border-left: 5px solid #858585;
-}
-
-[data-theme='dark'] .assignment-item.yet-ongoing {
-  background-color: #000000; 
-  border-color: #5c2223;
-  border-left: 5px solid #ff4d4f;
-}
-
-[data-theme='dark'] .assignment-item.done-ongoing {
-  background-color: #000000;
-  border-color: #274916;
-  border-left: 5px solid #53c71a;
+  background-color: var(--assignment-done-bg);
+  border-color: var(--assignment-done-border);
+  border-left: 6px solid var(--assignment-done-accent);
 }
 
 /* 과목 */
 .subject {
   font-size: 0.8rem;
-  color: var(--text-main);
+  color: var(--text-muted);
 }
 
 /* 과제명 */
 .task-name {
-  font-weight: 600;
+  font-size: 1.0rem;
   margin: 5px 0 0 0;
   color: var(--text-main);
 }
@@ -103,28 +86,28 @@
 
 /* 제출 상태 라벨 */
 .status-label {
-  font-size: 0.9rem;
-  font-weight: 630;
-  padding: 6px 9px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 4px 10px;
   border-radius: 20px;
 }
 
 .status-label.done { /* 제출완료 버튼 */
-  background-color: #f6ffed;
-  color: #3b7f19;
-  border: 1px solid #b7eb8f;
+  background-color: var(--lms-connected-bg);
+  color: var(--lms-connected-text);
+  border: 1px solid var(--assignment-done-border);
 }
 
 .status-label.yet {
-  background-color: #fff1f0;
-  color: #ff4d4f;
-  border: 1px solid #ffccc7;
+  background-color: var(--lms-disconnected-bg);
+  color: var(--lms-disconnected-text);
+  border: 1px solid var(--assignment-yet-border);
 }
 
 .dday-text {
   font-size: 0.8rem;
   font-weight: 500;
-  color: #fa4a4d;
+  color: var(--danger);
 }
 
 /* 기한 텍스트: 기본 빨강 (기한 안 지남) */
@@ -132,7 +115,7 @@
   display: block;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #ff4d4f;
+  color: var(--danger);
 }
 
 /* 필터링 태그 컨테이너 */
@@ -167,27 +150,15 @@
 }
 
 .tag-container button:hover {
-  background: #f0f0f0;
+  background: var(--btn-bg-hover);
   transform: translateY(-2px);
 }
 
 .tag-container button.on {
-  background-color: #1890ff;
+  background-color: var(--accent);
   color: white;
-  border-color: #1890ff;
+  border-color: var(--accent);
   font-weight: 500;
-}
-
-/* 상세 필터 태그 */
-[data-theme='dark'] .tag-container button {
-  background: #3b3b3b;
-  border-color: #525252;
-  color: #c7c7c7;
-}
-
-[data-theme='dark'] .tag-container button.on {
-  background-color: #1890ff;
-  color: #fff;
 }
 
 /* LMS. USER 태그 스타일 */
@@ -198,8 +169,8 @@
   margin-right: 8px;
   font-weight: bold;
 }
-.source-tag.lms { background: #f9f0ff; color: #1890ff; }
-.source-tag.user { background: #f9f0ff; color: #722ed1; }
+.source-tag.lms { background: var(--lms-connected-bg); color: var(--lms-connected-text); }
+.source-tag.user { background: var(--btn-bg); color: var(--text-muted); }
 
 /* 버튼 디자인 - 생성과제의 완료 처리, 삭제 버튼 */
 .item-actions {
@@ -215,9 +186,9 @@
   font-size: 12px;
   cursor: pointer;
 }
-.action-btn.toggle { background: #52c41a; color: white; }
-.action-btn.delete { background: #ff4d4f; color: white; }
-.lock-msg { font-size: 11px; color: #bfbfbf;}
+.action-btn.toggle { background: var(--assignment-done-accent); color: white; }
+.action-btn.delete { background: var(--danger); color: white; }
+.lock-msg { font-size: 11px; color: var(--text-muted);}
 
 /* 과제 생성창 */
 .add-form {
@@ -250,7 +221,7 @@
 .input-field label {
   font-size: 14px;
   font-weight: bold;
-  color: #888;
+  color: var(--text-muted);
   margin-left: 4px;
 }
 
@@ -259,33 +230,22 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
-  background: var(--bg-card); 
+  background: var(--bg); 
   color: var(--text-main);       
   outline: none;
-  color-scheme: light;
-}
-
-[data-theme='dark'] .input-field input {
-  border-color: #707070;
-  background: #0e0e0e;
-  color-scheme: dark;
+  color-scheme: light dark;
 }
 
 /* 과제 생성 캘린더 영역 */
 .input-field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.5); 
-  cursor: pointer;
-}
-
-[data-theme='dark'] .input-field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: none; 
+  filter: var(--calendar-invert, invert(0.4)); 
   cursor: pointer;
 }
 
 .add-submit-btn {
   height: 32px;
   padding: 0 15px;
-  background-color: #1890ff;
+  background-color: var(--accent);
   color: white;
   border: none;
   border-radius: 8px;
@@ -303,7 +263,7 @@
   width: 100%;
   height: 100%;
 
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
 
   display: flex;
   justify-content: center;
@@ -315,18 +275,19 @@
 body.modal-open .right:hover,
 body.modal-open .left:hover {
   transform: none;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  box-shadow: var(--card-shadow);
 }
 
 .modal {
   background: var(--bg-card);
   color: var(--text-main);
+  border: 1px solid var(--border);
   padding: 20px;
   border-radius: 12px;
   width: 300px;
 
   text-align: center;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .modal-buttons {
@@ -345,13 +306,13 @@ body.modal-open .left:hover {
 }
 
 .modal-buttons button:first-child {
-  background-color: #ff4d4f;
+  background-color: var(--danger);
   color: white;
 }
 
 .modal-buttons button:last-child {
-  background-color: #9b9b9b;
-  color: white;
+  background-color: var(--btn-bg-hover);
+  color: var(--btn-text);
 }
 
 @media screen and (max-width: 768px) {
