@@ -238,7 +238,11 @@ def get_lms_assignments(student_id: str = Depends(get_current_user)):
         session.cookies.update(cached_cookies)
     else:
         loaded_id, password = storage.load_user(student_id)
-        session, _ = login_to_lms(loaded_id, password)
+        session, message = login_to_lms(loaded_id, password)
+        if not session:
+            logger.error(f"LMS 로그인 실패 (학번: {student_id}): {message}")
+            raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다. 다시 로그인해주세요.")
+        
         redis_cache.set_lms_session(student_id, session.cookies.get_dict())
     
     try:

@@ -151,18 +151,29 @@ def check_user_logic(student_id, now):
         title = "과제 마감 임박!"
         body = f"{alert['assignment']['title']} 마감이 {alert['time_str']} 남았습니다."
         # 단일 알림 시 ID와 URL 모두 전달
-        send_all_notifications(student_id, title, body, url=alert['assignment']['url'], assignment_id=alert['assignment']['id'])
-        storage.record_notification_sent(student_id, alert['assignment']['id'], alert['alert_type'])
+        results = send_all_notifications(student_id, title, body, url=alert['assignment']['url'], assignment_id=alert['assignment']['id'])
+        
+        # 실제 발송 성공 여부 체크 (이메일 또는 푸시 중 하나라도 성공한 경우에만 기록)
+        is_sent = (results.get("email") is True) or any(r is True for r in results.get("push", []))
+        if is_sent:
+            storage.record_notification_sent(student_id, alert['assignment']['id'], alert['alert_type'])
+            logger.info(f"사용자 {student_id}: 단일 알림 발송 성공 및 기록 완료")
+        else:
+            logger.warning(f"사용자 {student_id}: 단일 알림 발송 실패 (기록 저장 안 함)")
     else:
         title = f"마감 임박 과제가 {len(pending_alerts)}건 있습니다"
         body = "\n".join([f"• {a['assignment']['title']} ({a['time_str']} 전)" for a in pending_alerts])
         # 통합 알림 시 과제 ID들을 합쳐서 기록 (URL은 메인으로)
         all_ids = ",".join([str(a['assignment']['id']) for a in pending_alerts])
-        send_all_notifications(student_id, title, body, url="/main", assignment_id=all_ids)
-        for alert in pending_alerts:
-            storage.record_notification_sent(student_id, alert['assignment']['id'], alert['alert_type'])
-    
-    logger.info(f"사용자 {student_id}에게 {len(pending_alerts)}건의 통합 알림 발송 완료")
+        results = send_all_notifications(student_id, title, body, url="/main", assignment_id=all_ids)
+        
+        is_sent = (results.get("email") is True) or any(r is True for r in results.get("push", []))
+        if is_sent:
+            for alert in pending_alerts:
+                storage.record_notification_sent(student_id, alert['assignment']['id'], alert['alert_type'])
+            logger.info(f"사용자 {student_id}: {len(pending_alerts)}건 통합 알림 발송 성공 및 기록 완료")
+        else:
+            logger.warning(f"사용자 {student_id}: 통합 알림 발송 실패 (기록 저장 안 함)")
 
 def process_user_notification_wrapper(student_id, now):
     """에러 핸들링을 포함한 개별 사용자 처리 래퍼"""
