@@ -25,8 +25,8 @@ if not DATABASE_URL:
 
 # 전역 커넥션 풀
 try:
-    connection_pool = pool.ThreadedConnectionPool(1, 30, DATABASE_URL) 
-    logger.info("데이터베이스 커넥션 풀이 생성되었습니다. (Max: 30)")
+    connection_pool = pool.ThreadedConnectionPool(1, 50, DATABASE_URL) 
+    logger.info("데이터베이스 커넥션 풀이 생성되었습니다. (Max: 50)")
 except Exception as e:
     logger.error(f"커넥션 풀 생성 실패: {e}")
     raise
@@ -145,6 +145,24 @@ def record_notification_sent(student_id, assignment_identifier, alert_type):
             conn.rollback()
             logger.error(f"알림 기록 저장 중 오류 발생: {e}")
             raise
+
+# 데이터 정리 로직
+def cleanup_old_notifications(days=30):
+    """지정한 일수(days)보다 오래된 알림 발송 기록을 삭제"""
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                # INTERVAL 문법 수정: 정수형 인자와 곱셈 연산 사용
+                sql = "DELETE FROM sent_notifications WHERE sent_at < CURRENT_TIMESTAMP - (INTERVAL '1 day' * %s);"
+                cur.execute(sql, (days,))
+                deleted_count = cur.rowcount
+            conn.commit()
+            logger.info(f"오래된 알림 기록 정리 완료: {deleted_count}개 삭제됨 (기준: {days}일)")
+            return deleted_count
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"알림 기록 정리 중 오류 발생: {e}")
+            return 0
 
 # 모든 사용자 목록 조회 (스케줄러용)
 

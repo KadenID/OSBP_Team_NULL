@@ -281,10 +281,11 @@ def get_user_settings(student_id: str = Depends(get_current_user)):
     try:
         settings = storage.get_user_settings(student_id)
         email = storage.get_user_email(student_id)
+        # 프론트엔드 기대치에 맞게 settings 딕셔너리와 email을 합쳐서 반환
         return {
             "success": True, 
             "data": {
-                "settings": settings,
+                **settings,
                 "email": email
             }
         }
@@ -295,9 +296,10 @@ def get_user_settings(student_id: str = Depends(get_current_user)):
 @app.post("/api/user-settings")
 def save_user_settings(request_data: dict, student_id: str = Depends(get_current_user)):
     try:
-        # 이메일이 포함되어 있다면 별도로 업데이트
+        # 이메일이 포함되어 있다면 별도로 업데이트하고 settings에서는 제거 (중복 방지)
         if "email" in request_data:
             storage.update_user_email(student_id, request_data["email"])
+            request_data.pop("email", None)
         
         # 나머지 설정 저장
         settings = request_data.get("settings", request_data)
@@ -316,7 +318,9 @@ def save_push_subscription(subscription: dict, student_id: str = Depends(get_cur
         logger.error(f"구독 정보 저장 중 오류 발생: {e}")
         raise HTTPException(status_code=500, detail="저장 실패")
 
-# 스케줄러 설정
+# --- 스케줄러 설정 ---
+# 주의: 다중 워커(workers > 1) 환경에서는 스케줄러가 중복 실행될 수 있습니다.
+# 실운영 환경에서는 전용 스케줄러 프로세스나 락(Lock) 메커니즘 사용이 권장됩니다.
 from apscheduler.schedulers.background import BackgroundScheduler
 from scheduler import check_and_send_notifications
 

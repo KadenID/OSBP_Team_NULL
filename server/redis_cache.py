@@ -109,23 +109,33 @@ def reset_login_attempts(student_id: str):
 # 입력: ip_address (클라이언트 IP), max_attempts (최대 시도 횟수), window_seconds (제한 시간)
 # 기능: IP 주소 기반의 로그인 시도 횟수 제한 확인
 # 반환: 통과 여부 (bool)
-def check_ip_rate_limit(ip_address: str, max_attempts: int = 10, window_seconds: int = 300) -> bool:
+# --- 스케줄러 분산 락 (Multi-worker 중복 방지) ---
+
+def acquire_scheduler_lock(worker_id: str, expire_seconds: int = 120) -> bool:
+    """
+    특정 워커가 스케줄러 실행 권한(락)을 획득하려고 시도함.
+    NX=True 옵션을 통해 키가 없을 때만 생성 성공 (최초 획득자만 True 반환)
+    """
     if not redis_client:
+        # Redis가 없으면 락을 걸 수 없으므로 안전을 위해 True 반환 (단일 워커라고 가정)
         return True
     
     try:
-        key = f"ip_attempts:{ip_address}"
-        # 원자적으로 1 증가시키고 새로운 값을 가져옴
-        current_attempts = redis_client.incr(key)
-        
-        # 첫 번째 시도일 경우 만료 시간 설정
-        if current_attempts == 1:
-            redis_client.expire(key, window_seconds)
-            
-        if current_attempts > max_attempts:
-            return False
-            
-        return True
+        key = "scheduler_lock"
+        # SET key value NX EX expire_seconds
+        # NX: 키가 없을 때만 설정, GET: 이전 값 반환 (여기서는 사용 안 함)
+        # upstash-redis 라이브러리 사양에 맞게 구현
+        result = redis_client.set(key, worker_id, ex=expire_seconds, nx=True)
+        return result is True
     except Exception as e:
-        logger.error(f"IP Rate limit 체크 중 오류 발생: {e}")
-        return True
+        logger.error(f"Redis 스케줄러 락 획득 오류: {e}")
+        return False
+
+def release_scheduler_lock():
+    """스케줄러 락 해제 (서버 종료 시 등)"""
+    if not redis_client:
+        return
+    try:
+        redis_client.delete("scheduler_lock")
+    except Exception as e:
+        logger.error(f"Redis 스케줄러 락 해제 오류: {e}")
