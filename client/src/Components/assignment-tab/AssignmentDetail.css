@@ -4,7 +4,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--modal-overlay);
   display: grid;
   justify-content: center;
   align-items: center;
@@ -91,7 +91,7 @@
   cursor: pointer;
 }
 
-.edit-btn:hover { background: rgba(0,0,0,0.06); }
+.edit-btn:hover { background: var(--shadow); }
 
 .edit-area {
   display: flex;
@@ -146,7 +146,7 @@
   color: var(--text-main);
 }
 
-.cancel-btn:hover { background: rgba(0,0,0,0.06); }
+.cancel-btn:hover { background: var(--shadow); }
 
 @media screen and (max-width: 768px) {
   .detail-modal {

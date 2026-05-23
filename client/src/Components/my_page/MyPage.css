@@ -152,7 +152,7 @@ body {
 /* 접근성 */
 .main-button:focus-visible,
 .logout-button:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--primary-focus);
   outline-offset: 2px;
   border-radius: 8px;
 }

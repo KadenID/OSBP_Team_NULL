@@ -107,23 +107,23 @@ function App() {
     }
   }, [accessToken]);
 
-  if (isInitializing) {
-    return (
+  
+
+  return (
+  <ThemeProvider>
+    { isInitializing ? (
       <div style={{ 
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
         height: '100vh',
-        backgroundColor: 'var(--background-color, #ffffff)',
-        color: 'var(--text-color, #333)'
+        backgroundColor: 'var(--bg)',
+        color: 'var(--text-color)'
       }}>
         로딩 중...
       </div>
-    );
-  }
+    ) : (
 
-  return (
-  <ThemeProvider>
     <Router>
       <Routes>
         <Route path="/" element={
@@ -145,6 +145,7 @@ function App() {
         <Route path="*" element={<Navigate to="/main" replace />} />
       </Routes>
     </Router>
+    )}
   </ThemeProvider>
   );
 }

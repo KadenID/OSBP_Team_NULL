@@ -5,7 +5,7 @@
   align-items: center;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--button-card-border);
+  border-bottom: 1px solid var(--border);
 }
 
 .notice-title-group {
@@ -54,7 +54,7 @@
   padding: 6px 12px;
   border: 1px solid var(--border);
   font-size: 14px;
-  background-color: var(--be-card);
+  background-color: var(--bg-card);
   color: var(--text-main);
   border-radius: 20px;
   cursor: pointer;
@@ -84,7 +84,7 @@
 
 /* 공지 아이템 */
 .notice-item {
-  border-bottom: 1px solid var(--button-card-border);
+  border-bottom: 1px solid var(--border);
   padding: 12px 0;
   cursor: pointer;
 }
