@@ -123,7 +123,7 @@ body {
   border-radius: 16px;
   padding: 28px 32px;
   padding-left: 40px;
-  min-height: 120px;
+  min-height: auto;
   box-shadow: var(--card-shadow);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -132,32 +132,57 @@ body {
   content: "";
   position: absolute;
   left: 0;
-  top: 26px;
-  bottom: 26px;
+  top: 32px;    /* 펼쳤을 때: 너무 길지 않게 적당히 줄임 */
+  bottom: 32px;
   width: 4px;
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 999px 999px 0;
   background: var(--primary);
+  transition: all 0.3s ease;
 }
 
-/* 카드 hover 효과 */
-.mypage-card:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--card-hover-shadow);
+/* 카드가 접혔을 때 (너무 짧지 않게 적당히 늘림) */
+.mypage-card:has(.is-closed)::before {
+  top: 28px;
+  bottom: 28px;
 }
 
+.mypage-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
 
-/* 카드 내부 텍스트 */
-.mypage-card-title {
-  margin: 0 0 12px;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--card-title);
+.mypage-card-header:hover .mypage-card-title {
+  color: var(--primary);
+}
+
+.mypage-card-toggle-icon {
+  font-size: 1.4rem;
+  color: var(--card-content);
+  transition: transform 0.3s ease;
+  display: flex;
+  align-items: center;
+}
+
+.mypage-card-toggle-icon.is-open {
+  transform: rotate(180deg);
 }
 
 .mypage-card-content {
-  margin: 0;
+  margin: 20px 0 0;
   font-size: 15px;
   color: var(--card-content);
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+}
+
+.mypage-card-content.is-closed {
+  margin-top: 0;
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 

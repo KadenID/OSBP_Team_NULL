@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 import uvicorn
 import logging
 import requests
+import os
 
 # 내부 모듈 임포트
 from lms_login import login_to_lms
@@ -271,7 +272,11 @@ def get_lms_assignments(student_id: str = Depends(get_current_user)):
         session.cookies.update(cached_cookies)
     else:
         loaded_id, password = storage.load_user(student_id)
-        session, _ = login_to_lms(loaded_id, password)
+        session, message = login_to_lms(loaded_id, password)
+        if not session:
+            logger.error(f"LMS 로그인 실패 (학번: {student_id}): {message}")
+            raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다. 다시 로그인해주세요.")
+        
         redis_cache.set_lms_session(student_id, session.cookies.get_dict())
     
     try:
@@ -307,6 +312,137 @@ def delete_custom_assignment(assignment_id: str, student_id: str = Depends(get_c
     except Exception as e:
         logger.error(f"Error: {e}")
         raise HTTPException(status_code=500, detail="삭제 실패")
+
+# 사용자 설정(알림 등) API
+
+@app.get("/api/user-settings")
+def get_user_settings(student_id: str = Depends(get_current_user)):
+    try:
+        settings = storage.get_user_settings(student_id)
+        email = storage.get_user_email(student_id)
+        # 프론트엔드 기대치에 맞게 settings 딕셔너리와 email을 합쳐서 반환
+        return {
+            "success": True, 
+            "data": {
+                **settings,
+                "email": email
+            }
+        }
+    except Exception as e:
+        logger.error(f"설정 로드 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail="설정 로드 실패")
+
+@app.post("/api/user-settings")
+def save_user_settings(request_data: dict, student_id: str = Depends(get_current_user)):
+    try:
+        # 이메일이 포함되어 있다면 별도로 업데이트하고 settings에서는 제거 (중복 방지)
+        if "email" in request_data:
+            storage.update_user_email(student_id, request_data["email"])
+            request_data.pop("email", None)
+        
+        # 나머지 설정 저장
+        settings = request_data.get("settings", request_data)
+        storage.save_user_settings(student_id, settings)
+        return {"success": True, "message": "설정 저장 완료"}
+    except Exception as e:
+        logger.error(f"설정 저장 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail="설정 저장 실패")
+
+@app.post("/api/push-subscription")
+def add_push_subscription(subscription: dict, student_id: str = Depends(get_current_user)):
+    try:
+        storage.save_push_subscription(student_id, subscription)
+        return {"success": True}
+    except Exception as e:
+        logger.error(f"푸시 구독 저장 실패: {e}")
+        raise HTTPException(status_code=500, detail="저장 실패")
+
+@app.delete("/api/push-subscription")
+def delete_push_subscription(subscription: dict, student_id: str = Depends(get_current_user)):
+    try:
+        storage.delete_push_subscription(student_id, subscription)
+        return {"success": True}
+    except Exception as e:
+        logger.error(f"푸시 구독 삭제 실패: {e}")
+        raise HTTPException(status_code=500, detail="삭제 실패")
+
+
+@app.get("/api/vapid-public-key")
+def get_vapid_public_key(student_id: str = Depends(get_current_user)):
+    public_key = os.getenv("VAPID_PUBLIC_KEY")
+    if not public_key:
+        logger.error("VAPID_PUBLIC_KEY가 설정되지 않았습니다.")
+        raise HTTPException(status_code=500, detail="서버 VAPID 설정 오류")
+    return {"success": True, "publicKey": public_key}
+
+@app.post("/api/test-notification")
+def send_test_notification(student_id: str = Depends(get_current_user)):
+    try:
+        from notification_service import send_all_notifications
+        title = "테스트 알림"
+        body = "알림 설정이 정상적으로 작동하고 있습니다!"
+        # 테스트 발송이므로 설정을 무시하고 현재 등록된 모든 수단으로 발송 시도
+        results = send_all_notifications(student_id, title, body, ignore_settings=True)
+        
+        # 상세 결과 분석
+        email_status = results.get("email")
+        push_results = results.get("push", [])
+        
+        email_ok = email_status is True
+        push_ok = any(r is True for r in push_results)
+        
+        if not email_ok and not push_ok:
+            msg = "발송 가능한 수단이 없습니다. "
+            if email_status == "MISSING_EMAIL":
+                msg += "이메일을 먼저 등록해주세요. "
+            if not push_results or "MISSING_SUBSCRIPTION" in push_results:
+                msg += "푸시 알림 권한을 허용해주세요."
+            return {"success": False, "message": msg.strip(), "details": results}
+
+        return {"success": True, "message": "테스트 알림이 발송되었습니다.", "details": results}
+    except Exception as e:
+        logger.error(f"테스트 알림 발송 실패: {e}")
+        raise HTTPException(status_code=500, detail="발송 실패")
+
+@app.get("/api/notification-history")
+def get_notification_history(student_id: str = Depends(get_current_user)):
+    try:
+        history = storage.get_notification_history(student_id)
+        return {"success": True, "data": history}
+    except Exception as e:
+        logger.error(f"알림 내역 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail="내역 조회 실패")
+
+@app.delete("/api/notification-history/{history_id}")
+def delete_notification_history(history_id: int, student_id: str = Depends(get_current_user)):
+    try:
+        # storage.py에 개별 삭제 함수 추가 예정
+        success = storage.delete_specific_notification_history(student_id, history_id)
+        return {"success": success}
+    except Exception as e:
+        logger.error(f"알림 내역 삭제 실패: {e}")
+        raise HTTPException(status_code=500, detail="삭제 실패")
+
+from apscheduler.schedulers.background import BackgroundScheduler
+from scheduler import check_and_send_notifications
+
+scheduler = BackgroundScheduler()
+# 1시간마다 마감 기한 체크
+scheduler.add_job(check_and_send_notifications, 'interval', hours=1)
+# 매일 새벽 3시에 30일이 지난 모든 알림 관련 기록(중복방지 및 내역) 통합 삭제
+scheduler.add_job(storage.cleanup_old_notifications, 'cron', hour=3, minute=0, args=[30])
+
+@app.on_event("startup")
+def start_scheduler():
+    if not scheduler.running:
+        scheduler.start()
+        logger.info("마감 알림 스케줄러가 시작되었습니다.")
+
+@app.on_event("shutdown")
+def stop_scheduler():
+    if scheduler.running:
+        scheduler.shutdown()
+        logger.info("스케줄러가 종료되었습니다.")
 
 if __name__ == "__main__":
     uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)

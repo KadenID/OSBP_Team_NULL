@@ -1,31 +1,25 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import AlarmSettings from "./AlarmSettings";
+import AlarmHistory from "./AlarmHistory";
 import "./AlarmSettings.css";
 import "./MyPage.css";
 import UserInfo from "./User-Info";
 import "./User-Info.css";
-import { FiLogOut, FiHome } from "react-icons/fi";
+import { FiLogOut, FiHome, FiChevronDown } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
-const MY_PAGE_CARDS = [
-    {
-        id: "alarm",
-        title: "알림 설정",
-        content: <AlarmSettings />,
-    },
-    {
-        id: "timetable",
-        title: "시간표 입력",
-        content: "사용자 시간표 입력 및 관리 영역",
-    },
-];
+function MyPageCard({ title = "", content = "", defaultOpen = true }) {
+    const [isOpen, setIsOpen] = useState(defaultOpen);
 
-
-function MyPageCard({ title = "", content = "" }) {
     return (
         <section className="mypage-card">
-            <h2 className="mypage-card-title">{title}</h2>
-            {content && <div className="mypage-card-content">{content}</div>}
+            <div className="mypage-card-header" onClick={() => setIsOpen(!isOpen)}>
+                <h2 className="mypage-card-title">{title}</h2>
+                <FiChevronDown className={`mypage-card-toggle-icon ${isOpen ? "is-open" : ""}`} />
+            </div>
+            <div className={`mypage-card-content ${isOpen ? "is-open" : "is-closed"}`}>
+                {content}
+            </div>
         </section>
     );
 }
@@ -39,6 +33,28 @@ function MyPage({ accessToken, onLogout }) {
             navigate("/");
         }
     };
+
+    // MY_PAGE_CARDS를 컴포넌트 내부로 이동시켜 accessToken을 주입할 수 있도록 함
+    const myPageCards = [
+        {
+            id: "alarm",
+            title: "알림 설정",
+            content: <AlarmSettings accessToken={accessToken} />,
+            defaultOpen: true,
+        },
+        {
+            id: "alarm-history",
+            title: "알림 내역",
+            content: <AlarmHistory accessToken={accessToken} />,
+            defaultOpen: false, // 알림 내역은 기본적으로 접어둠
+        },
+        {
+            id: "timetable",
+            title: "시간표 입력",
+            content: "사용자 시간표 입력 및 관리 영역",
+            defaultOpen: false,
+        },
+    ];
 
     return(
         <div className="mypage-container">
@@ -61,11 +77,12 @@ function MyPage({ accessToken, onLogout }) {
             <div className="mypage-grid">
                 <UserInfo accessToken={accessToken} />
                 
-                {MY_PAGE_CARDS.map((card) => (
+                {myPageCards.map((card) => (
                     <MyPageCard
                         key={card.id}
                         title={card.title}
                         content={card.content}
+                        defaultOpen={card.defaultOpen}
                     />
                 ))}
             </div>
