@@ -10,7 +10,7 @@ import requests
 
 # 내부 모듈 임포트
 from lms_login import login_to_lms
-from lms_crawler import crawl_all_assignments, SessionExpiredError
+from lms_crawler import crawl_all_assignments, SessionExpiredError, get_user_profile
 import auth
 import storage
 import redis_cache
@@ -41,6 +41,16 @@ class LoginResponse(BaseModel): # 로그인 응답 스키마
     success: bool
     message: str
     access_token: Optional[str] = None
+
+class UserProfileItem(BaseModel): # 사용자 정보 항목 스키마
+    name: str
+    student_id: str
+    department: str
+
+class UserProfileResponse(BaseModel): # 사용자 정보 API 응답 스키마
+    success: bool
+    message: str
+    data: UserProfileItem
 
 class LMSAssignmentItem(BaseModel): # LMS 과제 항목 스키마
     course_id: str
@@ -224,6 +234,30 @@ def logout(response: Response, student_id: str = Depends(get_current_user)):
     redis_cache.delete_lms_session(student_id)
     response.delete_cookie(key="refresh_token", httponly=True, secure=True, samesite="none", path="/")
     return {"success": True, "message": "로그아웃 성공"}
+
+# 입력: student_id (학번)
+# 기능: 로그인한 사용자의 이름, 학번, 학과 정보 조회
+# 반환: UserProfileResponse 객체
+@app.get("/api/me", response_model=UserProfileResponse)
+def get_my_profile(student_id: str = Depends(get_current_user)):
+    cached_cookies = redis_cache.get_lms_session(student_id)
+
+    session = requests.Session()
+    if cached_cookies:
+        session.cookies.update(cached_cookies)
+    else:
+        loaded_id, password = storage.load_user(student_id)
+        session, _ = login_to_lms(loaded_id, password)
+        if not session:
+            raise HTTPException(status_code=401, detail="LMS 세션을 생성할 수 없습니다.")
+        redis_cache.set_lms_session(student_id, session.cookies.get_dict())
+
+    try:
+        profile = get_user_profile(session, student_id)
+        return UserProfileResponse(success=True, message="성공", data=profile)
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="사용자 정보 로딩 실패")
 
 # 입력: student_id (학번)
 # 기능: LMS 과제 목록 크롤링 및 결과 반환

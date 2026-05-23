@@ -59,7 +59,7 @@ function MyPage({ accessToken, onLogout }) {
 
             {/* 마이페이지 주요 카드 영역 */}
             <div className="mypage-grid">
-                <UserInfo />
+                <UserInfo accessToken={accessToken} />
                 
                 {MY_PAGE_CARDS.map((card) => (
                     <MyPageCard
