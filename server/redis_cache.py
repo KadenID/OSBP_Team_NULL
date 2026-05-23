@@ -109,6 +109,25 @@ def reset_login_attempts(student_id: str):
 # 입력: ip_address (클라이언트 IP), max_attempts (최대 시도 횟수), window_seconds (제한 시간)
 # 기능: IP 주소 기반의 로그인 시도 횟수 제한 확인
 # 반환: 통과 여부 (bool)
+def check_ip_rate_limit(ip_address: str, max_attempts: int = 20, window_seconds: int = 600) -> bool:
+    if not redis_client:
+        return True
+    
+    try:
+        key = f"ip_attempts:{ip_address}"
+        current_attempts = redis_client.incr(key)
+        
+        if current_attempts == 1:
+            redis_client.expire(key, window_seconds)
+        
+        if current_attempts > max_attempts:
+            return False
+            
+        return True
+    except Exception as e:
+        logger.error(f"IP Rate limit 체크 중 오류 발생: {e}")
+        return True
+
 # --- 스케줄러 분산 락 (Multi-worker 중복 방지) ---
 
 def acquire_scheduler_lock(worker_id: str, expire_seconds: int = 120) -> bool:
