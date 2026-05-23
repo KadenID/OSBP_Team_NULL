@@ -1,12 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { API_BASE_URL } from "../../apiConfig";
+import useAssignmentStore from "../../store/useAssignmentStore";
 
-/* 과목 목록 */
-const courses = [
-    { id: "all", name: "전체 과목" },
-    { id: "course1", name: "과목명1" },
-    { id: "course2", name: "과목명2" },
-];
+// VAPID Public Key는 백엔드 API에서 동적으로 가져옵니다.
 
 /* 알림 단위별 최대 입력값 */
 const reminderMaxByUnit ={
@@ -24,10 +20,94 @@ const createReminderId = () => {
 };
 
 function AlarmSettings({ accessToken }) {
+    const { assignment, fetchAssignments } = useAssignmentStore();
+
+    /* 과제 목록이 없으면 불러오기 */
+    useEffect(() => {
+        if (accessToken) {
+            fetchAssignments(accessToken);
+        }
+    }, [accessToken, fetchAssignments]);
+
+    /* 과제 목록에서 고유 과목 추출 */
+    const courses = useMemo(() => {
+        const uniqueSubjects = Array.from(new Set(assignment.map(a => a.subject))).filter(Boolean);
+        return [
+            { id: "all", name: "전체 과목" },
+            ...uniqueSubjects.map(subject => ({ id: subject, name: subject }))
+        ];
+    }, [assignment]);
+
     /* 전체 알림 상태 */
     const [isAlarmEnabled, setIsAlarmEnabled] = useState(true);
     const [saveMessage, setSaveMessage] = useState("");
     const [isSaving, setIsSaving] = useState(false);
+
+    // VAPID 키 변환 도우미 함수
+    const urlBase64ToUint8Array = (base64String) => {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+    };
+
+    // 푸시 구독 함수
+    const subscribeToPush = async () => {
+        try {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                console.warn("이 브라우저는 푸시 알림을 지원하지 않습니다.");
+                return;
+            }
+
+            // 1. 서버에서 VAPID Public Key 가져오기
+            const keyResponse = await fetch(`${API_BASE_URL}/api/vapid-public-key`, {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            const keyResult = await keyResponse.json();
+            if (!keyResult.success || !keyResult.publicKey) {
+                throw new Error("VAPID 키를 가져올 수 없습니다.");
+            }
+
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            console.log("서비스 워커 등록 완료:", registration);
+
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                console.warn("알림 권한이 거부되었습니다.");
+                return;
+            }
+
+            const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(keyResult.publicKey)
+            });
+
+            console.log("푸시 구독 성공:", subscription);
+
+            // 서버에 구독 정보 전송
+            await fetch(`${API_BASE_URL}/api/push-subscription`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify(subscription),
+            });
+
+        } catch (error) {
+            console.error("푸시 구독 중 오류 발생:", error);
+        }
+    };
+
+    // 알림 토글 핸들러
+    const handleAlarmToggle = async (e) => {
+        const checked = e.target.checked;
+        setIsAlarmEnabled(checked);
+        
+        if (checked) {
+            await subscribeToPush();
+        }
+    };
     
     /* 과목별 알림 추가 상태 */
     const [selectedCourseId, setSelectedCourseId] = useState("all");
@@ -187,7 +267,7 @@ function AlarmSettings({ accessToken }) {
                     <input
                         type="checkbox"
                         checked={isAlarmEnabled}
-                        onChange={(e) => setIsAlarmEnabled(e.target.checked)}
+                        onChange={handleAlarmToggle}
                     />
                     <span className="alarm-slider"></span>
                 </label>

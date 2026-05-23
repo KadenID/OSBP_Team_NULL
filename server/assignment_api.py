@@ -318,6 +318,14 @@ def save_push_subscription(subscription: dict, student_id: str = Depends(get_cur
         logger.error(f"구독 정보 저장 중 오류 발생: {e}")
         raise HTTPException(status_code=500, detail="저장 실패")
 
+@app.get("/api/vapid-public-key")
+def get_vapid_public_key(student_id: str = Depends(get_current_user)):
+    public_key = os.getenv("VAPID_PUBLIC_KEY")
+    if not public_key:
+        logger.error("VAPID_PUBLIC_KEY가 설정되지 않았습니다.")
+        raise HTTPException(status_code=500, detail="서버 VAPID 설정 오류")
+    return {"success": True, "publicKey": public_key}
+
 # --- 스케줄러 설정 ---
 # 주의: 다중 워커(workers > 1) 환경에서는 스케줄러가 중복 실행될 수 있습니다.
 # 실운영 환경에서는 전용 스케줄러 프로세스나 락(Lock) 메커니즘 사용이 권장됩니다.

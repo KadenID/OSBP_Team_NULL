@@ -56,14 +56,9 @@ def send_push_notification(subscription_info, title, body, url=None):
 
     try:
         data = {
-            "notification": {
-                "title": title,
-                "body": body,
-                "icon": "/logo192.png", # 프론트엔드 아이콘 경로
-                "data": {
-                    "url": url or "https://osbp-team-null.vercel.app/assignments"
-                }
-            }
+            "title": title,
+            "body": body,
+            "url": url or "/"
         }
 
         webpush(
@@ -75,8 +70,11 @@ def send_push_notification(subscription_info, title, body, url=None):
         logger.info("브라우저 푸시 발송 성공")
         return True
     except WebPushException as ex:
+        # 410 Gone 또는 404 Not Found 에러는 구독이 만료되었거나 삭제되었음을 의미
+        if ex.response is not None and ex.response.status_code in [404, 410]:
+            logger.info("만료된 푸시 구독 발견")
+            return "EXPIRED"
         logger.error(f"푸시 발송 실패: {ex}")
-        # 만약 구독이 만료되었거나 유효하지 않으면 나중에 DB에서 삭제하는 로직이 필요할 수 있음
         return False
     except Exception as e:
         logger.error(f"푸시 발송 중 알 수 없는 오류: {e}")
@@ -91,12 +89,20 @@ def send_all_notifications(student_id, title, body, url=None):
     user_email = storage.get_user_email(student_id)
     settings = storage.get_user_settings(student_id)
     
-    # 설정에서 이메일 알림이 켜져 있는지 확인 (기본값 True라고 가정)
-    if user_email and settings.get("emailAlerts", True):
+    # 설정에서 이메일 알림이 켜져 있는지 확인 (기본값 True)
+    if user_email and settings.get("isAlarmEnabled", True):
         send_email_notification(user_email, title, body)
     
     # 브라우저 푸시 발송
-    if settings.get("browserAlerts", True):
+    if settings.get("isAlarmEnabled", True):
         subscriptions = storage.get_push_subscriptions(student_id)
-        for sub in subscriptions:
-            send_push_notification(sub, title, body, url)
+        for sub_json in subscriptions:
+            result = send_push_notification(sub_json, title, body, url)
+            if result == "EXPIRED":
+                # 만료된 구독 정보 삭제
+                try:
+                    sub_dict = json.loads(sub_json) if isinstance(sub_json, str) else sub_json
+                    storage.delete_push_subscription(student_id, sub_dict)
+                    logger.info(f"사용자 {student_id}의 만료된 구독 정보를 삭제했습니다.")
+                except Exception as e:
+                    logger.error(f"만료 구독 정보 삭제 중 오류: {e}")
