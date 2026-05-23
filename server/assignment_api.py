@@ -356,9 +356,15 @@ def send_test_notification(student_id: str = Depends(get_current_user)):
         logger.error(f"테스트 알림 발송 실패: {e}")
         raise HTTPException(status_code=500, detail="발송 실패")
 
-# --- 스케줄러 설정 ---
-# 주의: 다중 워커(workers > 1) 환경에서는 스케줄러가 중복 실행될 수 있습니다.
-# 실운영 환경에서는 전용 스케줄러 프로세스나 락(Lock) 메커니즘 사용이 권장됩니다.
+@app.get("/api/notification-history")
+def get_notification_history(student_id: str = Depends(get_current_user)):
+    try:
+        history = storage.get_notification_history(student_id)
+        return {"success": True, "data": history}
+    except Exception as e:
+        logger.error(f"알림 내역 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail="내역 조회 실패")
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from scheduler import check_and_send_notifications
 

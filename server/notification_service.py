@@ -111,38 +111,61 @@ def send_all_notifications(student_id, title, body, url=None, ignore_settings=Fa
     settings = storage.get_user_settings(student_id)
     results = {"email": None, "push": []}
     
-    # 이메일 처리
-    email_enabled = settings.get("emailAlerts", True) if not ignore_settings else True
-    if email_enabled:
-        results["email"] = send_email_notification(user_email, title, body) if user_email else "MISSING_EMAIL"
-    
-    # 푸시 처리 (병렬)
-    push_enabled = settings.get("browserAlerts", True) if not ignore_settings else True
-    if push_enabled:
-        subscriptions = storage.get_push_subscriptions(student_id)
-        if not subscriptions:
-            logger.warning(f"사용자 {student_id}의 구독 정보가 없습니다.")
-            results["push"].append("MISSING_SUBSCRIPTION")
-        else:
-            # 중복 제거
-            unique_subs = {}
-            for sub in subscriptions:
-                try:
-                    s_dict = json.loads(sub) if isinstance(sub, str) else sub
-                    endpoint = s_dict.get("endpoint")
-                    if endpoint:
-                        unique_subs[endpoint] = s_dict
-                except:
-                    continue
-            
-            final_subs = list(unique_subs.values())
-            logger.info(f"사용자 {student_id}에게 푸시 발송 시도 (구독 수: {len(final_subs)})")
-            
-            with ThreadPoolExecutor(max_workers=5) as executor:
-                futures = {executor.submit(send_push_notification, sub, title, body, url): sub for sub in final_subs}
-                for future in as_completed(futures):
-                    res = future.result()
-                    if res == "EXPIRED":
-                        storage.delete_push_subscription(student_id, futures[future])
+    # 병렬 처리를 위한 Executor (이메일 1개 + 푸시 N개를 동시에 처리)
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = []
+
+        # 이메일 처리 예약
+        email_enabled = settings.get("emailAlerts", True) if not ignore_settings else True
+        if email_enabled and user_email:
+            futures.append(executor.submit(send_email_notification, user_email, title, body))
+        elif email_enabled and not user_email:
+            results["email"] = "MISSING_EMAIL"
+        
+        # 푸시 처리 예약
+        push_enabled = settings.get("browserAlerts", True) if not ignore_settings else True
+        final_subs = []
+        if push_enabled:
+            subscriptions = storage.get_push_subscriptions(student_id)
+            if not subscriptions:
+                results["push"].append("MISSING_SUBSCRIPTION")
+            else:
+                # 중복 제거
+                unique_subs = {}
+                for sub in subscriptions:
+                    try:
+                        s_dict = json.loads(sub) if isinstance(sub, str) else sub
+                        endpoint = s_dict.get("endpoint")
+                        if endpoint:
+                            unique_subs[endpoint] = s_dict
+                    except:
+                        continue
+                final_subs = list(unique_subs.values())
+                
+                for sub in final_subs:
+                    futures.append(executor.submit(send_push_notification, sub, title, body, url))
+
+        # 결과 수집 및 이력 저장
+        email_sent = False
+        push_sent = False
+        
+        for future in as_completed(futures):
+            try:
+                res = future.result()
+                if futures.index(future) == 0 and email_enabled and user_email:
+                    results["email"] = res
+                    if res is True: email_sent = True
+                else:
                     results["push"].append(res)
+                    if res is True: push_sent = True
+            except Exception as e:
+                logger.error(f"비동기 발송 중 예외 발생: {e}")
+
+        # 통합 이력 저장 (하나라도 성공했다면 기록)
+        if email_sent or push_sent:
+            channels = []
+            if email_sent: channels.append("이메일")
+            if push_sent: channels.append("브라우저 푸시")
+            storage.add_notification_history(student_id, title, body, ", ".join(channels))
+
     return results

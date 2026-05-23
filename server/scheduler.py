@@ -33,7 +33,7 @@ def check_user_logic(student_id, now):
     """실제 개별 사용자의 알림 체크 및 발송 로직"""
     settings = storage.get_user_settings(student_id)
     
-    # 1. 알림 활성화 여부 체크 (이메일 혹은 브라우저 중 하나라도 켜져 있어야 함)
+    # 알림 활성화 여부 체크 (이메일 혹은 브라우저 중 하나라도 켜져 있어야 함)
     email_enabled = settings.get("emailAlerts", False)
     browser_enabled = settings.get("browserAlerts", False)
     
@@ -154,7 +154,19 @@ def process_user_notification_wrapper(student_id, now):
         logger.error(f"사용자 {student_id} 처리 중 오류 발생: {e}", exc_info=True)
 
 def check_and_send_notifications():
-    logger.info("마감 알림 체크 스케줄러 실행 중...")
+    """전체 사용자를 대상으로 알림 체크를 수행하는 엔트리 포인트 (Redis 락 적용)"""
+    import os
+    
+    # 워커 식별자 (프로세스 ID 포함)
+    worker_id = f"worker_{os.getpid()}"
+    
+    # 스케줄러 주기가 1시간이므로 락 만료 시간은 55분 정도로 길게 설정하여
+    # 해당 주기 동안 한 명의 워커만 실행되도록 보장
+    if not redis_cache.acquire_scheduler_lock(worker_id, expire_seconds=3300):
+        logger.debug(f"[{worker_id}] 다른 워커가 이미 스케줄러를 실행 중이거나 실행했습니다. 스킵합니다.")
+        return
+
+    logger.info(f"[{worker_id}] 마감 알림 체크 스케줄러 실행 중...")
     
     student_ids = storage.get_all_student_ids()
     now = datetime.now(timezone.utc)

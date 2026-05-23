@@ -53,13 +53,76 @@ function AlarmSettings({ accessToken }) {
         }
     }, [accessToken, fetchAssignments]);
 
+    // 과목명 정렬 기준: 한글 시작 > 영어 시작 > 기타 (사전순)
+    const sortCourseNames = useCallback((a, b) => {
+        if (!a) return 1;
+        if (!b) return -1;
+
+        // 시작 문자가 해당 언어권인지 판별
+        const isKoreanStart = (s) => /^[가-힣]/.test(s);
+        const isEnglishStart = (s) => /^[a-zA-Z]/.test(s);
+        
+        const aKo = isKoreanStart(a);
+        const bKo = isKoreanStart(b);
+        
+        // 1. 한글로 시작하는 과목 우선
+        if (aKo && !bKo) return -1;
+        if (!aKo && bKo) return 1;
+        
+        const aEn = isEnglishStart(a);
+        const bEn = isEnglishStart(b);
+        
+        // 2. 영어로 시작하는 과목 다음
+        if (aEn && !bEn) return -1;
+        if (!aEn && bEn) return 1;
+        
+        // 3. 같은 카테고리 내에서는 사전순 (가나다, ABC)
+        return String(a).localeCompare(String(b), 'ko', { sensitivity: 'base' });
+    }, []);
+
     const courses = useMemo(() => {
+        // assignment가 없을 경우 빈 배열 반환
+        if (!assignment || !Array.isArray(assignment)) {
+            return [{ id: "all", name: "전체 과목" }];
+        }
         const uniqueSubjects = Array.from(new Set(assignment.map(a => a.subject))).filter(Boolean);
+        const sortedSubjects = uniqueSubjects.sort(sortCourseNames);
+
         return [
             { id: "all", name: "전체 과목" },
-            ...uniqueSubjects.map(subject => ({ id: subject, name: subject }))
+            ...sortedSubjects.map(subject => ({ id: subject, name: subject }))
         ];
-    }, [assignment]);
+    }, [assignment, sortCourseNames]);
+
+    const getCourseName = useCallback((courseId) => {
+        const course = courses.find((c) => c.id === courseId);
+        return course ? course.name : "알 수 없는 과목";
+    }, [courses]);
+
+    // 정렬된 알림 목록
+    const sortedCourseReminders = useMemo(() => {
+        if (!courseReminders || !Array.isArray(courseReminders)) return [];
+        
+        return [...courseReminders].sort((a, b) => {
+            if (a.courseId === "all" && b.courseId !== "all") return -1;
+            if (a.courseId !== "all" && b.courseId === "all") return 1;
+            
+            const nameA = getCourseName(a.courseId);
+            const nameB = getCourseName(b.courseId);
+            
+            const nameComp = sortCourseNames(nameA, nameB);
+            if (nameComp !== 0) return nameComp;
+            
+            const getMins = (r) => {
+                const val = Number(r.value);
+                if (r.unit === 'minute') return val;
+                if (r.unit === 'hour') return val * 60;
+                if (r.unit === 'day') return val * 1440;
+                return 0;
+            };
+            return getMins(a) - getMins(b);
+        });
+    }, [courseReminders, getCourseName, sortCourseNames]);
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -274,11 +337,6 @@ function AlarmSettings({ accessToken }) {
         setCourseReminders((prev) => prev.filter((r) => r.id !== reminderId));
     };
 
-    const getCourseName = (courseId) => {
-        const course = courses.find((c) => c.id === courseId);
-        return course ? course.name : "알 수 없는 과목";
-    };
-
     useEffect(() => {
         if (!saveMessage || isSaving) return;
         const timerId = setTimeout(() => setSaveMessage(""), 3000);
@@ -489,10 +547,10 @@ function AlarmSettings({ accessToken }) {
                     </div>
 
                     <div className="alarm-course-list">
-                        {courseReminders.length === 0 ? (
+                        {sortedCourseReminders.length === 0 ? (
                             <p className="alarm-empty-text">설정된 알림이 없습니다.</p>
                         ) : (
-                            courseReminders.map((reminder) => (
+                            sortedCourseReminders.map((reminder) => (
                                 <div className="alarm-course-item" key={reminder.id}>
                                     <span className="alarm-course-name">{getCourseName(reminder.courseId)}</span>
                                     <div className="alarm-course-info">

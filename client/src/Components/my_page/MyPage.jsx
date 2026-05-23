@@ -1,17 +1,25 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import AlarmSettings from "./AlarmSettings";
+import AlarmHistory from "./AlarmHistory";
 import "./AlarmSettings.css";
 import "./MyPage.css";
 import UserInfo from "./User-Info";
 import "./User-Info.css";
-import { FiLogOut, FiHome } from "react-icons/fi";
+import { FiLogOut, FiHome, FiChevronDown } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
-function MyPageCard({ title = "", content = "" }) {
+function MyPageCard({ title = "", content = "", defaultOpen = true }) {
+    const [isOpen, setIsOpen] = useState(defaultOpen);
+
     return (
         <section className="mypage-card">
-            <h2 className="mypage-card-title">{title}</h2>
-            {content && <div className="mypage-card-content">{content}</div>}
+            <div className="mypage-card-header" onClick={() => setIsOpen(!isOpen)}>
+                <h2 className="mypage-card-title">{title}</h2>
+                <FiChevronDown className={`mypage-card-toggle-icon ${isOpen ? "is-open" : ""}`} />
+            </div>
+            <div className={`mypage-card-content ${isOpen ? "is-open" : "is-closed"}`}>
+                {content}
+            </div>
         </section>
     );
 }
@@ -32,11 +40,19 @@ function MyPage({ accessToken, onLogout }) {
             id: "alarm",
             title: "알림 설정",
             content: <AlarmSettings accessToken={accessToken} />,
+            defaultOpen: true,
+        },
+        {
+            id: "alarm-history",
+            title: "알림 내역",
+            content: <AlarmHistory accessToken={accessToken} />,
+            defaultOpen: false, // 알림 내역은 기본적으로 접어둠
         },
         {
             id: "timetable",
             title: "시간표 입력",
             content: "사용자 시간표 입력 및 관리 영역",
+            defaultOpen: false,
         },
     ];
 
@@ -66,6 +82,7 @@ function MyPage({ accessToken, onLogout }) {
                         key={card.id}
                         title={card.title}
                         content={card.content}
+                        defaultOpen={card.defaultOpen}
                     />
                 ))}
             </div>
