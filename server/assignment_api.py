@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 import uvicorn
 import logging
 import requests
+import os
 
 # 내부 모듈 임포트
 from lms_login import login_to_lms
@@ -325,6 +326,18 @@ def get_vapid_public_key(student_id: str = Depends(get_current_user)):
         logger.error("VAPID_PUBLIC_KEY가 설정되지 않았습니다.")
         raise HTTPException(status_code=500, detail="서버 VAPID 설정 오류")
     return {"success": True, "publicKey": public_key}
+
+@app.post("/api/test-notification")
+def send_test_notification(student_id: str = Depends(get_current_user)):
+    try:
+        from notification_service import send_all_notifications
+        title = "테스트 알림"
+        body = "알림 설정이 정상적으로 작동하고 있습니다!"
+        send_all_notifications(student_id, title, body)
+        return {"success": True, "message": "테스트 알림이 발송되었습니다."}
+    except Exception as e:
+        logger.error(f"테스트 알림 발송 실패: {e}")
+        raise HTTPException(status_code=500, detail="발송 실패")
 
 # --- 스케줄러 설정 ---
 # 주의: 다중 워커(workers > 1) 환경에서는 스케줄러가 중복 실행될 수 있습니다.

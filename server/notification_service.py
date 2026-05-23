@@ -85,21 +85,22 @@ def send_push_notification(subscription_info, title, body, url=None):
 def send_all_notifications(student_id, title, body, url=None):
     import storage
     
-    # 이메일 발송
+    # 사용자 설정 로드
     user_email = storage.get_user_email(student_id)
     settings = storage.get_user_settings(student_id)
     
-    # 설정에서 이메일 알림이 켜져 있는지 확인 (기본값 True)
-    if user_email and settings.get("isAlarmEnabled", True):
+    # 이메일 발송 여부 체크
+    email_enabled = settings.get("emailAlerts", True)
+    if email_enabled and user_email:
         send_email_notification(user_email, title, body)
     
-    # 브라우저 푸시 발송
-    if settings.get("isAlarmEnabled", True):
+    # 브라우저 푸시 발송 여부 체크
+    push_enabled = settings.get("browserAlerts", True)
+    if push_enabled:
         subscriptions = storage.get_push_subscriptions(student_id)
         for sub_json in subscriptions:
             result = send_push_notification(sub_json, title, body, url)
             if result == "EXPIRED":
-                # 만료된 구독 정보 삭제
                 try:
                     sub_dict = json.loads(sub_json) if isinstance(sub_json, str) else sub_json
                     storage.delete_push_subscription(student_id, sub_dict)
