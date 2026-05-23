@@ -389,20 +389,6 @@
   color: #fff;
 }
 
-[data-theme='dark'] .time-column {
-  scrollbar-color: var(--border) transparent;
-}
-
-[data-theme='dark'] .time-column::-webkit-scrollbar-thumb {
-  background: var(--border);
-}
-
-[data-theme='dark'] .deadline-control,
-[data-theme='dark'] .time-picker-panel {
-  border-color: var(--border-strong);
-  background: var(--bg);
-}
-
 .add-submit-btn {
   height: 42px;
   padding: 0 15px;
