@@ -274,13 +274,20 @@ def delete_custom_assignment(assignment_id: str, student_id: str = Depends(get_c
         logger.error(f"Error: {e}")
         raise HTTPException(status_code=500, detail="삭제 실패")
 
-# --- 사용자 설정(알림 등) API ---
+# 사용자 설정(알림 등) API
 
 @app.get("/api/user-settings")
 def get_user_settings(student_id: str = Depends(get_current_user)):
     try:
         settings = storage.get_user_settings(student_id)
-        return {"success": True, "data": settings}
+        email = storage.get_user_email(student_id)
+        return {
+            "success": True, 
+            "data": {
+                "settings": settings,
+                "email": email
+            }
+        }
     except Exception as e:
         logger.error(f"설정 로드 중 오류 발생: {e}")
         raise HTTPException(status_code=500, detail="설정 로드 실패")
@@ -288,11 +295,48 @@ def get_user_settings(student_id: str = Depends(get_current_user)):
 @app.post("/api/user-settings")
 def save_user_settings(request_data: dict, student_id: str = Depends(get_current_user)):
     try:
-        storage.save_user_settings(student_id, request_data)
+        # 이메일이 포함되어 있다면 별도로 업데이트
+        if "email" in request_data:
+            storage.update_user_email(student_id, request_data["email"])
+        
+        # 나머지 설정 저장
+        settings = request_data.get("settings", request_data)
+        storage.save_user_settings(student_id, settings)
         return {"success": True, "message": "설정 저장 완료"}
     except Exception as e:
         logger.error(f"설정 저장 중 오류 발생: {e}")
         raise HTTPException(status_code=500, detail="설정 저장 실패")
+
+@app.post("/api/push-subscription")
+def save_push_subscription(subscription: dict, student_id: str = Depends(get_current_user)):
+    try:
+        storage.save_push_subscription(student_id, subscription)
+        return {"success": True, "message": "구독 정보 저장 완료"}
+    except Exception as e:
+        logger.error(f"구독 정보 저장 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail="저장 실패")
+
+# 스케줄러 설정
+from apscheduler.schedulers.background import BackgroundScheduler
+from scheduler import check_and_send_notifications
+
+scheduler = BackgroundScheduler()
+# 1시간마다 마감 기한 체크
+scheduler.add_job(check_and_send_notifications, 'interval', hours=1)
+# 매일 새벽 3시에 30일이 지난 알림 기록 삭제
+scheduler.add_job(storage.cleanup_old_notifications, 'cron', hour=3, minute=0)
+
+@app.on_event("startup")
+def start_scheduler():
+    if not scheduler.running:
+        scheduler.start()
+        logger.info("마감 알림 스케줄러가 시작되었습니다.")
+
+@app.on_event("shutdown")
+def stop_scheduler():
+    if scheduler.running:
+        scheduler.shutdown()
+        logger.info("스케줄러가 종료되었습니다.")
 
 if __name__ == "__main__":
     uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)

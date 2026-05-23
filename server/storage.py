@@ -25,8 +25,8 @@ if not DATABASE_URL:
 
 # 전역 커넥션 풀
 try:
-    connection_pool = pool.ThreadedConnectionPool(1, 10, DATABASE_URL) # DB 커넥션 풀
-    logger.info("데이터베이스 커넥션 풀이 생성되었습니다.")
+    connection_pool = pool.ThreadedConnectionPool(1, 30, DATABASE_URL) 
+    logger.info("데이터베이스 커넥션 풀이 생성되었습니다. (Max: 30)")
 except Exception as e:
     logger.error(f"커넥션 풀 생성 실패: {e}")
     raise
@@ -55,6 +55,10 @@ def init_db():
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """)
+                # 사용자 테이블 - email 컬럼 추가
+                cur.execute("""
+                    ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
+                """)
                 # 리프레시 토큰 테이블
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS refresh_tokens (
@@ -76,12 +80,34 @@ def init_db():
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """)
-                # 사용자 설정(알림 등) 테이블 추가
+                # 사용자 설정(알림 등) 테이블
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS user_settings (
                         student_id VARCHAR(20) PRIMARY KEY REFERENCES users(student_id) ON DELETE CASCADE,
                         settings JSONB DEFAULT '{}'::jsonb,
                         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """)
+                # 브라우저 푸시 구독 정보 테이블
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS push_subscriptions (
+                        id SERIAL PRIMARY KEY,
+                        student_id VARCHAR(20) REFERENCES users(student_id) ON DELETE CASCADE,
+                        subscription_json JSONB NOT NULL,
+                        browser_info TEXT,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE(student_id, subscription_json)
+                    );
+                """)
+                # 알림 발송 기록 테이블 (중복 방지)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS sent_notifications (
+                        id SERIAL PRIMARY KEY,
+                        student_id VARCHAR(20) REFERENCES users(student_id) ON DELETE CASCADE,
+                        assignment_identifier TEXT NOT NULL,
+                        alert_type TEXT NOT NULL,
+                        sent_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE(student_id, assignment_identifier, alert_type)
                     );
                 """)
             conn.commit()
@@ -91,9 +117,118 @@ def init_db():
             logger.error(f"데이터베이스 초기화 중 오류 발생: {e}")
             raise
 
-# ... (기존 코드 유지) ...
+# 중복 알림 방지 로직
 
-# --- 사용자 설정 CRUD ---
+def is_notification_sent(student_id, assignment_identifier, alert_type):
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                sql = "SELECT 1 FROM sent_notifications WHERE student_id = %s AND assignment_identifier = %s AND alert_type = %s;"
+                cur.execute(sql, (student_id, assignment_identifier, alert_type))
+                return cur.fetchone() is not None
+        except Exception as e:
+            logger.error(f"알림 기록 조회 중 오류 발생: {e}")
+            return False
+
+def record_notification_sent(student_id, assignment_identifier, alert_type):
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                sql = """
+                INSERT INTO sent_notifications (student_id, assignment_identifier, alert_type)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (student_id, assignment_identifier, alert_type) DO NOTHING;
+                """
+                cur.execute(sql, (student_id, assignment_identifier, alert_type))
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"알림 기록 저장 중 오류 발생: {e}")
+            raise
+
+# 모든 사용자 목록 조회 (스케줄러용)
+
+def get_all_student_ids():
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT student_id FROM users;")
+                return [row[0] for row in cur.fetchall()]
+        except Exception as e:
+            logger.error(f"전체 사용자 조회 중 오류 발생: {e}")
+            return []
+
+# 사용자 정보 추가 업데이트
+
+def update_user_email(student_id, email):
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                sql = "UPDATE users SET email = %s WHERE student_id = %s;"
+                cur.execute(sql, (email, student_id))
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"이메일 업데이트 중 오류 발생: {e}")
+            raise
+
+def get_user_email(student_id):
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                sql = "SELECT email FROM users WHERE student_id = %s;"
+                cur.execute(sql, (student_id,))
+                result = cur.fetchone()
+                return result[0] if result else None
+        except Exception as e:
+            logger.error(f"이메일 조회 중 오류 발생: {e}")
+            raise
+
+# 푸시 구독 정보 관리
+
+def save_push_subscription(student_id, subscription_json, browser_info=None):
+    import json
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                sql = """
+                INSERT INTO push_subscriptions (student_id, subscription_json, browser_info)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (student_id, subscription_json) DO NOTHING;
+                """
+                cur.execute(sql, (student_id, json.dumps(subscription_json), browser_info))
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"푸시 구독 정보 저장 중 오류 발생: {e}")
+            raise
+
+def get_push_subscriptions(student_id):
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                sql = "SELECT subscription_json FROM push_subscriptions WHERE student_id = %s;"
+                cur.execute(sql, (student_id,))
+                rows = cur.fetchall()
+                return [row[0] for row in rows]
+        except Exception as e:
+            logger.error(f"푸시 구독 정보 조회 중 오류 발생: {e}")
+            raise
+
+def delete_push_subscription(student_id, subscription_json):
+    import json
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                sql = "DELETE FROM push_subscriptions WHERE student_id = %s AND subscription_json = %s;"
+                cur.execute(sql, (student_id, json.dumps(subscription_json)))
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"푸시 구독 정보 삭제 중 오류 발생: {e}")
+            raise
+
+# 사용자 설정 CRUD
 
 def save_user_settings(student_id, settings):
     import json
@@ -220,7 +355,7 @@ def delete_refresh_token(student_id):
             logger.error(f"리프레시 토큰 삭제 중 오류 발생 (student_id: {student_id}): {e}")
             raise
 
-# --- 커스텀 과제 CRUD ---
+# 커스텀 과제 CRUD
 
 # 입력: student_id (학번), assignment_data (딕셔너리)
 # 기능: 커스텀 과제를 DB에 저장하거나 수정
