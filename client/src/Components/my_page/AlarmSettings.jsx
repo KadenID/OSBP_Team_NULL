@@ -21,8 +21,10 @@ function AlarmSettings({ accessToken }) {
 
     /* --- 상태 선언 --- */
     const [email, setEmail] = useState("");
-    const [emailAlerts, setEmailAlerts] = useState(true);
-    const [browserAlerts, setBrowserAlerts] = useState(true);
+    const [tempEmail, setTempEmail] = useState("");
+    const [isEditingEmail, setIsEditingEmail] = useState(false);
+    const [emailAlerts, setEmailAlerts] = useState(false);
+    const [browserAlerts, setBrowserAlerts] = useState(false);
     const [courseReminders, setCourseReminders] = useState([]);
     
     const [permissionStatus, setPermissionStatus] = useState(
@@ -69,6 +71,7 @@ function AlarmSettings({ accessToken }) {
                 const result = await response.json();
                 if (result.success && result.data) {
                     setEmail(result.data.email || "");
+                    setTempEmail(result.data.email || "");
                     setEmailAlerts(result.data.emailAlerts ?? true);
                     setBrowserAlerts(result.data.browserAlerts ?? true);
                     setCourseReminders(result.data.courseReminders ?? []);
@@ -114,7 +117,14 @@ function AlarmSettings({ accessToken }) {
 
             const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
             
-            // 서비스 워커 업데이트 체크
+            // 기존 구독이 있다면 강제로 해제 (구독 정보 초기화 및 갱신)
+            const existingSubscription = await registration.pushManager.getSubscription();
+            if (existingSubscription) {
+                await existingSubscription.unsubscribe();
+                console.log("기존 구독 해제 완료 (갱신 준비)");
+            }
+
+            // 서비스 워커 업데이트 강제 실행
             await registration.update();
 
             const permission = await Notification.requestPermission();
@@ -131,15 +141,18 @@ function AlarmSettings({ accessToken }) {
                 applicationServerKey: urlBase64ToUint8Array(keyResult.publicKey)
             });
 
+            // PushSubscription 객체를 JSON으로 변환 (p256dh, auth 키 포함 보장)
+            const subscriptionJSON = subscription.toJSON();
+
             await fetch(`${API_BASE_URL}/api/push-subscription`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${accessToken}`
                 },
-                body: JSON.stringify(subscription),
+                body: JSON.stringify(subscriptionJSON),
             });
-            console.log("푸시 구독 완료");
+            console.log("푸시 신규 구독 및 서버 저장 완료:", subscriptionJSON);
         } catch (error) {
             console.error("푸시 구독 오류:", error);
             alert("알림 구독 중 오류가 발생했습니다.");
@@ -178,6 +191,15 @@ function AlarmSettings({ accessToken }) {
 
     /* --- 이벤트 핸들러 --- */
 
+    const handleSaveEmail = () => {
+        setEmail(tempEmail);
+        setIsEditingEmail(false);
+        // 이메일이 비어있으면 알림 자동 비활성화
+        if (!tempEmail) {
+            setEmailAlerts(false);
+        }
+    };
+
     const handleTestNotification = async () => {
         if (!accessToken || isTestSending) return;
         setIsTestSending(true);
@@ -192,14 +214,14 @@ function AlarmSettings({ accessToken }) {
             if (result.success) {
                 setTestMessage("발송 완료!");
             } else {
-                setTestMessage("발송 실패");
+                setTestMessage(result.message || "발송 실패");
             }
         } catch (error) {
             setTestMessage("오류 발생");
         } finally {
             setIsTestSending(false);
-            // 1초 후 테스트 메시지 자동 삭제
-            setTimeout(() => setTestMessage(""), 1000);
+            // 메시지가 길어질 수 있으므로 3초 후 자동 삭제
+            setTimeout(() => setTestMessage(""), 3000);
         }
     };
 
@@ -278,28 +300,93 @@ function AlarmSettings({ accessToken }) {
                             <input
                                 type="checkbox"
                                 checked={emailAlerts}
+                                disabled={!email}
                                 onChange={(e) => setEmailAlerts(e.target.checked)}
                             />
-                            <span className="alarm-slider"></span>
+                            <span className="alarm-slider" style={{ opacity: !email ? 0.5 : 1, cursor: !email ? 'not-allowed' : 'pointer' }}></span>
                         </label>
                     </div>
-                    <input
-                        type="email"
-                        className="alarm-select"
-                        style={{ 
-                            width: 'calc(100% - 2px)', 
-                            boxSizing: 'border-box',
-                            padding: '10px 12px', 
-                            marginTop: '4px',
-                            opacity: emailAlerts ? 1 : 0.6,
-                            pointerEvents: emailAlerts ? 'auto' : 'none',
-                            transition: 'all 0.2s ease',
-                            fontSize: '13px'
-                        }}
-                        placeholder="알림을 받을 이메일 주소 입력"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                    />
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
+                        {isEditingEmail ? (
+                            <>
+                                <input
+                                    type="email"
+                                    className="alarm-select"
+                                    style={{ 
+                                        width: '240px',
+                                        height: '40px',
+                                        boxSizing: 'border-box',
+                                        padding: '10px 12px', 
+                                        fontSize: '13px',
+                                        cursor: 'text',
+                                        background: 'var(--card-bg)',
+                                        margin: 0
+                                    }}
+                                    placeholder="알림을 받을 이메일 주소 입력"
+                                    value={tempEmail}
+                                    onChange={(e) => setTempEmail(e.target.value)}
+                                    autoFocus
+                                />
+                                <button 
+                                    type="button" 
+                                    className="add-reminder-button"
+                                    style={{ padding: '0 16px', height: '40px', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    onClick={handleSaveEmail}
+                                >
+                                    저장
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <div 
+                                    className="alarm-select"
+                                    style={{ 
+                                        width: '240px',
+                                        height: '40px',
+                                        boxSizing: 'border-box',
+                                        padding: '10px 12px', 
+                                        fontSize: '13px',
+                                        cursor: 'default',
+                                        background: 'var(--sub-card-bg)',
+                                        color: email ? 'var(--title)' : 'var(--card-content)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        opacity: email ? 1 : 0.7,
+                                        border: '1px solid var(--alarm-input-border)',
+                                        margin: 0
+                                    }}
+                                >
+                                    {email || "등록된 이메일이 없습니다."}
+                                </div>
+                                <button 
+                                    type="button" 
+                                    className="add-reminder-button"
+                                    style={{ 
+                                        padding: '0 16px', 
+                                        height: '40px',
+                                        margin: 0,
+                                        background: 'var(--card-bg)',
+                                        color: 'var(--title)',
+                                        border: '1px solid var(--alarm-input-border)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                    onClick={() => {
+                                        setTempEmail(email);
+                                        setIsEditingEmail(true);
+                                    }}
+                                >
+                                    수정
+                                </button>
+                            </>
+                        )}
+                    </div>
+                    {!email && !isEditingEmail && (
+                        <p style={{ color: '#ff4d4f', fontSize: '0.75rem', marginTop: '4px' }}>
+                            ※ 이메일을 등록해야 알림을 활성화할 수 있습니다.
+                        </p>
+                    )}
                 </div>
 
                 {/* 브라우저 푸시 알림 그룹 */}
@@ -375,8 +462,8 @@ function AlarmSettings({ accessToken }) {
                             ))}
                         </select>
 
-                        <div className="custom-reminder-box">
-                            <span>마감</span>
+                        <div className="custom-reminder-box" style={{ border: 'none', background: 'transparent', padding: '0 10px' }}>
+                            <span style={{ fontSize: '14px', fontWeight: '500' }}>마감</span>
                             <input
                                type="number"
                                min="1"

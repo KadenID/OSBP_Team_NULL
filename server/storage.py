@@ -273,7 +273,11 @@ def get_user_settings(student_id):
                 sql = "SELECT settings FROM user_settings WHERE student_id = %s;"
                 cur.execute(sql, (student_id,))
                 result = cur.fetchone()
-                return result[0] if result else {}
+                return result[0] if result else {
+                    "emailAlerts": False,
+                    "browserAlerts": False,
+                    "courseReminders": []
+                }
         except Exception as e:
             logger.error(f"사용자 설정 조회 중 오류 발생 (student_id: {student_id}): {e}")
             raise
