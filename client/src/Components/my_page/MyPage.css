@@ -38,6 +38,7 @@ body {
   font-size: clamp(24px, 4vw, 34px);
   font-weight: 700;
   color: var(--text-header);
+  flex: 1;
 }
 
 .mypage-subtitle {

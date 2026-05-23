@@ -8,6 +8,21 @@ import "./User-Info.css";
 import { FiLogOut, FiHome, FiChevronDown } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
+import { useTheme } from '../../context/ThemeContext.jsx';
+
+const MY_PAGE_CARDS = [
+    {
+        id: "alarm",
+        title: "알림 설정",
+        content: <AlarmSettings />,
+    },
+    {
+        id: "timetable",
+        title: "시간표 입력",
+        content: "사용자 시간표 입력 및 관리 영역",
+    },
+];
+
 function MyPageCard({ title = "", content = "", defaultOpen = true }) {
     const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -66,7 +81,9 @@ function MyPage({ accessToken, onLogout }) {
                 <header className="mypage-header">
                     <div className="mypage-title-row">
                         <h1 className="mypage-title">마이페이지</h1>
-                    
+                        <button type="button" className="dark-button" onClick={toggleTheme}>
+                            {theme === 'dark' ? '🌙' : '🌞'}
+                        </button>
                         <button type="button" className="main-button" onClick={() => navigate("/main")}>
                             <FiHome className="main-icon" />
                             메인

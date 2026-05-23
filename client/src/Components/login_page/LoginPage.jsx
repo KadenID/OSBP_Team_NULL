@@ -28,16 +28,9 @@ const loginFields = [
     },
 ];
 
-function LoginPage({  onLogin }) {
+function LoginPage({ onLogin }) {
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
-
-    const handleLogout = async () => {
-        if (onLogout) {
-            await onLogout();
-            navigate("/main");
-        }
-    };
 
     // 저장된 아이디가 있으면 로그인 폼 초기값으로 사용
     const [loginForm, setLoginForm] = useState(() => ({
