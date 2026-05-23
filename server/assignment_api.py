@@ -4,6 +4,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime, timedelta, timezone
+from contextlib import asynccontextmanager
+from apscheduler.schedulers.background import BackgroundScheduler
 import uvicorn
 import logging
 import requests
@@ -15,12 +17,32 @@ from lms_crawler import crawl_all_assignments, SessionExpiredError, get_user_pro
 import auth
 import storage
 import redis_cache
+from scheduler import check_and_send_notifications
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="LMS Assignment API") # FastAPI 객체
+# 스케줄러 설정
+scheduler = BackgroundScheduler()
+# 1시간마다 마감 기한 체크
+scheduler.add_job(check_and_send_notifications, 'interval', hours=1)
+# 매일 새벽 3시에 30일이 지난 모든 알림 관련 기록(중복방지 및 내역) 통합 삭제
+scheduler.add_job(storage.cleanup_old_notifications, 'cron', hour=3, minute=0, args=[30])
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: 스케줄러 시작
+    if not scheduler.running:
+        scheduler.start()
+        logger.info("마감 알림 스케줄러가 시작되었습니다.")
+    yield
+    # Shutdown: 스케줄러 종료
+    if scheduler.running:
+        scheduler.shutdown()
+        logger.info("스케줄러가 종료되었습니다.")
+
+app = FastAPI(title="LMS Assignment API", lifespan=lifespan) # FastAPI 객체
 
 # CORS 설정
 app.add_middleware(
@@ -422,27 +444,6 @@ def delete_notification_history(history_id: int, student_id: str = Depends(get_c
     except Exception as e:
         logger.error(f"알림 내역 삭제 실패: {e}")
         raise HTTPException(status_code=500, detail="삭제 실패")
-
-from apscheduler.schedulers.background import BackgroundScheduler
-from scheduler import check_and_send_notifications
-
-scheduler = BackgroundScheduler()
-# 1시간마다 마감 기한 체크
-scheduler.add_job(check_and_send_notifications, 'interval', hours=1)
-# 매일 새벽 3시에 30일이 지난 모든 알림 관련 기록(중복방지 및 내역) 통합 삭제
-scheduler.add_job(storage.cleanup_old_notifications, 'cron', hour=3, minute=0, args=[30])
-
-@app.on_event("startup")
-def start_scheduler():
-    if not scheduler.running:
-        scheduler.start()
-        logger.info("마감 알림 스케줄러가 시작되었습니다.")
-
-@app.on_event("shutdown")
-def stop_scheduler():
-    if scheduler.running:
-        scheduler.shutdown()
-        logger.info("스케줄러가 종료되었습니다.")
 
 if __name__ == "__main__":
     uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)
