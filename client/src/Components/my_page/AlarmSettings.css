@@ -184,53 +184,63 @@
 }
 
 .alarm-course-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 140px 60px; /* 과목명(자유), 시간(고정), 버튼(고정) */
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
-  padding: 16px;
+  padding: 12px 20px;
   background-color: var(--bg-card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  transition: border-color 0.2s ease;
+}
+
+.alarm-course-item:hover {
+  border-color: var(--primary);
 }
 
 .alarm-course-name {
   font-size: 14px;
   font-weight: 700;
   color: var(--text-heading);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* 긴 과목명 처리 */
 }
 
 .alarm-course-info {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  justify-content: center;
+  align-items: center;
 }
 
 .alarm-course-time {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--text-muted);
+  white-space: nowrap;
+  background: none; /* 배경 제거 */
+  border: none; /* 테두리 제거 */
+  padding: 0; /* 패딩 제거 */
 }
 
 .delete-reminder-button {
-  padding: 8px 12px;
-  border: none;
+  padding: 8px 0;
+  width: 100%;
+  border: 1px solid #e5e7eb; /* 연한 회색 테두리 */
   border-radius: 8px;
-  background-color: var(--danger);
-  color: var(--alarm-white);
-  font-size: 13px;
+  background-color: transparent;
+  color: var(--alarm-white); /* 차분한 회색 텍스트 */
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.delete-reminder-button:not(:disabled):hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-.delete-reminder-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-  transform: none;
+.delete-reminder-button:hover {
+  background-color: #fef2f2; /* 아주 연한 레드 배경 */
+  border-color: #fca5a5; /* 연한 레드 테두리 */
+  color: #ef4444; /* 명확한 레드 텍스트 */
 }
 
 /* 저장 버튼 */
