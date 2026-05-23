@@ -4,10 +4,12 @@ import AssignmentTab from "../assignment-tab/AssignmentTab.jsx";
 import NoticeTab from "../notice-tab/NoticeTab.jsx";
 import { useNavigate } from "react-router-dom";
 import { FiHome } from "react-icons/fi";
+import { useTheme } from "../../context/ThemeContext.jsx";
 
-function MainPage({ accessToken, onLogout, theme, toggleTheme }) {
+function MainPage({ accessToken, onLogout }) {
 
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="mainpage">

@@ -6,7 +6,7 @@ import UserInfo from "./User-Info";
 import "./User-Info.css";
 import { FiLogOut, FiHome } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-
+import { useTheme } from '../../context/ThemeContext.jsx';
 const MY_PAGE_CARDS = [
     {
         id: "alarm",
@@ -32,6 +32,7 @@ function MyPageCard({ title = "", content = "" }) {
 
 function MyPage({ accessToken, onLogout }) {
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
     // 저장된 테마가 없으면 시스템 테마를 기준으로 마이페이지 테마 설정
 
     const handleLogout = async () => {

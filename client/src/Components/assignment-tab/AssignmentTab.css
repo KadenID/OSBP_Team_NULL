@@ -32,7 +32,6 @@
   background-color: var(--assignment-yet-bg); 
   border: 1px solid var(--border);
   border-radius: 12px;
-  transition: transform 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
 }
 
@@ -146,12 +145,11 @@
   border-radius: 15px;
   cursor: pointer;
   font-size: 0.85rem;
-  transition: all 0.1s ease;
 }
 
 .tag-container button:hover {
-  background: var(--btn-bg-hover);
-  transform: translateY(-2px);
+   background-color: var(--shadow-hover);
+  transform: translateY(-1px);
 }
 
 .tag-container button.on {

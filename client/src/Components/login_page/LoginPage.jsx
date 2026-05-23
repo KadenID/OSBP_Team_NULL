@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./LoginPage.css";
 import { API_BASE_URL } from "../../apiConfig";
-
+import { useTheme } from '../../context/ThemeContext.jsx';
 const REMEMBERED_STUDENT_ID_KEY = "rememberedStudentId";
 const MAX_LOGIN_INPUT_LENGTH = 20;
 
@@ -28,8 +28,9 @@ const loginFields = [
     },
 ];
 
-function LoginPage({  onLogin, theme, toggleTheme  }) {
+function LoginPage({  onLogin }) {
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
 
     const handleLogout = async () => {
         if (onLogout) {

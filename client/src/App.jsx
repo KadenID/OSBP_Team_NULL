@@ -6,6 +6,7 @@ import MainPage from "./Components/main_page/MainPage";
 import MyPage from "./Components/my_page/MyPage";
 import { API_BASE_URL } from "./apiConfig";
 
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 // 보호된 라우트 컴포넌트: 로그인하지 않은 사용자의 접근을 차단
 const ProtectedRoute = ({ accessToken, children }) => {
   const location = useLocation();
@@ -30,47 +31,6 @@ function App() {
   const [accessToken, setAccessToken] = useState(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const refreshPromise = useRef(null); // 진행 중인 refresh 요청 저장
-
-
-  // 다크모드 테마 관리 로직
-  const getSystemTheme = () => {
-    const systemDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
-      return systemDark ? "dark" : "light";
-  };
-
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("theme") || getSystemTheme();
-  });
-
-  // 테마 상태가 변경될 때마다 저장
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
-
-  // 실시간으로 시스템 테마가 변경되면 브라우저 테마도 자동 연동
-  useEffect(() => {
-    const mediaQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
-    if (!mediaQuery) return;
-
-    const handleSystemThemeChange = (event) => {
-      // 시스템 설정이 바뀌면, 수동 모드를 해제하고 시스템 설정을 강제로 따름
-      localStorage.removeItem("theme"); 
-      const systemTheme = event.matches ? "dark" : "light";
-      setTheme(systemTheme);
-    };
-
-    mediaQuery.addEventListener("change", handleSystemThemeChange);
-    return () => mediaQuery.removeEventListener("change", handleSystemThemeChange);
-  }, []);
-
-  // 테마 스위치 토글 함수
-  const toggleTheme = useCallback(() => {
-    setTheme((prev) => {
-      const nextTheme = prev === "dark" ? "light" : "dark";
-      localStorage.setItem("theme", nextTheme);
-      return nextTheme;
-    });
-  }, []);
 
 
   // 토큰 갱신 함수
@@ -163,16 +123,17 @@ function App() {
   }
 
   return (
+  <ThemeProvider>
     <Router>
       <Routes>
         <Route path="/" element={
           <PublicRoute accessToken={accessToken}>
-            <LoginPage onLogin={setAccessToken} theme={theme} toggleTheme={toggleTheme}/>
+            <LoginPage onLogin={setAccessToken}/>
           </PublicRoute>
         } />
         <Route path="/main" element={
           <ProtectedRoute accessToken={accessToken}>
-            <MainPage accessToken={accessToken} onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            <MainPage accessToken={accessToken} onLogout={handleLogout} />
           </ProtectedRoute>
         } />
         <Route path="/mypage" element={
@@ -184,6 +145,7 @@ function App() {
         <Route path="*" element={<Navigate to="/main" replace />} />
       </Routes>
     </Router>
+  </ThemeProvider>
   );
 }
 

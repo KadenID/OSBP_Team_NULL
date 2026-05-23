@@ -196,6 +196,5 @@ body {
   background-color: var(--bg);
   color: var(--text-color);
   font-family: "Noto Sans CJK KR", "Noto Sans KR", system-ui, sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
  
