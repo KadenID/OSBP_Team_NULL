@@ -34,15 +34,15 @@ app.add_middleware(
 )
 
 class LoginRequest(BaseModel): # 로그인 요청 스키마
-    student_id: str = Field(..., max_length=20)
-    password: str = Field(..., max_length=20)
+    student_id: str = Field(..., min_length=1, max_length=20)
+    password: str = Field(..., min_length=1, max_length=20)
 
 class LoginResponse(BaseModel): # 로그인 응답 스키마
     success: bool
     message: str
     access_token: Optional[str] = None
 
-class AssignmentItem(BaseModel): # 과제 항목 스키마
+class LMSAssignmentItem(BaseModel): # LMS 과제 항목 스키마
     course_id: str
     course_name: str
     assignment_id: str
@@ -51,11 +51,34 @@ class AssignmentItem(BaseModel): # 과제 항목 스키마
     status: str
     url: str
 
-class APIResponse(BaseModel): # 공통 API 응답 스키마
+class CustomAssignmentItem(BaseModel): # 커스텀 과제 항목 스키마
+    id: str
+    subject: str
+    task: str
+    deadline: str
+    isSubmitted: bool = False
+    description: Optional[str] = ""
+    source: str = "user"
+
+class LMSAPIResponse(BaseModel): # LMS API 응답 스키마
     success: bool
     message: str
     total_count: int
-    data: List[AssignmentItem] = []
+    data: List[LMSAssignmentItem] = []
+
+class CustomAPIResponse(BaseModel): # 커스텀 API 응답 스키마
+    success: bool
+    message: str
+    total_count: int
+    data: List[CustomAssignmentItem] = []
+
+class CustomAssignmentRequest(BaseModel):
+    id: Optional[str] = None
+    subject: str = Field(..., min_length=1, max_length=30)
+    task: str = Field(..., min_length=1, max_length=50)
+    deadline: str = Field(..., max_length=50)
+    isSubmitted: bool = False
+    description: Optional[str] = Field(None, max_length=1000)
 
 security = HTTPBearer() # 인증 객체
 
@@ -104,6 +127,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         status_code=422,
         content={"success": False, "message": "입력 데이터 형식이 올바르지 않습니다."}
     )
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "message": "Server is running"}
 
 # 입력: request_data (로그인 정보), response (응답 객체), request (요청 객체)
 # 기능: LMS 로그인 인증 및 JWT 발급
@@ -200,8 +227,8 @@ def logout(response: Response, student_id: str = Depends(get_current_user)):
 
 # 입력: student_id (학번)
 # 기능: LMS 과제 목록 크롤링 및 결과 반환
-# 반환: APIResponse 객체
-@app.get("/api/assignments", response_model=APIResponse)
+# 반환: LMSAPIResponse 객체
+@app.get("/api/assignments", response_model=LMSAPIResponse)
 def get_lms_assignments(student_id: str = Depends(get_current_user)):
     cached_cookies = redis_cache.get_lms_session(student_id)
 
@@ -215,10 +242,37 @@ def get_lms_assignments(student_id: str = Depends(get_current_user)):
     
     try:
         assignments = crawl_all_assignments(session)
-        return APIResponse(success=True, message="성공", total_count=len(assignments), data=assignments)
+        return LMSAPIResponse(success=True, message="성공", total_count=len(assignments), data=assignments)
     except Exception as e:
         logger.error(f"Error: {e}")
         raise HTTPException(status_code=500, detail="데이터 로딩 실패")
+
+@app.get("/api/custom-assignments", response_model=CustomAPIResponse)
+def get_custom_assignments(student_id: str = Depends(get_current_user)):
+    try:
+        assignments = storage.get_custom_assignments(student_id)
+        return CustomAPIResponse(success=True, message="성공", total_count=len(assignments), data=assignments)
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="데이터 로딩 실패")
+
+@app.post("/api/custom-assignments")
+def create_or_update_custom_assignment(request_data: CustomAssignmentRequest, student_id: str = Depends(get_current_user)):
+    try:
+        assignment_id = storage.save_custom_assignment(student_id, request_data.model_dump())
+        return {"success": True, "message": "저장 성공", "id": str(assignment_id)}
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="저장 실패")
+
+@app.delete("/api/custom-assignments/{assignment_id}")
+def delete_custom_assignment(assignment_id: str, student_id: str = Depends(get_current_user)):
+    try:
+        storage.delete_custom_assignment(student_id, assignment_id)
+        return {"success": True, "message": "삭제 성공"}
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="삭제 실패")
 
 if __name__ == "__main__":
     uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)

@@ -149,7 +149,7 @@
     --accent:        #1890ff;
     --accent-hover:  #40a9ff;
  
-    --error:   #ff7b7b;
+     --error:   #ff7b7b;
     --danger:  #ff7b7b;
  
     --btn-bg:       #374155;
@@ -164,12 +164,12 @@
     --card-shadow:       0 8px 24px rgba(0, 0, 0, 0.20);
     --card-shadow-hover: 0 8px 18px rgba(0, 0, 0, 0.35);
  
-    --lms-connected-bg:      rgb(22, 59, 35);
+    --lms-connected-bg:      rgba(34, 197, 94, 0.562);
     --lms-connected-text:    #86efac;
     --lms-disconnected-bg:   rgba(248, 113, 113, 0.20);
     --lms-disconnected-text: #fca5a5;
- 
-    --assignment-expired-bg:     rgba(24, 24, 24, 0.22);
+
+    --assignment-expired-bg:     rgb(24, 24, 24);
     --assignment-expired-border: #838383;
     --assignment-expired-accent: #858585;
  
@@ -177,7 +177,7 @@
     --assignment-yet-border:     #5c2223;
     --assignment-yet-accent:     #ff4d4f;
  
-    --assignment-done-bg:        #00000034;
+    --assignment-done-bg:        #000000;
     --assignment-done-border:    #274916;
     --assignment-done-accent:    #53c71a;
   }

@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import './AssignmentDetail.css';
 
-function AssignmentDetail({ assignment, onClose, updateDescription }) {
+const DESCRIPTION_MAX_LENGTH = 1000;
+
+function AssignmentDetail({ assignment, onClose, updateDescription, accessToken }) {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
+
+  if (!assignment) return null;
 
   // 객체 직접 참조
   const description = assignment.source === 'lms'
     ? "현재 상세 설명을 불러올 수 없습니다.\nLMS 페이지에서 직접 확인해주세요."
     : (assignment.description ?? "");
-
-  if (!assignment) return null;
 
   // 생성 과제 편집
   const handleEditStart = () => {
@@ -21,7 +23,9 @@ function AssignmentDetail({ assignment, onClose, updateDescription }) {
 
   // 생성 과제 저장
   const handleSave = () => {
-    updateDescription(assignment.id, editText);
+    if (editText.length > DESCRIPTION_MAX_LENGTH) return;
+
+    updateDescription(assignment.id, editText, accessToken);
     setIsEditing(false);
   };
 
@@ -65,6 +69,7 @@ function AssignmentDetail({ assignment, onClose, updateDescription }) {
               onChange={(e) => setEditText(e.target.value)}
               placeholder="과제 상세 설명을 입력하세요..."
               autoFocus
+              maxLength={DESCRIPTION_MAX_LENGTH}
             />
             <div className="edit-actions">
               <button className="save-btn" onClick={handleSave}>저장</button>

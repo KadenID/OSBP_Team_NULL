@@ -4,6 +4,25 @@ import './AssignmentTab.css';
 import useAssignmentStore from '../../store/useAssignmentStore';
 import AssignmentDetail from './AssignmentDetail';
 
+const getTodayDateString = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const date = String(today.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${date}`;
+};
+
+
+// 커스텀 과제 마감일 입력 범위 제한
+const MIN_DEADLINE_DATE = "2000-01-01";
+const MAX_DEADLINE_DATE = "2099-12-31";
+const TIME_ERROR_MESSAGE = "마감 시간은 00:00부터 23:59까지 입력할 수 있습니다.";
+
+// 과목 및 과제 입력 범위 제한
+const SUBJECT_MAX_LENGTH = 30;
+const TASK_MAX_LENGTH = 50;
+
 const STATUS = {
   UNSUBMITTED: 'UNSUBMITTED',
   SUBMITTED: 'SUBMITTED',
@@ -20,6 +39,10 @@ const CountdownText = ({ deadlineDate }) => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer); // 언마운트 시 클린업
   }, []);
+
+  if (!deadlineDate || Number.isNaN(deadlineDate.getTime())) {
+    return <span className="dday-text">날짜 오류</span>;
+  }
 
   const diff = deadlineDate - now;
   if (diff <= 0) return <span className="dday-text">기한 종료</span>; // 기한이 지났을 경우 처리
@@ -59,7 +82,10 @@ function AssignmentTab({ accessToken }) {
   
   const [newSubject, setNewSubject] = useState("");
   const [newTask, setNewTask] = useState("");
-  const [newDeadline, setNewDeadline] = useState("");
+  const [newDeadlineDate, setNewDeadlineDate] = useState(getTodayDateString);
+  const [newDeadlineTime, setNewDeadlineTime] = useState("23:59");
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const [activeTags, setActiveTags] = useState([
     STATUS.UNSUBMITTED,
@@ -84,67 +110,188 @@ function AssignmentTab({ accessToken }) {
 
 
   // 과제 추가 로직
+  const formatTimeInput = (value) => {
+    const onlyNumbers = value.replace(/\D/g, "").slice(0, 4);
+
+    if (onlyNumbers.length <= 2) return onlyNumbers;
+
+    return `${onlyNumbers.slice(0, 2)}:${onlyNumbers.slice(2)}`;
+  };
+
+  const handleTimeChange = (e) => {
+    setNewDeadlineTime(formatTimeInput(e.target.value));
+    if (formError) setFormError("");
+  };
+
+  const normalizeTimeInput = (value) => {
+    const onlyNumbers = value.replace(/\D/g, "").slice(0, 4);
+
+    let hour = "";
+    let minute = "";
+
+    if (onlyNumbers.length === 0) {
+      return { value: "23:59", isValid: false };
+    }
+
+    if (onlyNumbers.length <= 2) {
+      hour = onlyNumbers.padStart(2, "0");
+      minute = "00";
+    } else if (onlyNumbers.length === 3) {
+      hour = onlyNumbers.slice(0, 2);
+      minute = `${onlyNumbers.slice(2)}0`;
+    } else {
+      hour = onlyNumbers.slice(0, 2);
+      minute = onlyNumbers.slice(2, 4);
+    }
+
+    const hourNumber = Number(hour);
+    const minuteNumber = Number(minute);
+
+    if (
+      Number.isNaN(hourNumber) ||
+      Number.isNaN(minuteNumber) ||
+      hourNumber > 23 ||
+      minuteNumber > 59
+    ) {
+      return { value: "23:59", isValid: false };
+    }
+
+    return { value: `${hour}:${minute}`, isValid: true };
+  };
+
+  const handleTimeBlur = () => {
+    setNewDeadlineTime((prev) => {
+      const result = normalizeTimeInput(prev);
+
+      if (!result.isValid) {
+        setFormError(TIME_ERROR_MESSAGE);
+      }
+
+      return result.value;
+    });
+  };
+
   const handleAddAssignment = (e) => {
     e.preventDefault();
 
+    const trimmedSubject = newSubject.trim();
+    const trimmedTask = newTask.trim();
+
+    if (!trimmedSubject) {
+      setFormError("과목명을 입력해주세요.");
+      return;
+    }
+
+    if (!trimmedTask) {
+      setFormError("할 일을 입력해주세요.");
+      return;
+    }
+
+    if (trimmedSubject.length > SUBJECT_MAX_LENGTH) {
+      setFormError(`과목명은 ${SUBJECT_MAX_LENGTH}자 이하로 입력해주세요.`);
+      return;
+    }
+
+    if (trimmedTask.length > TASK_MAX_LENGTH) {
+      setFormError(`할 일은 ${TASK_MAX_LENGTH}자 이하로 입력해주세요.`);
+      return;
+    }
+
+    const normalizedDeadlineTime = normalizeTimeInput(newDeadlineTime);
+
+    if (!normalizedDeadlineTime.isValid) {
+      setFormError(TIME_ERROR_MESSAGE);
+      setNewDeadlineTime(normalizedDeadlineTime.value);
+      return;
+    }
+
+    const deadlineValue = `${newDeadlineDate}T${normalizedDeadlineTime.value}:59`;
+    const deadlineDate = new Date(deadlineValue);
+    const minDate = new Date(`${MIN_DEADLINE_DATE}T00:00:00`);
+    const maxDate = new Date(`${MAX_DEADLINE_DATE}T23:59:59`);
+
+    if (Number.isNaN(deadlineDate.getTime())) {
+      setFormError("올바른 마감 날짜를 입력해주세요.");
+      return;
+    }
+
+    if (deadlineDate < minDate || deadlineDate > maxDate) {
+      setFormError("마감 날짜는 2000년 1월 1일부터 2099년 12월 31일까지만 입력할 수 있습니다.");
+      return;
+    }
+
     const newItem = {
-      id: Date.now(),
-      subject: newSubject,
-      task: newTask,
-      deadline: `${newDeadline}:59`,
+      subject: trimmedSubject,
+      task: trimmedTask,
+      deadline: deadlineValue,
       isSubmitted: false,
       source: 'user'
     };
 
-    addAssignment(newItem); // store의 추가 액션 호출
-    setNewSubject(""); setNewTask(""); setNewDeadline("");
+    setFormError("");
+    addAssignment(newItem, accessToken); // store의 추가 액션 호출
+    setNewSubject("");
+    setNewTask("");
+    setNewDeadlineDate(getTodayDateString());
+    setNewDeadlineTime("23:59");
+    setShowTimePicker(false);
   };
 
-   // 과제 필터링 함수 : processed + filteredList
+  // 과제 필터링 함수 : processed + filteredList
   const processed = useMemo(() => {
     const now = new Date();
     return assignment.map(item => {
       
       const deadlineDate = new Date(item.deadline);
-      return { ...item, deadlineDate, isExpired: deadlineDate - now <= 0 };
+      const isValidDeadline = !Number.isNaN(deadlineDate.getTime());
+
+      return {
+        ...item,
+        deadlineDate,
+        isValidDeadline,
+        isExpired: isValidDeadline ? deadlineDate - now <= 0 : false
+      };
     });
   }, [assignment]);
 
 
   const filteredList = useMemo(() => {
     return processed.filter(item => {
-
       const isExpired = item.isExpired;
       
       // 태그 선택 안하면 전체 표시
       if (activeTags.length === 0) return true;
 
-          return activeTags.every(tag => {
-            if (tag === STATUS.SUBMITTED) return item.isSubmitted;
-            if (tag === STATUS.UNSUBMITTED) return !item.isSubmitted;
-            if (tag === STATUS.ONGOING) return !isExpired;
-            if (tag === STATUS.OVERDUE) return isExpired;
-            return true;
-          });
-        });
-      }, [processed, activeTags]);
+      return activeTags.every(tag => {
+        if (tag === STATUS.SUBMITTED) return item.isSubmitted;
+        if (tag === STATUS.UNSUBMITTED) return !item.isSubmitted;
+        if (tag === STATUS.ONGOING) return !isExpired;
+        if (tag === STATUS.OVERDUE) return isExpired;
+        return true;
+      });
+    });
+  }, [processed, activeTags]);
 
 
   const sortedList = useMemo(() => { // 남은 기한이 적은 순으로 과제 정렬
-    return [...filteredList].sort((a, b) => a.deadlineDate - b.deadlineDate);
+    return [...filteredList].sort((a, b) => {
+      if (!a.isValidDeadline && !b.isValidDeadline) return 0;
+      if (!a.isValidDeadline) return 1;
+      if (!b.isValidDeadline) return -1;
+      return a.deadlineDate - b.deadlineDate;
+    });
   }, [filteredList]);
   
   const confirmDelete = () => {
-    deleteAssignment(targetId); // 스토어의 삭제 액션 실행
+    deleteAssignment(targetId, accessToken); // 스토어의 삭제 액션 실행
     setShowModal(false);        // 모달 닫기
     setTargetId(null);          // 타겟 ID 초기화
   };
 
   // 선택된 과제 데이터를 최신으로 참조
-  const selectedAssignment = useMemo(() => 
-    assignment.find(item => item.id === selectedId) ?? null,
+  const selectedAssignment = useMemo(() =>
+    assignment.find(item => String(item.id) === String(selectedId)) ?? null,
   [assignment, selectedId]);
-
   // 상태 변경
   const toggleTag = (tag) => {
     setActiveTags((prev) => {
@@ -172,27 +319,140 @@ function AssignmentTab({ accessToken }) {
 
 
   return (
-    <div className="assignment-wrapper">
+    <>
 
       <form className="add-form" onSubmit={handleAddAssignment}> {/* 과제 생성 영역 */}
         <div className="input-group">
           <div className="input-field">
-            <input type="text" placeholder="과목" value={newSubject} onChange={e => setNewSubject(e.target.value)} />
+            <input
+              type="text"
+              placeholder="과목"
+              value={newSubject}
+              maxLength={SUBJECT_MAX_LENGTH}
+              onChange={e => {
+                setNewSubject(e.target.value);
+                if (formError) setFormError("");
+              }}
+            />          
           </div>
 
           <div className="input-field">
-            <input type="text" placeholder="할 일" value={newTask} onChange={e => setNewTask(e.target.value)} />
+            <input
+              type="text"
+              placeholder="할 일"
+              value={newTask}
+              maxLength={TASK_MAX_LENGTH}
+              onChange={e => {
+                setNewTask(e.target.value);
+                if (formError) setFormError("");
+              }}
+            />          
           </div>
 
-          <div className="input-field">
-            <input type="datetime-local" value={newDeadline} onChange={e => setNewDeadline(e.target.value)} required/>
+          <div className="input-field deadline-field">
+            <div className="deadline-control">
+              <input
+                type="date"
+                value={newDeadlineDate}
+                min={MIN_DEADLINE_DATE}
+                max={MAX_DEADLINE_DATE}
+                title="마감 날짜를 선택하거나 YYYY-MM-DD 형식으로 입력하세요."
+                aria-label="마감 날짜"
+                onMouseDown={() => setShowTimePicker(false)}
+                onFocus={() => setShowTimePicker(false)}
+                onChange={e => {
+                  setNewDeadlineDate(e.target.value);
+                  if (formError) setFormError("");
+                }}
+                required
+              />
+
+              <div className="time-picker-wrap">
+                <input
+                  type="text"
+                  className="time-input"
+                  value={newDeadlineTime}
+                  onChange={handleTimeChange}
+                  onBlur={handleTimeBlur}
+                  onFocus={() => setShowTimePicker(true)}
+                  placeholder="23:59"
+                  inputMode="numeric"
+                  maxLength="5"
+                  required
+                />
+
+                <button
+                  type="button"
+                  className="time-picker-toggle"
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => setShowTimePicker(prev => !prev)}
+                  aria-label="시간 선택"
+                />
+
+                {showTimePicker && (
+                  <div
+                    className="time-picker-panel"
+                    onMouseDown={e => e.preventDefault()}
+                  >
+                    <div className="time-column">
+                      {Array.from({ length: 24 }, (_, hour) => {
+                        const value = String(hour).padStart(2, "0");
+                        const isSelected = newDeadlineTime.slice(0, 2) === value;
+
+                        return (
+                          <button
+                            type="button"
+                            key={value}
+                            className={isSelected ? "selected" : ""}
+                            onClick={() => {
+                              const normalizedTime = normalizeTimeInput(newDeadlineTime);
+                              const minute = normalizedTime.value.slice(3, 5);
+                              setNewDeadlineTime(`${value}:${minute}`);
+                            }}
+                          >
+                            {value}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="time-column">
+                      {Array.from({ length: 60 }, (_, minute) => {
+                        const value = String(minute).padStart(2, "0");
+                        const isSelected = newDeadlineTime.slice(3, 5) === value;
+
+                        return (
+                          <button
+                            type="button"
+                            key={value}
+                            className={isSelected ? "selected" : ""}
+                            onClick={() => {
+                              const normalizedTime = normalizeTimeInput(newDeadlineTime);
+                              const hour = normalizedTime.value.slice(0, 2);
+                              setNewDeadlineTime(`${hour}:${value}`);
+                              setShowTimePicker(false);
+                            }}
+                          >
+                            {value}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-          
-          <button type="submit" className="add-submit-btn">새 과제 추가</button>
-      </form>
+      <button type="submit" className="add-submit-btn">새 과제 추가</button>
+      {formError && (
+        <p className="add-form-error" role="alert">
+          {formError}
+        </p>
+      )}
+    </form>
 
-        <div className="tag-container"><p>상세 필터:</p> {/* 필터링 태그 */}
+        <div className="tag-container"><p>필터</p> {/* 필터링 태그 */}
           {[
             { id: STATUS.UNSUBMITTED, label: '미제출' },
             { id: STATUS.SUBMITTED,   label: '제출' },
@@ -236,13 +496,15 @@ function AssignmentTab({ accessToken }) {
                   {item.isSubmitted ? '제출 완료' : '미제출'}
                 </div>
 
-                <span className="deadline-text"> 기한: {item.deadline.replace('T', ' ').slice(0, 16)}</span>
-                <CountdownText deadlineDate={item.deadlineDate} /> 
+                <span className="deadline-text">
+                  기한: {item.isValidDeadline ? item.deadline.replace('T', ' ').slice(0, 16) : '날짜 오류'}
+                </span>
+                <CountdownText deadlineDate={item.deadlineDate} />
 
                 <div className="item-actions"> {/* 생성과제 - 삭제, 완료 처리 버튼 영역 */}
                     {item.source === 'user' ? (
                       <>
-                        <button onClick={(e) => { e.stopPropagation(); toggleSubmit(item.id); }} className="action-btn toggle">
+                        <button onClick={(e) => { e.stopPropagation(); toggleSubmit(item.id, accessToken); }} className="action-btn toggle">
                           {item.isSubmitted ? '진행으로 변경' : '완료 처리'}
                         </button>
                         <button onClick={(e) => {e.stopPropagation(); setTargetId(item.id); setShowModal(true); }} className="action-btn delete">삭제</button>
@@ -275,11 +537,12 @@ function AssignmentTab({ accessToken }) {
             assignment={selectedAssignment}
             onClose={() => setSelectedId(null)} 
             updateDescription={updateDescription}
+            accessToken={accessToken}
           />,
           document.body
         )}
       </div>
-    </div>
+    </>
   );
 }
 export default AssignmentTab;

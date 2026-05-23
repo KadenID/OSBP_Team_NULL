@@ -25,8 +25,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   align-items: center;
-  padding: 16px;
-  height: auto;
+  padding: 11px;
   min-width: 0;
   min-height: 110px;
   background-color: var(--assignment-yet-bg); 
@@ -62,9 +61,17 @@
 }
 
 /* 과목 */
+.info {
+  min-width: 0;
+  flex: 1;
+  padding-right: 24px;
+}
+
 .subject {
   font-size: 0.8rem;
   color: var(--text-muted);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* 과제명 */
@@ -72,6 +79,8 @@
   font-size: 1.0rem;
   margin: 5px 0 0 0;
   color: var(--text-main);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .status-box {
@@ -80,7 +89,8 @@
   align-items: flex-end; 
   gap: 5px; 
   text-align: right;
-  flex-shrink: 0;  
+  flex-shrink: 0;
+  margin-left: 16px;
 }
 
 /* 제출 상태 라벨 */
@@ -123,10 +133,9 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 20px;
-  padding: 10px;
-  background-color: var(--bg-layout);
+  padding: 0;
+  background: transparent;
   color: var(--text-main);
-  border-radius: 8px;
 }
 
 .tag-container p {
@@ -137,11 +146,11 @@
 }
 
 .tag-container button {
+  height: 34px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   color: var(--text-main);
-
-  padding: 6px 14px;
+  padding: 0 14px;
   border-radius: 15px;
   cursor: pointer;
   font-size: 0.85rem;
@@ -154,7 +163,7 @@
 
 .tag-container button.on {
   background-color: var(--accent);
-  color: white;
+  color: #ffffff;
   border-color: var(--accent);
   font-weight: 500;
 }
@@ -184,21 +193,21 @@
   font-size: 12px;
   cursor: pointer;
 }
-.action-btn.toggle { background: var(--assignment-done-accent); color: white; }
-.action-btn.delete { background: var(--danger); color: white; }
+.action-btn.toggle { background: var(--assignment-done-accent); color: #ffffff; }
+.action-btn.delete { background: var(--danger); color: #ffffff; }
 .lock-msg { font-size: 11px; color: var(--text-muted);}
 
 /* 과제 생성창 */
 .add-form {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   gap: 12px;
-  background-color: var(--bg-card);
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
+  padding: 0;
   margin-bottom: 17px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .input-group {
@@ -206,14 +215,15 @@
   flex-wrap: wrap;
   flex: 1;
   gap: 10px;
+  align-items: center;
 }
 
 .input-field {
   display: flex;
-  flex-wrap: wrap;
   flex-direction: column;
   flex: 1;
   gap: 5px;
+  min-width: 140px;
 }
 
 .input-field label {
@@ -224,24 +234,184 @@
 }
 
 .input-field input {
-  padding: 8px 9px;
+  width: 100%;
+  height: 42px;
+  padding: 0 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
-  background: var(--bg); 
-  color: var(--text-main);       
+  background: var(--bg-card);
+  color: var(--text-main);
   outline: none;
-  color-scheme: light dark;
+  color-scheme: light;
+  box-sizing: border-box;
+}
+
+[data-theme='dark'] .input-field input {
+  border-color: var(--border-strong); 
+  background: var(--bg);
+  color-scheme: dark;
 }
 
 /* 과제 생성 캘린더 영역 */
-.input-field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: var(--calendar-invert, invert(0.4)); 
+.deadline-field {
+  flex: 0 0 325px;
+  min-width: 325px;
+}
+
+.deadline-control {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  box-sizing: border-box;
+}
+
+.deadline-control input[type="date"],
+.deadline-control .time-input {
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 14px;
+  line-height: 42px;
+  outline: none;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.deadline-control input[type="date"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.deadline-control .time-input {
+  width: 56px;
+  text-align: center;
+}
+
+.input-field .deadline-control .time-input {
+  width: 56px;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.time-picker-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 86px;
+  flex: none;
+}
+
+.time-picker-toggle {
+  width: 22px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+}
+
+.time-picker-toggle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid var(--text-main);
+  border-bottom: 1.5px solid var(--text-main);
+  transform: translate(-50%, -65%) rotate(45deg);
+}
+
+.deadline-control input:focus,
+.time-picker-toggle:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.time-picker-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 100;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+}
+
+.time-column {
+  width: 48px;
+  max-height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong);
+}
+
+.time-column::-webkit-scrollbar {
+  width: 6px;
+}
+
+.time-column::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.time-column::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+.time-column button {
+  width: 100%;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 13px;
   cursor: pointer;
 }
 
+.time-column button:hover,
+.time-column button.selected {
+  background: var(--accent);
+  color: #fff;
+}
+
+[data-theme='dark'] .time-column {
+  scrollbar-color: var(--border) transparent;
+}
+
+[data-theme='dark'] .time-column::-webkit-scrollbar-thumb {
+  background: var(--border);
+}
+
+[data-theme='dark'] .deadline-control,
+[data-theme='dark'] .time-picker-panel {
+  border-color: var(--border-strong);
+  background: var(--bg);
+}
+
 .add-submit-btn {
-  height: 32px;
+  height: 42px;
   padding: 0 15px;
   background-color: var(--accent);
   color: white;
@@ -251,6 +421,14 @@
   font-size: 14px;
   cursor: pointer;
   white-space: nowrap;
+}
+
+.add-form-error {
+  width: 100%;
+  margin: -4px 0 0;
+  color: var(--error);
+  font-size: 0.85rem;
+  font-weight: 500;
 }
 
 /* 생성 과제 삭제창 */
@@ -305,7 +483,7 @@ body.modal-open .left:hover {
 
 .modal-buttons button:first-child {
   background-color: var(--danger);
-  color: white;
+  color: #ffffff;
 }
 
 .modal-buttons button:last-child {
@@ -314,11 +492,15 @@ body.modal-open .left:hover {
 }
 
 @media screen and (max-width: 768px) {
+  .info {
+    width: 100%;
+    padding-right: 0;
+  }
+
   .assignment-item {
     padding: 12px;
     flex-direction: column;
     align-items: flex-start;
-    height: auto; 
     gap: 10px;
   }
 
@@ -333,7 +515,6 @@ body.modal-open .left:hover {
 
 @media screen and (max-width: 1300px) {
   .assignment-item {
-    height: auto;        /* 고정 높이 해제 */
     min-height: 110px;
   }
 }

@@ -4,7 +4,10 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from dotenv import load_dotenv
 
 # .env 파일 로드
-load_dotenv()
+if os.path.exists("/etc/secrets/.env"):
+    load_dotenv("/etc/secrets/.env")
+else:
+    load_dotenv()
 
 # 환경 변수 로드
 SECRET_KEY_RAW = os.getenv("AES_SECRET_KEY") # 암호화 키

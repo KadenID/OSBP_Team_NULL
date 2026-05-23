@@ -22,7 +22,7 @@ const PublicRoute = ({ accessToken, children }) => {
   const location = useLocation();
   const from = location.state?.from?.pathname || "/main";
   if (accessToken) {
-    return <Navigate to={from} replace />;
+    return <Navigate to="/main" replace />;
   }
   return children;
 };
