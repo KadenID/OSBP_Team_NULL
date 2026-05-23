@@ -65,6 +65,94 @@ def get_enrolled_courses(session):
         print(f"과목 목록 추출 중 오류 발생: {e}")
         return {}
 
+# 입력: session (로그인된 세션 객체), student_id (학번)
+# 기능: LMS 사용자 정보 API에서 이름, 학과 정보를 추출
+# 반환: 사용자 정보 딕셔너리
+def get_user_profile(session, student_id):
+    dashboard_url = "https://lms.chungbuk.ac.kr/"
+    profile_action_url = "https://lms.chungbuk.ac.kr/theme/coursemos/action.php"
+    profile_info = {
+        "name": "",
+        "student_id": student_id,
+        "department": ""
+    }
+
+    try:
+        resp = session.get(dashboard_url, timeout=10, allow_redirects=False)
+
+        if resp.status_code == 302 or "login" in resp.headers.get("Location", ""):
+            raise SessionExpiredError("LMS 세션이 만료되었습니다. (302 Redirect)")
+
+        if resp.status_code == 401:
+            raise SessionExpiredError("LMS 세션이 유효하지 않습니다. (401 Unauthorized)")
+
+        resp.raise_for_status()
+
+        sesskey_match = re.search(r'"sesskey":"([^"]+)"', resp.text)
+        if not sesskey_match:
+            sesskey_match = re.search(r"sesskey=([A-Za-z0-9]+)", resp.text)
+
+        if not sesskey_match:
+            raise Exception("sesskey를 찾을 수 없습니다.")
+
+        sesskey = sesskey_match.group(1)
+
+        profile_resp = session.post(
+            profile_action_url,
+            data={
+                "coursemostype": "userInfoMy",
+                "courseid": "1",
+                "sesskey": sesskey
+            },
+            headers={
+                "X-Requested-With": "XMLHttpRequest",
+                "Referer": dashboard_url,
+                "User-Agent": "Mozilla/5.0"
+            },
+            timeout=10,
+            allow_redirects=False
+        )
+
+        if profile_resp.status_code == 302 or "login" in profile_resp.headers.get("Location", ""):
+            raise SessionExpiredError("LMS 세션이 만료되었습니다. (302 Redirect)")
+
+        if profile_resp.status_code == 401:
+            raise SessionExpiredError("LMS 세션이 유효하지 않습니다. (401 Unauthorized)")
+
+        profile_resp.raise_for_status()
+
+        if not profile_resp.text.strip():
+            raise Exception("프로필 API 응답이 비어 있습니다.")
+        
+        profile_data = profile_resp.json()
+        profile_html = profile_data.get("html", "")
+
+        profile_soup = BeautifulSoup(profile_html, 'html.parser')
+
+        name_tag = profile_soup.select_one("h4.username")
+        if name_tag:
+            profile_info["name"] = name_tag.text.strip()
+
+        department_tag = profile_soup.select_one("div.department")
+        if department_tag:
+            department_lines = [
+                line.strip()
+                for line in department_tag.get_text("\n", strip=True).split("\n")
+                if line.strip()
+            ]
+
+            if department_lines:
+                profile_info["department"] = department_lines[-1]
+
+        return profile_info
+
+    except SessionExpiredError:
+        raise
+    except Exception as e:
+        error_msg = f"사용자 프로필 추출 중 오류 발생: {str(e)}"
+        print(error_msg)
+        raise Exception(error_msg)
+
 # 입력: session (세션 객체), course_id (과목 ID), course_name (과목명)
 # 기능: 특정 과목의 과제 목록 페이지를 크롤링하여 상세 정보 추출
 # 반환: 과제 정보 딕셔너리 리스트
