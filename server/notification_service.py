@@ -104,33 +104,34 @@ def send_push_notification(subscription_info, title, body, url=None):
         logger.error(f"푸시 내부 오류: {e}")
         return False
 
-def send_all_notifications(student_id, title, body, url=None, ignore_settings=False):
+def send_all_notifications(student_id, title, body, url=None, ignore_settings=False, assignment_id=None):
     import storage # 순환 참조 방지를 위해 함수 내 임포트
     
     user_email = storage.get_user_email(student_id)
     settings = storage.get_user_settings(student_id)
     results = {"email": None, "push": []}
     
-    # 병렬 처리를 위한 Executor (이메일 1개 + 푸시 N개를 동시에 처리)
+    # 병렬 처리를 위한 Executor
     with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = []
+        # future 객체를 키로, (작업유형, 관련데이터)를 값으로 갖는 맵 생성
+        future_to_task = {}
 
         # 이메일 처리 예약
         email_enabled = settings.get("emailAlerts", True) if not ignore_settings else True
         if email_enabled and user_email:
-            futures.append(executor.submit(send_email_notification, user_email, title, body))
+            f = executor.submit(send_email_notification, user_email, title, body)
+            future_to_task[f] = ("email", user_email)
         elif email_enabled and not user_email:
             results["email"] = "MISSING_EMAIL"
         
         # 푸시 처리 예약
         push_enabled = settings.get("browserAlerts", True) if not ignore_settings else True
-        final_subs = []
         if push_enabled:
             subscriptions = storage.get_push_subscriptions(student_id)
             if not subscriptions:
                 results["push"].append("MISSING_SUBSCRIPTION")
             else:
-                # 중복 제거
+                # 중복 제거 (endpoint 기준)
                 unique_subs = {}
                 for sub in subscriptions:
                     try:
@@ -140,32 +141,41 @@ def send_all_notifications(student_id, title, body, url=None, ignore_settings=Fa
                             unique_subs[endpoint] = s_dict
                     except:
                         continue
-                final_subs = list(unique_subs.values())
                 
-                for sub in final_subs:
-                    futures.append(executor.submit(send_push_notification, sub, title, body, url))
+                for sub_dict in unique_subs.values():
+                    f = executor.submit(send_push_notification, sub_dict, title, body, url)
+                    future_to_task[f] = ("push", sub_dict)
 
-        # 결과 수집 및 이력 저장
-        email_sent = False
-        push_sent = False
+        # 결과 수집
+        email_sent_count = 0
+        push_sent_count = 0
         
-        for future in as_completed(futures):
+        for future in as_completed(future_to_task):
+            task_type, task_data = future_to_task[future]
             try:
                 res = future.result()
-                if futures.index(future) == 0 and email_enabled and user_email:
+                if task_type == "email":
                     results["email"] = res
-                    if res is True: email_sent = True
+                    if res is True: email_sent_count += 1
                 else:
-                    results["push"].append(res)
-                    if res is True: push_sent = True
+                    # 만료된 구독 정보 처리
+                    if res == "EXPIRED":
+                        logger.info(f"만료된 푸시 구독 발견 및 삭제 시도: {student_id}")
+                        storage.delete_push_subscription(student_id, task_data)
+                        results["push"].append("EXPIRED_REMOVED")
+                    else:
+                        results["push"].append(res)
+                        if res is True: push_sent_count += 1
             except Exception as e:
-                logger.error(f"비동기 발송 중 예외 발생: {e}")
+                logger.error(f"{task_type} 발송 중 예외 발생 ({task_data}): {e}")
+                if task_type == "email": results["email"] = False
+                else: results["push"].append(False)
 
         # 통합 이력 저장 (하나라도 성공했다면 기록)
-        if email_sent or push_sent:
+        if email_sent_count > 0 or push_sent_count > 0:
             channels = []
-            if email_sent: channels.append("이메일")
-            if push_sent: channels.append("브라우저 푸시")
-            storage.add_notification_history(student_id, title, body, ", ".join(channels))
+            if email_sent_count > 0: channels.append("이메일")
+            if push_sent_count > 0: channels.append("브라우저 푸시")
+            storage.add_notification_history(student_id, title, body, ", ".join(channels), assignment_id, url)
 
     return results

@@ -77,10 +77,11 @@ def check_user_logic(student_id, now):
         for a in lms_assignments:
             all_assignments.append({
                 "id": a["assignment_id"],
-                "course_name": a["course_name"], # 프론트엔드와 맞추기 위해 이름 추가
+                "course_name": a["course_name"],
                 "title": f"[{a['course_name']}] {a['assignment_name']}",
                 "deadline": a["due_date"],
-                "is_submitted": a["status"] == "제출"
+                "is_submitted": a["status"] == "제출",
+                "url": a["url"]
             })
     
     # 커스텀 과제 추가
@@ -88,15 +89,18 @@ def check_user_logic(student_id, now):
     for a in custom_assignments:
         all_assignments.append({
             "id": f"custom_{a['id']}",
-            "course_name": a["subject"], # 프론트엔드와 맞추기 위해 이름 추가
+            "course_name": a["subject"],
             "title": f"[{a['subject']}] {a['task']}",
             "deadline": a["deadline"],
-            "is_submitted": a["isSubmitted"]
+            "is_submitted": a["isSubmitted"],
+            "url": "/"
         })
 
     logger.info(f"사용자 {student_id}: 총 {len(all_assignments)}개의 과제를 체크 중...")
 
-    # 마감 임박 체크 및 발송
+    pending_alerts = []
+
+    # 마감 임박 체크
     for assignment in all_assignments:
         if assignment["is_submitted"]:
             continue
@@ -108,11 +112,10 @@ def check_user_logic(student_id, now):
         time_diff = deadline - now
         minutes_left = time_diff.total_seconds() / 60
         
-        # 마감이 지난 과제는 제외
-        if minutes_left < 0:
+        # 마감이 너무 오래 지난 과제(30분 이상)는 체크 제외
+        if minutes_left < -30:
             continue
         
-        # 해당 과제에 적용되는 알림 설정 필터링 (과목명으로 매칭!)
         applicable_reminders = [
             r for r in reminders 
             if r.get("courseId") == "all" or r.get("courseId") == assignment.get("course_name")
@@ -122,29 +125,44 @@ def check_user_logic(student_id, now):
             try:
                 val = int(r.get("value", 0))
                 unit = r.get("unit", "hour")
-                
                 threshold_min = val
                 if unit == "hour": threshold_min *= 60
                 elif unit == "day": threshold_min *= 1440
                 
-                logger.info(f"  [체크중] {assignment['title']} - 남은시간: {int(minutes_left)}분 / 설정: {threshold_min}분 전")
-
-                # 발송 조건: 마감까지 남은 시간이 설정한 시간(threshold_min) 이하일 때 발송
-                if minutes_left <= threshold_min:
+                # 중복 발송 방지 및 유연한 윈도우 체크 (기준 시간 이하이고, 마감 후 30분 이내일 때)
+                if minutes_left <= threshold_min and minutes_left > -30:
                     alert_type = f"{threshold_min}m_before"
-                    
                     if not storage.is_notification_sent(student_id, assignment["id"], alert_type):
-                        title = "과제 마감 임박!"
-                        time_str = f"{val}{'분' if unit=='minute' else '시간' if unit=='hour' else '일'}"
-                        body = f"{assignment['title']} 마감이 {time_str} 남았습니다."
-                        
-                        logger.info(f"🔔 사용자 {student_id}에게 알림 발송! 과제: {assignment['title']}")
-                        send_all_notifications(student_id, title, body)
-                        storage.record_notification_sent(student_id, assignment["id"], alert_type)
-                    else:
-                        logger.debug(f"사용자 {student_id}: 이미 발송된 알림 ({alert_type})")
+                        pending_alerts.append({
+                            "assignment": assignment,
+                            "alert_type": alert_type,
+                            "time_str": f"{val}{'분' if unit=='minute' else '시간' if unit=='hour' else '일'}"
+                        })
             except Exception as e:
                 logger.error(f"알림 판정 중 오류: {e}")
+
+    # 통합 발송 처리
+    if not pending_alerts:
+        return
+
+    from notification_service import send_all_notifications
+    if len(pending_alerts) == 1:
+        alert = pending_alerts[0]
+        title = "과제 마감 임박!"
+        body = f"{alert['assignment']['title']} 마감이 {alert['time_str']} 남았습니다."
+        # 단일 알림 시 ID와 URL 모두 전달
+        send_all_notifications(student_id, title, body, url=alert['assignment']['url'], assignment_id=alert['assignment']['id'])
+        storage.record_notification_sent(student_id, alert['assignment']['id'], alert['alert_type'])
+    else:
+        title = f"마감 임박 과제가 {len(pending_alerts)}건 있습니다"
+        body = "\n".join([f"• {a['assignment']['title']} ({a['time_str']} 전)" for a in pending_alerts])
+        # 통합 알림 시 과제 ID들을 합쳐서 기록 (URL은 메인으로)
+        all_ids = ",".join([str(a['assignment']['id']) for a in pending_alerts])
+        send_all_notifications(student_id, title, body, url="/main", assignment_id=all_ids)
+        for alert in pending_alerts:
+            storage.record_notification_sent(student_id, alert['assignment']['id'], alert['alert_type'])
+    
+    logger.info(f"사용자 {student_id}에게 {len(pending_alerts)}건의 통합 알림 발송 완료")
 
 def process_user_notification_wrapper(student_id, now):
     """에러 핸들링을 포함한 개별 사용자 처리 래퍼"""

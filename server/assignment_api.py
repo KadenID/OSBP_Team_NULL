@@ -311,13 +311,23 @@ def save_user_settings(request_data: dict, student_id: str = Depends(get_current
         raise HTTPException(status_code=500, detail="설정 저장 실패")
 
 @app.post("/api/push-subscription")
-def save_push_subscription(subscription: dict, student_id: str = Depends(get_current_user)):
+def add_push_subscription(subscription: dict, student_id: str = Depends(get_current_user)):
     try:
         storage.save_push_subscription(student_id, subscription)
-        return {"success": True, "message": "구독 정보 저장 완료"}
+        return {"success": True}
     except Exception as e:
-        logger.error(f"구독 정보 저장 중 오류 발생: {e}")
+        logger.error(f"푸시 구독 저장 실패: {e}")
         raise HTTPException(status_code=500, detail="저장 실패")
+
+@app.delete("/api/push-subscription")
+def delete_push_subscription(subscription: dict, student_id: str = Depends(get_current_user)):
+    try:
+        storage.delete_push_subscription(student_id, subscription)
+        return {"success": True}
+    except Exception as e:
+        logger.error(f"푸시 구독 삭제 실패: {e}")
+        raise HTTPException(status_code=500, detail="삭제 실패")
+
 
 @app.get("/api/vapid-public-key")
 def get_vapid_public_key(student_id: str = Depends(get_current_user)):
@@ -365,14 +375,24 @@ def get_notification_history(student_id: str = Depends(get_current_user)):
         logger.error(f"알림 내역 조회 실패: {e}")
         raise HTTPException(status_code=500, detail="내역 조회 실패")
 
+@app.delete("/api/notification-history/{history_id}")
+def delete_notification_history(history_id: int, student_id: str = Depends(get_current_user)):
+    try:
+        # storage.py에 개별 삭제 함수 추가 예정
+        success = storage.delete_specific_notification_history(student_id, history_id)
+        return {"success": success}
+    except Exception as e:
+        logger.error(f"알림 내역 삭제 실패: {e}")
+        raise HTTPException(status_code=500, detail="삭제 실패")
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from scheduler import check_and_send_notifications
 
 scheduler = BackgroundScheduler()
 # 1시간마다 마감 기한 체크
 scheduler.add_job(check_and_send_notifications, 'interval', hours=1)
-# 매일 새벽 3시에 30일이 지난 알림 기록 삭제
-scheduler.add_job(storage.cleanup_old_notifications, 'cron', hour=3, minute=0)
+# 매일 새벽 3시에 30일이 지난 모든 알림 관련 기록(중복방지 및 내역) 통합 삭제
+scheduler.add_job(storage.cleanup_old_notifications, 'cron', hour=3, minute=0, args=[30])
 
 @app.on_event("startup")
 def start_scheduler():

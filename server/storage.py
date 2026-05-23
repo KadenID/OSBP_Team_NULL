@@ -118,11 +118,16 @@ def init_db():
                         title TEXT NOT NULL,
                         message TEXT NOT NULL,
                         channel TEXT NOT NULL,
+                        assignment_id TEXT,
+                        url TEXT,
                         sent_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """)
+                # 마이그레이션: 기존 테이블에 컬럼이 없는 경우 추가
+                cur.execute("ALTER TABLE notification_history ADD COLUMN IF NOT EXISTS assignment_id TEXT;")
+                cur.execute("ALTER TABLE notification_history ADD COLUMN IF NOT EXISTS url TEXT;")
             conn.commit()
-            logger.info("데이터베이스 테이블 초기화 완료")
+            logger.info("데이터베이스 테이블 초기화 및 스키마 업데이트 완료")
         except Exception as e:
             conn.rollback()
             logger.error(f"데이터베이스 초기화 중 오류 발생: {e}")
@@ -142,6 +147,7 @@ def is_notification_sent(student_id, assignment_identifier, alert_type):
             return False
 
 def record_notification_sent(student_id, assignment_identifier, alert_type):
+    """알림 발송 기록을 저장 (중복 발송 방지용)"""
     with get_db_connection() as conn:
         try:
             with conn.cursor() as cur:
@@ -157,19 +163,27 @@ def record_notification_sent(student_id, assignment_identifier, alert_type):
             logger.error(f"알림 기록 저장 중 오류 발생: {e}")
             raise
 
-# 데이터 정리 로직
+# 별칭 추가 (코드 호환성 유지)
+mark_notification_as_sent = record_notification_sent
+
+# --- 데이터 정리 로직 ---
+
 def cleanup_old_notifications(days=30):
-    """지정한 일수(days)보다 오래된 알림 발송 기록을 삭제"""
+    """지정한 일수(days)보다 오래된 모든 알림 관련 기록을 정리"""
     with get_db_connection() as conn:
         try:
             with conn.cursor() as cur:
-                # INTERVAL 문법 수정: 정수형 인자와 곱셈 연산 사용
-                sql = "DELETE FROM sent_notifications WHERE sent_at < CURRENT_TIMESTAMP - (INTERVAL '1 day' * %s);"
-                cur.execute(sql, (days,))
-                deleted_count = cur.rowcount
+                # 1. 중복 발송 방지 기록 삭제
+                cur.execute("DELETE FROM sent_notifications WHERE sent_at < CURRENT_TIMESTAMP - (INTERVAL '1 day' * %s);", (days,))
+                sent_count = cur.rowcount
+                
+                # 2. 사용자용 알림 내역 삭제
+                cur.execute("DELETE FROM notification_history WHERE sent_at < CURRENT_TIMESTAMP - (INTERVAL '1 day' * %s);", (days,))
+                history_count = cur.rowcount
+                
             conn.commit()
-            logger.info(f"오래된 알림 기록 정리 완료: {deleted_count}개 삭제됨 (기준: {days}일)")
-            return deleted_count
+            logger.info(f"오래된 알림 데이터 정리 완료 (중복방지: {sent_count}개, 내역: {history_count}개)")
+            return sent_count + history_count
         except Exception as e:
             conn.rollback()
             logger.error(f"알림 기록 정리 중 오류 발생: {e}")
@@ -249,7 +263,8 @@ def delete_push_subscription(student_id, subscription_json):
     with get_db_connection() as conn:
         try:
             with conn.cursor() as cur:
-                sql = "DELETE FROM push_subscriptions WHERE student_id = %s AND subscription_json = %s;"
+                # JSONB 비교 시 문자열 비교보다 안전한 ::jsonb 캐스팅 사용
+                sql = "DELETE FROM push_subscriptions WHERE student_id = %s AND subscription_json = %s::jsonb;"
                 cur.execute(sql, (student_id, json.dumps(subscription_json)))
             conn.commit()
         except Exception as e:
@@ -483,16 +498,16 @@ def delete_custom_assignment(student_id, assignment_id):
 
 # --- 알림 내역 관리 ---
 
-def add_notification_history(student_id, title, message, channel):
-    """사용자에게 보여줄 알림 내역을 저장"""
+def add_notification_history(student_id, title, message, channel, assignment_id=None, url=None):
+    """사용자에게 보여줄 알림 내역을 저장 (과제 ID 및 URL 포함)"""
     with get_db_connection() as conn:
         try:
             with conn.cursor() as cur:
                 sql = """
-                INSERT INTO notification_history (student_id, title, message, channel)
-                VALUES (%s, %s, %s, %s);
+                INSERT INTO notification_history (student_id, title, message, channel, assignment_id, url)
+                VALUES (%s, %s, %s, %s, %s, %s);
                 """
-                cur.execute(sql, (student_id, title, message, channel))
+                cur.execute(sql, (student_id, title, message, channel, assignment_id, url))
             conn.commit()
         except Exception as e:
             conn.rollback()
@@ -504,7 +519,7 @@ def get_notification_history(student_id, limit=50):
         try:
             with conn.cursor() as cur:
                 sql = """
-                SELECT id, title, message, channel, sent_at 
+                SELECT id, title, message, channel, sent_at, assignment_id, url
                 FROM notification_history 
                 WHERE student_id = %s 
                 ORDER BY sent_at DESC 
@@ -518,12 +533,28 @@ def get_notification_history(student_id, limit=50):
                         "title": row[1],
                         "message": row[2],
                         "channel": row[3],
-                        "sent_at": row[4].isoformat()
+                        "sent_at": row[4].isoformat(),
+                        "assignment_id": row[5],
+                        "url": row[6]
                     } for row in rows
                 ]
         except Exception as e:
             logger.error(f"알림 내역 조회 중 오류 발생: {e}")
             return []
+
+def delete_specific_notification_history(student_id, history_id):
+    """특정 알림 내역 삭제"""
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                sql = "DELETE FROM notification_history WHERE id = %s AND student_id = %s;"
+                cur.execute(sql, (history_id, student_id))
+            conn.commit()
+            return cur.rowcount > 0
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"알림 내역 개별 삭제 중 오류 발생: {e}")
+            return False
 
 def delete_old_notification_history(days=30):
     """오래된 알림 내역 삭제"""

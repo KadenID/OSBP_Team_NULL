@@ -170,25 +170,28 @@ function AlarmSettings({ accessToken }) {
                 return;
             }
 
+            // VAPID 키 로드
             const keyResponse = await fetch(`${API_BASE_URL}/api/vapid-public-key`, {
                 headers: { 'Authorization': `Bearer ${accessToken}` }
             });
             const keyResult = await keyResponse.json();
             if (!keyResult.success || !keyResult.publicKey) {
-                throw new Error("VAPID 키 로드 실패");
+                throw new Error("서버에서 VAPID 키를 가져올 수 없습니다.");
             }
 
-            const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+            // 서비스 워커가 준비될 때까지 대기
+            const registration = await navigator.serviceWorker.ready;
             
-            // 기존 구독이 있다면 강제로 해제 (구독 정보 초기화 및 갱신)
-            const existingSubscription = await registration.pushManager.getSubscription();
-            if (existingSubscription) {
-                await existingSubscription.unsubscribe();
-                console.log("기존 구독 해제 완료 (갱신 준비)");
+            // 기존 구독 확인 및 갱신 처리
+            try {
+                const existingSubscription = await registration.pushManager.getSubscription();
+                if (existingSubscription) {
+                    await existingSubscription.unsubscribe();
+                    console.log("기존 구독 정보를 갱신하기 위해 초기화했습니다.");
+                }
+            } catch (subError) {
+                console.warn("기존 구독 해제 중 오류 발생 (무시하고 계속):", subError);
             }
-
-            // 서비스 워커 업데이트 강제 실행
-            await registration.update();
 
             const permission = await Notification.requestPermission();
             setPermissionStatus(permission);
@@ -204,10 +207,9 @@ function AlarmSettings({ accessToken }) {
                 applicationServerKey: urlBase64ToUint8Array(keyResult.publicKey)
             });
 
-            // PushSubscription 객체를 JSON으로 변환 (p256dh, auth 키 포함 보장)
             const subscriptionJSON = subscription.toJSON();
 
-            await fetch(`${API_BASE_URL}/api/push-subscription`, {
+            const saveResponse = await fetch(`${API_BASE_URL}/api/push-subscription`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -215,10 +217,15 @@ function AlarmSettings({ accessToken }) {
                 },
                 body: JSON.stringify(subscriptionJSON),
             });
-            console.log("푸시 신규 구독 및 서버 저장 완료:", subscriptionJSON);
+
+            if (saveResponse.ok) {
+                console.log("푸시 알림 구독 및 서버 저장이 완료되었습니다.");
+            } else {
+                throw new Error("서버에 구독 정보를 저장하지 못했습니다.");
+            }
         } catch (error) {
             console.error("푸시 구독 오류:", error);
-            alert("알림 구독 중 오류가 발생했습니다.");
+            alert(`알림 구독 중 오류가 발생했습니다: ${error.message}`);
             setBrowserAlerts(false);
         }
     };
@@ -229,8 +236,19 @@ function AlarmSettings({ accessToken }) {
             if (registration) {
                 const subscription = await registration.pushManager.getSubscription();
                 if (subscription) {
+                    // 서버에서도 구독 정보 삭제 시도
+                    const subscriptionJSON = subscription.toJSON();
+                    await fetch(`${API_BASE_URL}/api/push-subscription`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}`
+                        },
+                        body: JSON.stringify(subscriptionJSON),
+                    });
+
                     await subscription.unsubscribe();
-                    console.log("푸시 구독 해제 완료");
+                    console.log("푸시 구독 해제 및 서버 삭제 완료");
                 }
             }
         } catch (error) {
@@ -255,6 +273,13 @@ function AlarmSettings({ accessToken }) {
     /* --- 이벤트 핸들러 --- */
 
     const handleSaveEmail = () => {
+        // 이메일 형식 검사 정규식
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (tempEmail && !emailRegex.test(tempEmail)) {
+            alert("올바른 이메일 형식이 아닙니다.");
+            return;
+        }
+
         setEmail(tempEmail);
         setIsEditingEmail(false);
         // 이메일이 비어있으면 알림 자동 비활성화

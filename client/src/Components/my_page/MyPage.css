@@ -123,9 +123,27 @@ body {
   border-radius: 16px;
   padding: 28px 32px;
   padding-left: 40px;
-  min-height: auto; /* min-height 제거 */
+  min-height: auto;
   box-shadow: var(--card-shadow);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mypage-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 32px;    /* 펼쳤을 때: 너무 길지 않게 적당히 줄임 */
+  bottom: 32px;
+  width: 4px;
+  border-radius: 0 999px 999px 0;
+  background: var(--primary);
+  transition: all 0.3s ease;
+}
+
+/* 카드가 접혔을 때 (너무 짧지 않게 적당히 늘림) */
+.mypage-card:has(.is-closed)::before {
+  top: 28px;
+  bottom: 28px;
 }
 
 .mypage-card-header {
