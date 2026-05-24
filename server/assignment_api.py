@@ -467,6 +467,29 @@ def delete_notification_history(history_id: int, student_id: str = Depends(get_c
     except Exception as e:
         logger.error(f"알림 내역 삭제 실패: {e}")
         raise HTTPException(status_code=500, detail="삭제 실패")
-
+    
+    
+# 입력: student_id (학번)
+# 기능: 전체 수강 과목 공지사항 목록 크롤링
+# 반환: NoticeListResponse
+@app.get("/api/notices", response_model=NoticeListResponse)
+def get_notices(student_id: str = Depends(get_current_user)):
+    session = get_lms_session(student_id)
+ 
+    try:
+        notices = crawl_all_notices(session)
+        return NoticeListResponse(
+            success=True,
+            message="성공",
+            total_count=len(notices),
+            data=notices
+        )
+    except SessionExpiredError:
+        raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다.")
+    except Exception as e:
+        logger.error(f"공지사항 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail="공지사항 조회 실패")
+ 
+ 
 if __name__ == "__main__":
     uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)
