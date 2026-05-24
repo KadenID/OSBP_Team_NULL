@@ -474,7 +474,7 @@ def delete_notification_history(history_id: int, student_id: str = Depends(get_c
 # 반환: NoticeListResponse
 @app.get("/api/notices", response_model=NoticeListResponse)
 def get_notices(student_id: str = Depends(get_current_user)):
-    session = get_lms_session(student_id)
+    session = redis_cache.get_lms_session(student_id)
  
     try:
         notices = crawl_all_notices(session)
@@ -490,6 +490,22 @@ def get_notices(student_id: str = Depends(get_current_user)):
         logger.error(f"공지사항 조회 실패: {e}")
         raise HTTPException(status_code=500, detail="공지사항 조회 실패")
  
+# 입력: board_id (게시판 ID), notice_id (게시글 ID), student_id (학번)
+# 기능: 공지사항 상세 본문 크롤링
+# 반환: NoticeDetailResponse
+@app.get("/api/notices/{board_id}/{notice_id}", response_model=NoticeDetailResponse)
+def get_notice_detail_api(board_id: str, notice_id: str, student_id: str = Depends(get_current_user)):
+    session = redis_cache.get_lms_session(student_id)
  
+    try:
+        detail = get_notice_detail(session, board_id, notice_id)
+        return NoticeDetailResponse(success=True, message="성공", data=detail)
+    except SessionExpiredError:
+        raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다.")
+    except Exception as e:
+        logger.error(f"공지사항 상세 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail="공지사항 상세 조회 실패")
+
+
 if __name__ == "__main__":
     uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)
