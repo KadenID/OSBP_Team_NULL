@@ -197,3 +197,43 @@ def get_notice_detail(session, board_id, notice_id):
     except Exception as e:
         logger.error(f"공지사항 상세 조회 중 오류 (Notice ID: {notice_id}): {e}")
         raise Exception(f"공지사항 상세 조회 중 오류: {e}")
+
+
+# 입력: session (세션 객체)
+# 기능: 전체 수강 과목의 공지사항 통합 크롤링
+# 반환: 공지 리스트
+# ThreadPoolExecutor를 사용한 멀티스레드 병렬 크롤링
+def crawl_all_notices(session, common_board_ids=None):
+    if common_board_ids is None:
+        common_board_ids = COMMON_BOARD_IDS
+
+    all_notices = []
+    courses = get_enrolled_courses(session)
+    if not courses:
+        return []
+
+    # 과목별 처리를 위한 래퍼 함수 정의 (예외 처리를 개별적으로 수행하기 위함)
+    def worker(course_info):
+        cid, cname = course_info
+        try:
+            return get_notices_for_course(session, cid, cname, common_board_ids=common_board_ids)
+        except SessionExpiredError:
+            return None
+        except Exception:
+            return []
+
+    # 최대 스레드 수는 수강 과목 수에 맞춤
+    with ThreadPoolExecutor(max_workers=7) as executor:
+        results = executor.map(worker, courses.items())
+        
+        for notice_list in results:
+            if notice_list is None:
+                raise SessionExpiredError("LMS 세션이 만료되었습니다.")
+            
+            if notice_list:
+                all_notices.extend(notice_list)
+
+    # 최신 날짜 순 정렬
+    all_notices.sort(key=lambda x: x['date'], reverse=True)
+
+    return all_notices
