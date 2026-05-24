@@ -28,8 +28,9 @@ body {
 .mypage-title-row {
   display: flex;
   justify-content: space-between;
+  flex-direction: row;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   margin-bottom: 8px;
 }
 
@@ -49,7 +50,8 @@ body {
 
 /* 버튼 공통 */
 .main-button,
-.logout-button {
+.logout-button, 
+.dark-button {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -64,11 +66,17 @@ body {
   background-color: var(--btn-bg);
   color: var(--btn-text);
   font-size: 13px;
-  transform: translateY(2px);
   transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-.main-button:hover {
+.dark-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 16px;
+}
+
+.main-button:hover, .dark-button:hover {
   background-color: var(--btn-bg-hover);
 }
 

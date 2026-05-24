@@ -8,7 +8,9 @@ import "./User-Info.css";
 import { FiLogOut, FiHome, FiChevronDown } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
+
 import { useTheme } from '../../context/ThemeContext.jsx';
+
 
 const MY_PAGE_CARDS = [
     {
@@ -86,7 +88,7 @@ function MyPage({ accessToken, onLogout }) {
                         </button>
                         <button type="button" className="main-button" onClick={() => navigate("/main")}>
                             <FiHome className="main-icon" />
-                            메인
+                            Mainpage
                         </button>
                     </div>
                 
