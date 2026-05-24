@@ -40,7 +40,7 @@ function MainPage({ accessToken, onLogout }) {
 
           <div className="left-section">
             <div className="left"><AssignmentTab accessToken={accessToken}/></div>
-            <div className="left"><NoticeTab/></div>
+            <div className="left"><NoticeTab accessToken={accessToken}/></div>
           </div>
 
           <div className="right">Ai 기능</div>
