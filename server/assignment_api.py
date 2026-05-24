@@ -14,6 +14,7 @@ import os
 # 내부 모듈 임포트
 from lms_login import login_to_lms
 from lms_crawler import crawl_all_assignments, SessionExpiredError, get_user_profile
+from notice_crawler import crawl_all_notices, get_notice_detail  
 import auth
 import storage
 import redis_cache
@@ -113,6 +114,28 @@ class CustomAssignmentRequest(BaseModel):
     isSubmitted: bool = False
     description: Optional[str] = Field(None, max_length=1000)
 
+class NoticeItem(BaseModel): # 공지사항 개별 항목 스키마
+    course_id: str
+    course_name: str
+    board_id: str
+    notice_id: str
+    title: str
+    writer: str
+    date: str
+    description: str
+    url: str
+
+class NoticeListResponse(BaseModel): # 공지사항 목록 응답 스키마
+    success: bool
+    message: str
+    total_count: int
+    data: List[NoticeItem] = []
+
+class NoticeDetailResponse(BaseModel): # 공지사항 상세 응답 스키마
+    success: bool
+    message: str
+    data: dict
+    
 security = HTTPBearer() # 인증 객체
 
 # 입력: credentials (HTTP 헤더 인증 정보)
