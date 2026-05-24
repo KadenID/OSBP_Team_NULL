@@ -1,32 +1,16 @@
 /* 사용자 정보 카드 */
 .user-info-card {
-  --user-card-bg: var(--card-bg);
-  --user-card-border: var(--card-border);
-  --user-card-shadow: var(--card-shadow);
-
-  --user-accent: var(--primary);
-
-  --user-text-main: var(--card-title);
-  --user-text-sub: var(--card-content);
-
-  --lms-connected-bg: #e7f7ef;
-  --lms-connected-text: #137a44;
-
-  --lms-disconnected-bg: #fff1f0;
-  --lms-disconnected-text: #bd2f24;
-
   font-family: inherit;
-
   position: relative;
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
   padding: 28px 36px;
-  border: 1px solid var(--user-card-border);
   border-radius: 12px;
-  background-color: var(--user-card-bg);
-  color: var(--user-text-main);
-  box-shadow: 0 8px 24px var(--user-card-shadow);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  box-shadow: var(--card-shadow);
 }
 
 .user-info-card::before {
@@ -37,7 +21,7 @@
   bottom: 26px;
   width: 4px;
   border-radius: 0 999px 999px 0;
-  background-color: var(--user-accent);
+  background-color: var(--accent);
 }
 
 .user-info-card *,
@@ -59,7 +43,7 @@
   margin: 0;
   font-size: 20px;
   font-weight: 700;
-  color: var(--user-text-main);
+  color: var(--text-heading);
 }
 
 /* LMS 연동 상태 배지 */
@@ -102,7 +86,7 @@
   margin-bottom: 8px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--user-text-sub);
+  color: var(--text-muted);
 }
 
 .user-info-value {
@@ -110,19 +94,8 @@
   font-size: 16px;
   font-weight: 700;
   line-height: 1.4;
-  color: var(--user-text-main);
+  color: var(--text-main);
   overflow-wrap: break-word;
-}
-
-/* 다크모드 */
-@media (prefers-color-scheme: dark) {
-  .user-info-card {
-    --lms-connected-bg: rgba(34, 197, 94, 0.18);
-    --lms-connected-text: #86efac;
-
-    --lms-disconnected-bg: rgba(248, 113, 113, 0.2);
-    --lms-disconnected-text: #fca5a5;
-  }
 }
 
 /* 좁은 화면 */

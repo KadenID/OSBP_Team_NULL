@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./LoginPage.css";
 import { API_BASE_URL } from "../../apiConfig";
-
+import { useTheme } from '../../context/ThemeContext.jsx';
 const REMEMBERED_STUDENT_ID_KEY = "rememberedStudentId";
 const MAX_LOGIN_INPUT_LENGTH = 20;
 
@@ -30,6 +30,7 @@ const loginFields = [
 
 function LoginPage({ onLogin }) {
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
 
     // 저장된 아이디가 있으면 로그인 폼 초기값으로 사용
     const [loginForm, setLoginForm] = useState(() => ({
@@ -40,6 +41,7 @@ function LoginPage({ onLogin }) {
     const [rememberId, setRememberId] = useState(() =>
         Boolean(localStorage.getItem(REMEMBERED_STUDENT_ID_KEY))
     );
+    
     const [errorMessage, setErrorMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
