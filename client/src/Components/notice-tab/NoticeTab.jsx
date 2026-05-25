@@ -7,45 +7,45 @@ import { API_BASE_URL } from '../../apiConfig';
 
 
 // Zustand 스토어
-const useNoticeStore = create((set, get) => ({
-  notices: [],
-  isLoading: false,
-  isFetched: false,
+const useLMSStore = create((set, get) => ({
+  notices: { data: [], isLoading: false, isFetched: false },
+  messages: { data: [], isLoading: false, isFetched: false },
 
-  fetchNotices: async (accessToken) => {
-    if (get().isFetched || !accessToken) return;  // 중복 호출 방지
 
-    set({ isLoading: true });
+  fetchData: async (type, accessToken) => { // type: 'notices' | 'messages'
+
+    const state = get()[type];
+    if (state.isFetched || !accessToken) return;  // 중복 호출 방지
+
+    set((prev) => ({ ...prev, [type]: { ...prev[type], isLoading: true } }));
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/notices`, {
+      const response = await fetch(`${API_BASE_URL}/api/${type}`, {
         headers: { 'Authorization': `Bearer ${accessToken}` },
         credentials: 'include'
       });
 
-      if (!response.ok) {
-        throw new Error(`서버 응답 오류 (Status: ${response.status})`);
-      }
+      if (!response.ok) throw new Error(`Status: ${response.status}`);
 
       const result = await response.json();
       if (result.success) {
-        set({ notices: result.data, isFetched: true });
+        set((prev) => ({ ...prev, [type]: { data: result.data, isLoading: false, isFetched: true } }));
       }
     } catch (error) {
-      console.error("공지사항 로드 실패:", error);
-    } finally {
-      set({ isLoading: false });
+      console.error(`${type} 로드 실패:`, error);
+      set((prev) => ({ ...prev, [type]: { ...prev[type], isLoading: false } }));
     }
   }
 }));
 
 
 function NoticeTab({ accessToken }) {
+  const [activeTab, setActiveTab] = useState('notices');
+  const { notices, messages, fetchData } = useLMSStore();
 
-  const { notices, isLoading, fetchNotices } = useNoticeStore();
-
-  useEffect(() => {
-    fetchNotices(accessToken);
-  }, [fetchNotices, accessToken]);
+   useEffect(() => {
+    fetchData(activeTab, accessToken);
+  }, [activeTab, fetchData, accessToken]);
 
   const [selectedCourse, setSelectedCourse] = useState('all'); // 선택 과목 ID 상태
   const [selectedNotice, setSelectedNotice] = useState(null); // 상세보기 모달 상태 (객체 저장)
@@ -61,21 +61,29 @@ function NoticeTab({ accessToken }) {
   // 과목 태그 목록 생성 (중복 제거)
   const courses = useMemo(() => [
     { id: 'all', name: '전체' },
-    ...Array.from(
-      new Map(notices.map(n => [n.course_id, n.course_name])).entries()
-    ).map(([id, name]) => ({ id, name }))
-  ], [notices]);
+    ...Array.from(new Map(notices.data.map(n => [n.course_id, n.course_name])).entries())
+      .map(([id, name]) => ({ id, name }))
+  ], [notices.data]);
 
 
   // 선택한 과목 필터링 리스트
-  const filtered = useMemo(() =>
+  const filteredNotices = useMemo(() =>
     selectedCourse === 'all'
-      ? notices
-      : notices.filter(n => n.course_id === selectedCourse),
-  [notices, selectedCourse]);
+      ? notices.data
+      : notices.data.filter(n => n.course_id === selectedCourse),
+  [notices.data, selectedCourse]);
+
+  // 리스트 렌더링용 변수 통합 
+  const isNotice = activeTab === 'notices';
+  const currentData = isNotice ? notices : messages;
+  const listItems = isNotice ? filteredNotices : messages.data;
+  const emptyText = isNotice ? '공지사항이 없습니다.' : '받은 쪽지가 없습니다.';
+
 
   // 공지 클릭 시 상세 모달 — description_html 없으면 상세 API 호출
   const handleNoticeClick = async (item) => {
+    if (!isNotice) return;
+
     // description_html이 없으면 항상 상세 API 호출
     if (item.description_html) {
       setSelectedNotice(item);
@@ -98,20 +106,49 @@ function NoticeTab({ accessToken }) {
     }
   };
 
+  // 문자를 입력받아 css 변수명 변경(과목 색 변)
+  const getColorForString = (str) => {
+  if (!str) return 'var(--text-main)';
+
+  const colorVars = [
+    'var(--tag-color-0)', 'var(--tag-color-1)', 'var(--tag-color-2)', 
+    'var(--tag-color-3)', 'var(--tag-color-4)', 'var(--tag-color-5)', 
+    'var(--tag-color-6)', 'var(--tag-color-7)', 'var(--tag-color-8)', 
+    'var(--tag-color-9)'
+  ];
+  
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  const index = Math.abs(hash) % colorVars.length;
+  return colorVars[index];
+};
+
+
   return (
     <div>
       <div className="notice-header">
         <div className="notice-title-group">
-          <span className="notice-emoji">📖</span>
-          <h2>과목별 공지 및 과제</h2>
+          <span className="notice-emoji">{isNotice ? '📖' : '✉️'}</span>
+          <h2>{isNotice ? '과목별 공지 및 과제' : '받은 쪽지함'}</h2>
         </div>
-        <a href="https://lms.chungbuk.ac.kr" target="_blank" rel="noreferrer" className="notice-more-btn">
-          LMS 바로가기
-        </a>
+
+        <div className="notice-header-right">
+          <div className="notice-tab-toggles">
+            <button className={`tab-toggle-btn ${isNotice ? 'active' : ''}`} onClick={() => setActiveTab('notices')}>공지사항</button>
+            <button className={`tab-toggle-btn ${!isNotice ? 'active' : ''}`} onClick={() => setActiveTab('messages')}>쪽지함</button>
+          </div>
+
+          <a href="https://lms.chungbuk.ac.kr" target="_blank" rel="noreferrer" className="notice-more-btn">
+            LMS 바로가기
+          </a>
+        </div>
       </div>
 
       {/* 상단 과목 필터 버튼들 */}
-      <div className="notice-filter-tags">
+      {isNotice && ( <div className="notice-filter-tags">
         {courses.map(c => (
           <button
             key={c.id}
@@ -122,37 +159,64 @@ function NoticeTab({ accessToken }) {
           </button>
         ))}
       </div>
+      )}
 
       {/* 공지 리스트 렌더링 */}
-      {isLoading ? (
-        <div className="notice-empty">공지사항을 불러오는 중입니다...</div>
+      {currentData.isLoading ? (<div className="notice-empty">데이터를 불러오는 중입니다...</div>
       ) : (
 
       <ul className="notice-list">
-        {filtered.length === 0 ? (
-          <p className="notice-empty">공지사항이 없습니다.</p>
+        {listItems.length === 0 ? (
+          <p className="notice-empty">{emptyText}</p>
         ) : (
-          filtered.map((item, index) => (
-            // id가 없으므로 course_id와 index 조합으로 key 생성
+           listItems.map((item, index) => { // 탭에 따라 매핑할 데이터 다르게 설정
+              const key = isNotice ? `${item.course_id}-${index}` : item.message_id;
+              const tag = isNotice ? item.course_name : item.sender;
+              const title = isNotice ? item.title : item.content;
+              const date = isNotice ? item.date?.slice(0, 10) : item.date;
+
+              const tagColor = getColorForString(tag);
+
+              return (
             <li 
-              key={`${item.course_id}-${index}`} 
+              key={key} 
               className="notice-item" 
               onClick={() => handleNoticeClick(item)} 
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: isNotice ? 'pointer' : 'default' }}
             >
               <div className="notice-title-area">
-                <span className="notice-course-tag">[{item.course_name}]</span>
-                <span className="notice-item-title">{item.title}</span>
-                {item.date && (
-                  <span className="notice-item-date">
-                    {item.date.slice(0, 10)}  {/* 날짜 부분만 표시 */}
+                <span 
+                    className="notice-course-tag" 
+                    style={{ color: tagColor }} 
+                  >
+                    [{tag}]
                   </span>
-                 )}
+
+                {/* 쪽지이면서 url이 존재할 경우에만 링크 적용 */}
+                {!isNotice && item.url ? (
+                  <a href={item.url} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="notice-item-title" 
+                  style={{ textDecoration: 'none', color: 'inherit' }}>
+                      {title}
+                    </a>
+                  ) : (
+
+                <span className="notice-item-title">{title}</span>
+                )}
               </div>
-            </li>
-          ))
-        )}
-      </ul>
+
+                {date && (
+                  <span className="notice-item-date">
+                    {date.slice(0, 10)}  {/* 날짜 부분만 표시 */}
+                  </span>
+                  )}
+                </li>
+              );
+            })
+          )}
+        </ul>
       )}
 
       {/* Portal을 통한 상세 보기 모달 팝업 */}
