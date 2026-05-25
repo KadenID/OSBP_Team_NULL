@@ -125,7 +125,7 @@ function NoticeTab({ accessToken }) {
 
       {/* 공지 리스트 렌더링 */}
       {isLoading ? (
-        <p className="notice-empty">공지사항을 불러오는 중입니다...</p>
+        <div className="notice-empty">공지사항을 불러오는 중입니다...</div>
       ) : (
 
       <ul className="notice-list">
@@ -143,6 +143,11 @@ function NoticeTab({ accessToken }) {
               <div className="notice-title-area">
                 <span className="notice-course-tag">[{item.course_name}]</span>
                 <span className="notice-item-title">{item.title}</span>
+                {item.date && (
+                  <span className="notice-item-date">
+                    {item.date.slice(0, 10)}  {/* 날짜 부분만 표시 */}
+                  </span>
+                 )}
               </div>
             </li>
           ))
@@ -156,11 +161,13 @@ function NoticeTab({ accessToken }) {
           <div className="detail-modal" onClick={e => e.stopPropagation()}>
             <button className="close-btn" onClick={() => setSelectedNotice(null)}>✕</button>
             <h3>공지 상세 정보</h3>
+            <div className="detail-modal-body">
             <div className="detail-info">
               <p><strong>과목:</strong> {selectedNotice.course_name}</p>
               <p><strong>제목:</strong> {selectedNotice.title}</p>
               {selectedNotice.writer && <p><strong>작성자:</strong> {selectedNotice.writer}</p>}
-              {selectedNotice.date && <p><strong>작성일:</strong> {selectedNotice.date}</p>}
+              {selectedNotice.date && ( <p><strong>작성일: </strong> 
+                {selectedNotice.date.replace(/(\d{4}-\d{2}-\d{2})\s*(\d{2})(\d{2})(\d{2})/, '$1 $2:$3')}</p>)}
             </div>
             <hr />
             <span className="detail-section-title">공지 내용</span>
@@ -180,6 +187,7 @@ function NoticeTab({ accessToken }) {
                 </a>
               </div>
             )}
+            </div> 
           </div>
         </div>,
         document.body
