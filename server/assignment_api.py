@@ -163,6 +163,21 @@ def set_refresh_cookie(response: Response, refresh_token: str, request: Request)
         path="/"
     )
 
+# 입력: session (requests.Session 객체)
+# 기능: LMS 대시보드 요청으로 세션 유효성 확인
+# 반환: 유효 여부 (bool)
+def _is_lms_session_valid(session: requests.Session) -> bool:
+    try:
+        resp = session.get(
+            "https://lms.chungbuk.ac.kr/",
+            timeout=5,
+            allow_redirects=False
+        )
+        # 302 = 로그인 페이지로 튕김 = 만료
+        return resp.status_code == 200
+    except Exception:
+        return False
+
 # 입력: student_id (학번)
 # 기능: Redis 캐시에서 LMS 세션 복원, 없으면 저장된 계정으로 재로그인
 # 반환: requests.Session 객체
@@ -170,14 +185,24 @@ def resolve_lms_session(student_id: str) -> requests.Session:
     cached_cookies = redis_cache.get_lms_session(student_id)
     
     session = requests.Session()
+    
     if cached_cookies:
         session.cookies.update(cached_cookies)
-    else:
-        loaded_id, password = storage.load_user(student_id)
-        session, message = login_to_lms(loaded_id, password)
-        if not session:
-            raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다. 다시 로그인해주세요.")
-        redis_cache.set_lms_session(student_id, session.cookies.get_dict())
+        
+        if _is_lms_session_valid(session):
+            return session
+        
+        # 만료된 경우 Redis 캐시 삭제 후 재로그인
+        logger.warning(f"캐시된 LMS 세션 만료 감지, 재로그인 시도 (student_id: {student_id})")
+        redis_cache.delete_lms_session(student_id)
+        session = requests.Session()
+   
+   
+    loaded_id, password = storage.load_user(student_id)
+    session, message = login_to_lms(loaded_id, password)
+    if not session:
+        raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다. 다시 로그인해주세요.")
+    redis_cache.set_lms_session(student_id, session.cookies.get_dict())
     return session
 
 
