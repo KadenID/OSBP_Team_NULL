@@ -71,6 +71,17 @@
   --login-focus-shadow: rgba(33, 150, 243, 0.12);
   --login-button-shadow: rgba(33, 150, 243, 0.25);
   --login-card-shadow: rgba(20, 40, 70, 0.1);
+
+  --tag-color-0: #1565c0; /* 다크 블루 */
+  --tag-color-1: #c62828; /* 다크 레드 */
+  --tag-color-2: #d84315; /* 번트 오렌지 */
+  --tag-color-3: #2e7d32; /* 다크 그린 */
+  --tag-color-4: #ad1457; /* 다크 핑크 */
+  --tag-color-5: #6a1b9a; /* 다크 보라 */
+  --tag-color-6: #00838f; /* 다크 청록 */
+  --tag-color-7: #558b2f; /* 올리브 그린 */
+  --tag-color-8: #c2185b; /* 다크 마젠타 */
+  --tag-color-9: #4527a0; /* 다크 인디고 */
  
   /* 기타 */
   --backdrop:    blur(8px);
@@ -149,6 +160,17 @@
   --login-focus-shadow: rgba(96, 165, 250, 0.22);
   --login-button-shadow: rgba(96, 165, 250, 0.25);
   --login-card-shadow: rgba(0, 0, 0, 0.28);
+
+  --tag-color-0: #8ab4f8; /* 파스텔 파랑 */
+  --tag-color-1: #f28b82; /* 파스텔 빨강 */
+  --tag-color-2: #fde293; /* 파스텔 노랑 */
+  --tag-color-3: #81c995; /* 파스텔 초록 */
+  --tag-color-4: #f48fb1; /* 파스텔 핑크 */
+  --tag-color-5: #c58af9; /* 파스텔 보라 */
+  --tag-color-6: #4fc3f7; /* 파스텔 청록 */
+  --tag-color-7: #aed581; /* 파스텔 연두 */
+  --tag-color-8: #ffb74d; /* 파스텔 주황 */
+  --tag-color-9: #ba68c8; /* 파스텔 연보라 */
 }
  
 @media (prefers-color-scheme: dark) {
@@ -214,6 +236,17 @@
     --login-focus-shadow: rgba(96, 165, 250, 0.22);
     --login-button-shadow: rgba(96, 165, 250, 0.25);
     --login-card-shadow: rgba(0, 0, 0, 0.28);
+
+    --tag-color-0: #8ab4f8; /* 파스텔 파랑 */
+    --tag-color-1: #f28b82; /* 파스텔 빨강 */
+    --tag-color-2: #fde293; /* 파스텔 노랑 */
+    --tag-color-3: #81c995; /* 파스텔 초록 */
+    --tag-color-4: #f48fb1; /* 파스텔 핑크 */
+    --tag-color-5: #c58af9; /* 파스텔 보라 */
+    --tag-color-6: #4fc3f7; /* 파스텔 청록 */
+    --tag-color-7: #aed581; /* 파스텔 연두 */
+    --tag-color-8: #ffb74d; /* 파스텔 주황 */
+    --tag-color-9: #ba68c8; /* 파스텔 연보라 */
 
   }
 }
