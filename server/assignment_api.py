@@ -14,7 +14,7 @@ import os
 # 내부 모듈 임포트
 from lms_login import login_to_lms
 from lms_crawler import crawl_all_assignments, SessionExpiredError, get_user_profile
-from notice_crawler import crawl_all_notices, get_notice_detail  
+from notice_crawler import crawl_all_notices, get_notice_detail, crawl_all_messages
 import auth
 import storage
 import redis_cache
@@ -135,6 +135,19 @@ class NoticeDetailResponse(BaseModel): # 공지사항 상세 응답 스키마
     success: bool
     message: str
     data: dict
+    
+class MessageItem(BaseModel): # 쪽지 개별 항목 스키마
+    message_id: str
+    sender: str
+    content: str
+    date: str
+    url: str
+
+class MessageListResponse(BaseModel): # 쪽지 목록 API 응답 스키마
+    success: bool
+    message: str
+    total_count: int
+    data: List[MessageItem] = []
     
 security = HTTPBearer() # 인증 객체
 
@@ -537,6 +550,26 @@ def get_notice_detail_api(board_id: str, notice_id: str, student_id: str = Depen
         logger.error(f"공지사항 상세 조회 실패: {e}")
         raise HTTPException(status_code=500, detail="공지사항 상세 조회 실패")
     
+# 입력: student_id (학번)
+# 기능: LMS 받은 쪽지 목록 크롤링 및 반환
+# 반환: MessageListResponse
+@app.get("/api/messages", response_model=MessageListResponse)
+def get_lms_messages(student_id: str = Depends(get_current_user)):
+    session = resolve_lms_session(student_id)
+    try:
+        messages = crawl_all_messages(session)
+        return MessageListResponse(
+            success=True, 
+            message="성공", 
+            total_count=len(messages), 
+            data=messages
+        )
+    except SessionExpiredError:
+        raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다.")
+    except Exception:
+        logger.exception("쪽지 목록 조회 실패")
+        raise HTTPException(status_code=500, detail="쪽지 목록 조회 실패")
     
+
 if __name__ == "__main__":
     uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)
