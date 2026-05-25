@@ -253,3 +253,63 @@ def crawl_all_notices(session, common_board_ids=None):
     all_notices.sort(key=lambda x: x['date'], reverse=True)
 
     return all_notices
+
+# 입력: session (requests.Session 객체)
+# 기능: LMS 받은 쪽지 목록 크롤링
+# 반환: 쪽지 정보 딕셔너리 리스트
+def crawl_all_messages(session):
+    url = "https://lms.chungbuk.ac.kr/local/ubsend/message/"
+    messages = []
+    
+    try:
+        resp = session.get(url, timeout=10, allow_redirects=False)
+        if resp.status_code in [302, 401]:
+            raise SessionExpiredError("LMS 세션이 만료되었습니다.")
+            
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        
+        # 실제 LMS 구조: table이 아니라 <li class="media"> 형태의 리스트임
+        message_items = soup.select('li.media')
+        
+        for idx, item in enumerate(message_items):
+            body = item.select_one('div.media-body')
+            if not body:
+                continue
+                
+            link_tag = body.select_one('a')
+            if not link_tag:
+                continue
+                
+            # 1. 보낸 사람 (h4.media-heading)
+            sender_tag = link_tag.select_one('h4.media-heading')
+            sender = sender_tag.get_text(strip=True) if sender_tag else "알 수 없음"
+            
+            # 2. 날짜 (div.time)
+            time_tag = link_tag.select_one('div.time')
+            date = time_tag.get_text(strip=True) if time_tag else ""
+            
+            # 3. 내용 (div.msg)
+            msg_tag = link_tag.select_one('div.msg')
+            content = msg_tag.get_text(strip=True) if msg_tag else ""
+            
+            # 4. 상세 페이지 URL
+            href = link_tag.get('href', '')
+            url_link = href if href.startswith('http') else f"https://lms.chungbuk.ac.kr{href}"
+            
+            message_id = f"{sender}-{idx}"
+            
+            messages.append({
+                'message_id': message_id,
+                'sender': sender,
+                'content': content,
+                'date': date,
+                'url': url_link
+            })
+            
+        return messages
+        
+    except SessionExpiredError:
+        raise
+    except Exception as e:
+        logger.error(f"쪽지 크롤링 중 오류: {e}")
+        return []
