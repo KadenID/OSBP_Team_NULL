@@ -511,22 +511,28 @@ def get_notices(student_id: str = Depends(get_current_user)):
         logger.error(f"공지사항 조회 실패: {e}")
         raise HTTPException(status_code=500, detail="공지사항 조회 실패")
  
+ 
 # 입력: board_id (게시판 ID), notice_id (게시글 ID), student_id (학번)
 # 기능: 공지사항 상세 본문 크롤링
 # 반환: NoticeDetailResponse
+
+# 에러 처리:
+#   - 잘못된 board_id/notice_id 입력 시 LMS가 에러 페이지를 반환
+#     → 크롤러에서 title_tag 파싱 실패 → ValueError 발생 → 404 반환
+#   - 위를 통해 사용자의 잘못된 요청(404)과 서버 내부 오류(500)를 구분
+
 @app.get("/api/notices/{board_id}/{notice_id}", response_model=NoticeDetailResponse)
 def get_notice_detail_api(board_id: str, notice_id: str, student_id: str = Depends(get_current_user)):
     session = resolve_lms_session(student_id)
- 
+
     try:
         detail = get_notice_detail(session, board_id, notice_id)
         return NoticeDetailResponse(success=True, message="성공", data=detail)
     except SessionExpiredError:
         raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다.")
+    except ValueError as e:
+        # 크롤러에서 올린 404 케이스 (잘못된 board_id/notice_id)
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.error(f"공지사항 상세 조회 실패: {e}")
         raise HTTPException(status_code=500, detail="공지사항 상세 조회 실패")
-
-
-if __name__ == "__main__":
-    uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)

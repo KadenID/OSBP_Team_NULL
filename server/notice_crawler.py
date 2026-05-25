@@ -162,6 +162,12 @@ def get_notice_detail(session, board_id, notice_id):
             raise SessionExpiredError("LMS 세션이 만료되었습니다.")
 
         soup = BeautifulSoup(resp.text, 'html.parser')
+        
+        # 존재하지 않는 게시글이면 LMS가 에러 메시지 페이지를 반환함
+        error_box = soup.select_one('div.alert-danger') or soup.select_one('div#notice')
+        title_tag = soup.select_one('div.article-subject h3')
+        if not title_tag or (error_box and '존재하지' in error_box.get_text()):
+            raise ValueError("존재하지 않는 공지사항입니다.")
 
         title = ""
         title_tag = soup.select_one('div.article-subject h3')
