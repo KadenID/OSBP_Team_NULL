@@ -184,10 +184,19 @@ def get_notice_detail(session, board_id, notice_id):
             elif '조회수' in text:
                 views = text.replace('조회수', '').replace(':', '').strip()
 
+        # 텍스트 대신 HTML 추출 — 이미지 src를 절대 경로로 변환
         description = ""
+        description_html = ""
         content_tag = soup.select_one('div.article-content div.text_to_html')
         if content_tag:
             description = content_tag.get_text(separator='\n', strip=True)
+
+            # 이미지 src 상대경로 → 절대경로 변환
+            for img in content_tag.find_all('img'):
+                src = img.get('src', '')
+                if src.startswith('/'):
+                    img['src'] = f"https://lms.chungbuk.ac.kr{src}"
+            description_html = str(content_tag)
 
         return {
             'title': title,
@@ -195,6 +204,7 @@ def get_notice_detail(session, board_id, notice_id):
             'date': date,
             'views': views,
             'description': description,
+            'description_html': description_html,  # HTML 버전 추가
             'url': url
         }
 

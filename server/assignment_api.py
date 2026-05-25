@@ -536,3 +536,7 @@ def get_notice_detail_api(board_id: str, notice_id: str, student_id: str = Depen
     except Exception as e:
         logger.error(f"공지사항 상세 조회 실패: {e}")
         raise HTTPException(status_code=500, detail="공지사항 상세 조회 실패")
+    
+    
+if __name__ == "__main__":
+    uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)

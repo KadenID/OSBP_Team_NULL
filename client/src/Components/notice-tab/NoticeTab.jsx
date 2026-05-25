@@ -74,9 +74,10 @@ function NoticeTab({ accessToken }) {
       : notices.filter(n => n.course_id === selectedCourse),
   [notices, selectedCourse]);
 
-  // 공지 클릭 시 상세 모달 — description 없으면 API 호출
+  // 공지 클릭 시 상세 모달 — description_html 없으면 상세 API 호출
   const handleNoticeClick = async (item) => {
-    if (item.description) {
+    // description_html이 없으면 항상 상세 API 호출
+    if (item.description_html) {
       setSelectedNotice(item);
     } else {
       try {
@@ -163,7 +164,15 @@ function NoticeTab({ accessToken }) {
             </div>
             <hr />
             <span className="detail-section-title">공지 내용</span>
-            <pre className="detail-text">{selectedNotice.description}</pre>
+            {/* description_html 있으면 HTML로 렌더링, 없으면 텍스트 폴백 */}
+            {selectedNotice.description_html ? (
+              <div
+                className="detail-html-content"
+                dangerouslySetInnerHTML={{ __html: selectedNotice.description_html }}
+              />
+            ) : (
+              <pre className="detail-text">{selectedNotice.description}</pre>
+            )}
             {selectedNotice.url && (
               <div className="detail-footer">
                 <a href={selectedNotice.url} target="_blank" rel="noopener noreferrer" className="lms-link">

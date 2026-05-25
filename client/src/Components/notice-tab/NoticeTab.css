@@ -141,6 +141,48 @@
   font-size: 0.9rem;
 }
 
+/* HTML 본문 렌더링 영역 */
+.detail-html-content {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--text-main);
+  word-break: break-word;
+  overflow-x: auto;
+}
+
+/* 이미지 넘침 방지 */
+.detail-html-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 8px 0;
+}
+
+/* 표 스타일 */
+.detail-html-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 0.85rem;
+}
+
+.detail-html-content th,
+.detail-html-content td {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.detail-html-content th {
+  background-color: var(--bg-card);
+  font-weight: 600;
+}
+
+/* 단락 간격 */
+.detail-html-content p {
+  margin: 0 0 10px 0;
+}
+
 @media screen and (max-width: 1300px) {
   .notice-section {
     padding: 22px; 
