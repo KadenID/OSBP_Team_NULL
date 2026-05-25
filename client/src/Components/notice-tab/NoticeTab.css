@@ -8,10 +8,18 @@
   border-bottom: 1px solid var(--border);
 }
 
+.notice-header-right {
+  display: flex;
+  flex-direction: column; 
+  align-items: flex-end;  
+  gap: 10px;          
+}
+
 .notice-title-group {
   display: flex;
   align-items: center;
   gap: 10px;
+  justify-content: space-between;
 }
 
 .notice-title-group h2 {
@@ -25,7 +33,7 @@
   font-size: 1.4rem;
 }
 
-.notice-more-btn {
+.notice-more-btn { 
   padding: 6px 10px;
   border: 1px solid var(--accent);
   font-size: 12px;
@@ -34,6 +42,41 @@
   color: #ffffff;
   border-radius: 8px;
   text-decoration: none;
+}
+
+/* 공지사항, 쪽지함 영역 */
+.notice-tab-toggles {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-card); 
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+/* 공지사항, 쪽지함 버튼 */
+.tab-toggle-btn {  
+  padding: 6px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.tab-toggle-btn:hover:not(.active) {
+  background-color: var(--shadow-hover);
+}
+
+.tab-toggle-btn.active {
+  background-color: var(--accent);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 2px 4px var(--btn-bg-hover); 
 }
 
 .filter-tag-btn:hover {
@@ -87,6 +130,10 @@
   border-bottom: 1px solid var(--border);
   padding: 18px 24px;
   cursor: pointer;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .notice-item:first-child {
