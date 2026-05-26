@@ -7,10 +7,30 @@ from concurrent.futures import ThreadPoolExecutor
 import storage
 import redis_cache
 from lms_login import login_to_lms
-from lms_crawler import crawl_all_assignments
+from lms_crawler import crawl_all_assignments, get_enrolled_courses
 from notification_service import send_all_notifications
 
 logger = logging.getLogger(__name__)
+
+def refresh_all_user_courses():
+    """모든 사용자의 수강 과목 목록을 강제로 갱신 (매일 새벽용)"""
+    logger.info("모든 사용자의 수강 과목 정보 갱신 시작...")
+    student_ids = storage.get_all_student_ids()
+    
+    for student_id in student_ids:
+        try:
+            loaded_id, password = storage.load_user(student_id)
+            if loaded_id and password:
+                session, _ = login_to_lms(loaded_id, password)
+                if session:
+                    # student_id를 전달하면 get_enrolled_courses 내부에서 DB/Redis에 자동 저장함
+                    # 캐시를 무시하고 새로 크롤링하기 위해 Redis 캐시 삭제 후 호출 고려 가능
+                    # 여기서는 그냥 호출하여 최신화
+                    get_enrolled_courses(session, student_id)
+                    logger.info(f"사용자 {student_id} 과목 갱신 완료")
+                time.sleep(0.5) # LMS 부하 방지
+        except Exception as e:
+            logger.error(f"사용자 {student_id} 과목 갱신 중 오류: {e}")
 
 def parse_deadline(date_str):
     """마감 기한 문자열을 datetime 객체로 변환 (LMS 시간은 KST)"""
@@ -56,7 +76,7 @@ def check_user_logic(student_id, now):
     if cached_cookies:
         session.cookies.update(cached_cookies)
         try:
-            lms_assignments = crawl_all_assignments(session)
+            lms_assignments = crawl_all_assignments(session, student_id)
             lms_fetched = True
         except Exception as e:
             logger.debug(f"사용자 {student_id}: 캐시 세션 크롤링 실패 ({e})")
@@ -68,7 +88,7 @@ def check_user_logic(student_id, now):
             if session:
                 redis_cache.set_lms_session(student_id, session.cookies.get_dict())
                 try:
-                    lms_assignments = crawl_all_assignments(session)
+                    lms_assignments = crawl_all_assignments(session, student_id)
                     lms_fetched = True
                 except Exception as e:
                     logger.error(f"사용자 {student_id}: LMS 로그인 후 크롤링 실패 ({e})")
@@ -80,7 +100,7 @@ def check_user_logic(student_id, now):
                 "course_name": a["course_name"],
                 "title": f"[{a['course_name']}] {a['assignment_name']}",
                 "deadline": a["due_date"],
-                "is_submitted": a["status"] == "제출",
+                "is_submitted": "제출" in a["status"] and "미제출" not in a["status"],
                 "url": a["url"]
             })
     

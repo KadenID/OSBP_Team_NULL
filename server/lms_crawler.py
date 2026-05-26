@@ -2,14 +2,31 @@ import urllib.parse             #과목별 ID 추출
 import requests                 #서버 통신
 import re                       #과목명 정제
 from bs4 import BeautifulSoup   #html > python 객체로 변환하여 탐색
+import redis_cache
+import storage
 
 class SessionExpiredError(Exception): # 세션 만료 예외
     pass
 
-# 입력: session (로그인된 세션 객체)
-# 기능: 대시보드 페이지에서 수강 중인 과목 목록 및 ID 추출
+# 입력: session (로그인된 세션 객체), student_id (학번, 선택사항)
+# 기능: 대시보드 페이지에서 수강 중인 과목 목록 및 ID 추출 (캐싱 지원)
 # 반환: {과목ID: 과목명} 딕셔너리
-def get_enrolled_courses(session):
+def get_enrolled_courses(session, student_id=None):
+    # 1. Redis 캐시 확인
+    if student_id:
+        cached = redis_cache.get_cached_courses(student_id)
+        if cached:
+            return cached
+
+    # 2. DB 확인 (Redis에 없거나 student_id가 있는 경우)
+    if student_id:
+        db_courses = storage.get_user_courses(student_id)
+        if db_courses:
+            # DB 데이터를 Redis에 캐싱 (24시간)
+            redis_cache.set_cached_courses(student_id, db_courses)
+            return db_courses
+
+    # 3. 크롤링 (캐시/DB에 없으면 직접 추출)
     dashboard_url = "https://lms.chungbuk.ac.kr/"
     courses = {}
 
@@ -57,12 +74,20 @@ def get_enrolled_courses(session):
                     if course_name:
                         courses[course_id] = course_name
 
+        # 4. 결과 저장 (성공적으로 크롤링한 경우 DB와 Redis에 업데이트)
+        if student_id and courses:
+            storage.save_user_courses(student_id, courses)
+            redis_cache.set_cached_courses(student_id, courses)
+
         return courses
 
     except SessionExpiredError:
         raise
     except Exception as e:
         print(f"과목 목록 추출 중 오류 발생: {e}")
+        # 오류 발생 시 DB에 저장된 예전 데이터라도 반환 시도
+        if student_id:
+            return storage.get_user_courses(student_id)
         return {}
 
 # 입력: session (로그인된 세션 객체), student_id (학번)
@@ -216,13 +241,13 @@ def get_assignments_for_course(session, course_id, course_name):
         print(error_msg)
         raise Exception(error_msg)
 
-# 입력: session (세션 객체)
+# 입력: session (세션 객체), student_id (학번, 캐싱용)
 # 기능: 모든 수강 과목의 과제를 통합하여 크롤링하고 마감일 순으로 정렬
 # 반환: 정렬된 과제 리스트
-def crawl_all_assignments(session):
+def crawl_all_assignments(session, student_id=None):
     all_assignments = []
 
-    courses = get_enrolled_courses(session)
+    courses = get_enrolled_courses(session, student_id)
     
     for course_id, course_name in courses.items():
         assign_list = get_assignments_for_course(session, course_id, course_name)

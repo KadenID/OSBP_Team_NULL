@@ -110,6 +110,16 @@ def init_db():
                         UNIQUE(student_id, assignment_identifier, alert_type)
                     );
                 """)
+                # 수강 과목 테이블 (캐싱용)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS user_courses (
+                        student_id VARCHAR(20) REFERENCES users(student_id) ON DELETE CASCADE,
+                        course_id VARCHAR(50) NOT NULL,
+                        course_name VARCHAR(200) NOT NULL,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        PRIMARY KEY (student_id, course_id)
+                    );
+                """)
                 # 사용자용 알림 내역 테이블 (조회용)
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS notification_history (
@@ -497,6 +507,49 @@ def delete_custom_assignment(student_id, assignment_id):
             raise
 
 # --- 알림 내역 관리 ---
+
+def save_user_courses(student_id, courses_dict):
+    """사용자의 수강 과목 목록을 DB에 저장 (동기화)"""
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                # 기존 과목 삭제 후 새로 삽입 (또는 ON CONFLICT 처리)
+                # 여기서는 ON CONFLICT를 사용하여 업데이트 처리
+                for course_id, course_name in courses_dict.items():
+                    sql = """
+                    INSERT INTO user_courses (student_id, course_id, course_name, updated_at)
+                    VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
+                    ON CONFLICT (student_id, course_id)
+                    DO UPDATE SET course_name = EXCLUDED.course_name, updated_at = CURRENT_TIMESTAMP;
+                    """
+                    cur.execute(sql, (student_id, course_id, course_name))
+                
+                # 현재 dict에 없는 과목은 삭제 (수강 취소 등 반영)
+                if courses_dict:
+                    placeholders = ', '.join(['%s'] * len(courses_dict))
+                    delete_sql = f"DELETE FROM user_courses WHERE student_id = %s AND course_id NOT IN ({placeholders});"
+                    cur.execute(delete_sql, [student_id] + list(courses_dict.keys()))
+                else:
+                    cur.execute("DELETE FROM user_courses WHERE student_id = %s;", (student_id,))
+                    
+            conn.commit()
+            logger.info(f"사용자 과목 정보 업데이트 완료 (student_id: {student_id})")
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"사용자 과목 저장 중 오류 발생 (student_id: {student_id}): {e}")
+
+def get_user_courses(student_id):
+    """DB에서 사용자의 수강 과목 목록 조회"""
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                sql = "SELECT course_id, course_name FROM user_courses WHERE student_id = %s;"
+                cur.execute(sql, (student_id,))
+                rows = cur.fetchall()
+                return {row[0]: row[1] for row in rows}
+        except Exception as e:
+            logger.error(f"사용자 과목 조회 중 오류 발생 (student_id: {student_id}): {e}")
+            return {}
 
 def add_notification_history(student_id, title, message, channel, assignment_id=None, url=None):
     """사용자에게 보여줄 알림 내역을 저장 (과제 ID 및 URL 포함)"""

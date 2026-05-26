@@ -37,6 +37,32 @@ def set_lms_session(student_id: str, cookies: dict, expire_seconds: int = 1500):
     except Exception as e:
         logger.error(f"Redis 세션 저장 오류: {e}")
 
+# 입력: student_id (학번), courses (과목 딕셔너리), expire_seconds (만료 초, 기본 24시간)
+# 기능: 수강 과목 목록을 Redis에 캐싱
+def set_cached_courses(student_id: str, courses: dict, expire_seconds: int = 86400):
+    if not redis_client:
+        return
+    try:
+        key = f"user_courses:{student_id}"
+        redis_client.set(key, json.dumps(courses), ex=expire_seconds)
+        logger.info(f"Redis에 과목 캐싱 완료 (student_id: {student_id})")
+    except Exception as e:
+        logger.error(f"Redis 과목 캐싱 오류: {e}")
+
+# 입력: student_id (학번)
+# 기능: Redis에서 캐싱된 과목 목록 조회
+def get_cached_courses(student_id: str) -> dict:
+    if not redis_client:
+        return None
+    try:
+        key = f"user_courses:{student_id}"
+        data = redis_client.get(key)
+        if data:
+            return json.loads(data)
+    except Exception as e:
+        logger.error(f"Redis 과목 로드 오류: {e}")
+    return None
+
 # 입력: student_id (학번)
 # 기능: Redis에서 학번으로 저장된 세션(쿠키) 정보를 역직렬화하여 로드
 # 반환: 쿠키 딕셔너리 (없거나 에러 시 None)

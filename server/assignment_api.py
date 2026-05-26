@@ -17,7 +17,7 @@ from lms_crawler import crawl_all_assignments, SessionExpiredError, get_user_pro
 import auth
 import storage
 import redis_cache
-from scheduler import check_and_send_notifications
+from scheduler import check_and_send_notifications, refresh_all_user_courses
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +29,8 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(check_and_send_notifications, 'interval', hours=1)
 # 매일 새벽 3시에 30일이 지난 모든 알림 관련 기록(중복방지 및 내역) 통합 삭제
 scheduler.add_job(storage.cleanup_old_notifications, 'cron', hour=3, minute=0, args=[30])
+# 매일 새벽 4시에 모든 사용자의 수강 과목 정보 갱신 (캐싱 최신화)
+scheduler.add_job(refresh_all_user_courses, 'cron', hour=4, minute=0)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -302,7 +304,7 @@ def get_lms_assignments(student_id: str = Depends(get_current_user)):
         redis_cache.set_lms_session(student_id, session.cookies.get_dict())
     
     try:
-        assignments = crawl_all_assignments(session)
+        assignments = crawl_all_assignments(session, student_id)
         return LMSAPIResponse(success=True, message="성공", total_count=len(assignments), data=assignments)
     except Exception as e:
         logger.error(f"Error: {e}")
