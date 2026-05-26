@@ -310,6 +310,57 @@ def get_lms_assignments(student_id: str = Depends(get_current_user)):
         logger.error(f"Error: {e}")
         raise HTTPException(status_code=500, detail="데이터 로딩 실패")
 
+@app.get("/api/courses")
+def get_user_courses(include_custom: bool = True, student_id: str = Depends(get_current_user)):
+    cached_cookies = redis_cache.get_lms_session(student_id)
+    session = requests.Session()
+    
+    if cached_cookies:
+        session.cookies.update(cached_cookies)
+    else:
+        loaded_id, password = storage.load_user(student_id)
+        session, _ = login_to_lms(loaded_id, password)
+        if not session:
+             # 세션이 없어도 DB 데이터는 보여줄 수 있음
+             pass
+        else:
+             redis_cache.set_lms_session(student_id, session.cookies.get_dict())
+            
+    try:
+        from lms_crawler import get_enrolled_courses, get_course_sort_key
+        # LMS 공식 과목 가져오기
+        lms_courses = get_enrolled_courses(session, student_id)
+        
+        course_list = []
+        if isinstance(lms_courses, dict):
+            for cid, cdata in lms_courses.items():
+                if isinstance(cdata, dict):
+                    course_list.append({"id": cid, "name": cdata.get("name", cid), "type": cdata.get("type", "regular")})
+                else:
+                    # 구버전 캐시 데이터 대응 (문자열인 경우)
+                    course_list.append({"id": cid, "name": str(cdata), "type": "regular"})
+        
+        # 커스텀 과목 포함 여부 확인
+        if include_custom:
+            try:
+                custom_assignments = storage.get_custom_assignments(student_id)
+                custom_subjects = {a['subject'] for a in custom_assignments if a.get('subject')}
+                lms_course_names = {c['name'] for c in course_list}
+                for subject in custom_subjects:
+                    if subject not in lms_course_names:
+                        course_list.append({"id": subject, "name": subject, "type": "custom"})
+            except Exception as ce:
+                logger.error(f"커스텀 과목 병합 중 오류 (무시함): {ce}")
+        
+        # 전체 리스트 재정렬 (정규(0) > 비교과(1) > 커스텀(2))
+        type_rank = {"regular": 0, "comparative": 1, "custom": 2}
+        course_list.sort(key=lambda x: (type_rank.get(x.get('type'), 3), get_course_sort_key(x.get('name', ''))))
+        
+        return {"success": True, "data": course_list}
+    except Exception as e:
+        logger.error(f"과목 목록 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail="과목 목록을 불러올 수 없습니다.")
+
 @app.get("/api/custom-assignments", response_model=CustomAPIResponse)
 def get_custom_assignments(student_id: str = Depends(get_current_user)):
     try:

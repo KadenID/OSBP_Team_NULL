@@ -26,6 +26,7 @@ function AlarmSettings({ accessToken }) {
     const [emailAlerts, setEmailAlerts] = useState(false);
     const [browserAlerts, setBrowserAlerts] = useState(false);
     const [courseReminders, setCourseReminders] = useState([]);
+    const [courses, setCourses] = useState([{ id: "all", name: "전체 과목" }]);
     
     const [permissionStatus, setPermissionStatus] = useState(
         typeof Notification !== "undefined" ? Notification.permission : "default"
@@ -53,66 +54,34 @@ function AlarmSettings({ accessToken }) {
         }
     }, [accessToken, fetchAssignments]);
 
-    // 과목명 정렬 기준: 한글 시작 > 영어 시작 > 기타 (사전순)
-    const sortCourseNames = useCallback((a, b) => {
-        if (!a) return 1;
-        if (!b) return -1;
-
-        // 시작 문자가 해당 언어권인지 판별
-        const isKoreanStart = (s) => /^[가-힣]/.test(s);
-        const isEnglishStart = (s) => /^[a-zA-Z]/.test(s);
-        
-        const aKo = isKoreanStart(a);
-        const bKo = isKoreanStart(b);
-        
-        // 1. 한글로 시작하는 과목 우선
-        if (aKo && !bKo) return -1;
-        if (!aKo && bKo) return 1;
-        
-        const aEn = isEnglishStart(a);
-        const bEn = isEnglishStart(b);
-        
-        // 2. 영어로 시작하는 과목 다음
-        if (aEn && !bEn) return -1;
-        if (!aEn && bEn) return 1;
-        
-        // 3. 같은 카테고리 내에서는 사전순 (가나다, ABC)
-        return String(a).localeCompare(String(b), 'ko', { sensitivity: 'base' });
-    }, []);
-
-    const courses = useMemo(() => {
-        // assignment가 없을 경우 빈 배열 반환
-        if (!assignment || !Array.isArray(assignment)) {
-            return [{ id: "all", name: "전체 과목" }];
-        }
-        const uniqueSubjects = Array.from(new Set(assignment.map(a => a.subject))).filter(Boolean);
-        const sortedSubjects = uniqueSubjects.sort(sortCourseNames);
-
-        return [
-            { id: "all", name: "전체 과목" },
-            ...sortedSubjects.map(subject => ({ id: subject, name: subject }))
-        ];
-    }, [assignment, sortCourseNames]);
-
     const getCourseName = useCallback((courseId) => {
-        const course = courses.find((c) => c.id === courseId);
-        return course ? course.name : "알 수 없는 과목";
+        if (courseId === "all") return "전체 과목";
+        const course = courses.find((c) => String(c.id) === String(courseId));
+        return course ? course.name : courseId;
     }, [courses]);
 
     // 정렬된 알림 목록
     const sortedCourseReminders = useMemo(() => {
         if (!courseReminders || !Array.isArray(courseReminders)) return [];
         
+        // courses 배열에서 각 과목의 인덱스를 맵으로 저장 (빠른 조회를 위함)
+        const courseOrderMap = new Map();
+        courses.forEach((c, index) => {
+            courseOrderMap.set(String(c.id), index);
+        });
+
         return [...courseReminders].sort((a, b) => {
+            // 1. "전체 과목" 우선
             if (a.courseId === "all" && b.courseId !== "all") return -1;
             if (a.courseId !== "all" && b.courseId === "all") return 1;
             
-            const nameA = getCourseName(a.courseId);
-            const nameB = getCourseName(b.courseId);
+            // 2. 서버에서 보내준 courses 리스트의 순서(정규 > 비교과 > 커스텀 & 이름순)를 따름
+            const orderA = courseOrderMap.has(String(a.courseId)) ? courseOrderMap.get(String(a.courseId)) : 9999;
+            const orderB = courseOrderMap.has(String(b.courseId)) ? courseOrderMap.get(String(b.courseId)) : 9999;
             
-            const nameComp = sortCourseNames(nameA, nameB);
-            if (nameComp !== 0) return nameComp;
+            if (orderA !== orderB) return orderA - orderB;
             
+            // 3. 같은 과목 내에서의 알림 시간순 정렬
             const getMins = (r) => {
                 const val = Number(r.value);
                 if (r.unit === 'minute') return val;
@@ -122,35 +91,46 @@ function AlarmSettings({ accessToken }) {
             };
             return getMins(a) - getMins(b);
         });
-    }, [courseReminders, getCourseName, sortCourseNames]);
+    }, [courseReminders, courses]);
 
     useEffect(() => {
-        const fetchSettings = async () => {
+        const fetchSettingsAndCourses = async () => {
             if (!accessToken) return;
             try {
-                const response = await fetch(`${API_BASE_URL}/api/user-settings`, {
+                // 1. 설정 로드
+                const settingsResponse = await fetch(`${API_BASE_URL}/api/user-settings`, {
                     headers: { 'Authorization': `Bearer ${accessToken}` }
                 });
-                const result = await response.json();
-                if (result.success && result.data) {
-                    setEmail(result.data.email || "");
-                    setTempEmail(result.data.email || "");
-                    setEmailAlerts(result.data.emailAlerts ?? true);
-                    setBrowserAlerts(result.data.browserAlerts ?? true);
-                    setCourseReminders(result.data.courseReminders ?? []);
-                    
-                    // 하이드레이션: 브라우저에 구독 정보가 있는지 확인
-                    if (result.data.browserAlerts) {
+                const settingsResult = await settingsResponse.json();
+                if (settingsResult.success && settingsResult.data) {
+                    setEmail(settingsResult.data.email || "");
+                    setTempEmail(settingsResult.data.email || "");
+                    setEmailAlerts(settingsResult.data.emailAlerts ?? true);
+                    setBrowserAlerts(settingsResult.data.browserAlerts ?? true);
+                    setCourseReminders(settingsResult.data.courseReminders ?? []);
+                    if (settingsResult.data.browserAlerts) {
                         checkAndSyncSubscription();
                     }
                 }
+
+                // 2. 과목 목록 로드 (서버에서 이미 정렬되어 옴)
+                const coursesResponse = await fetch(`${API_BASE_URL}/api/courses?include_custom=true`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const coursesResult = await coursesResponse.json();
+                if (coursesResult.success && Array.isArray(coursesResult.data)) {
+                    setCourses([
+                        { id: "all", name: "전체 과목" },
+                        ...coursesResult.data
+                    ]);
+                }
             } catch (error) {
-                console.error("설정 로드 오류:", error);
+                console.error("데이터 로드 오류:", error);
             } finally {
-                setTimeout(() => setIsInitialLoad(false), 100);
+                setIsInitialLoad(false);
             }
         };
-        fetchSettings();
+        fetchSettingsAndCourses();
     }, [accessToken]);
 
     /* --- 권한 및 구독 로직 --- */

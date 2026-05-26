@@ -4,29 +4,51 @@ import re                       #과목명 정제
 from bs4 import BeautifulSoup   #html > python 객체로 변환하여 탐색
 import redis_cache
 import storage
+from concurrent.futures import ThreadPoolExecutor
 
 class SessionExpiredError(Exception): # 세션 만료 예외
     pass
 
+def get_course_sort_key(name):
+    """과목명 정렬 키: 한글(0) > 영어(1) > 숫자(2) > 기타(3) 순서"""
+    if not name:
+        return (4, "")
+    first_char = name[0]
+    # 한글: 0
+    if '가' <= first_char <= '힣':
+        return (0, name)
+    # 영어: 1
+    if ('a' <= first_char <= 'z') or ('A' <= first_char <= 'Z'):
+        return (1, name.lower())
+    # 숫자: 2
+    if '0' <= first_char <= '9':
+        return (2, name)
+    # 기타: 3
+    return (3, name)
+
 # 입력: session (로그인된 세션 객체), student_id (학번, 선택사항)
 # 기능: 대시보드 페이지에서 수강 중인 과목 목록 및 ID 추출 (캐싱 지원)
-# 반환: {과목ID: 과목명} 딕셔너리
+# 반환: {과목ID: {"name": 과목명, "type": "regular"|"comparative"}} 딕셔너리
 def get_enrolled_courses(session, student_id=None):
-    # 1. Redis 캐시 확인
+    # Redis 캐시 확인
     if student_id:
         cached = redis_cache.get_cached_courses(student_id)
         if cached:
             return cached
 
-    # 2. DB 확인 (Redis에 없거나 student_id가 있는 경우)
+    # DB 확인 (Redis에 없거나 student_id가 있는 경우)
     if student_id:
         db_courses = storage.get_user_courses(student_id)
         if db_courses:
-            # DB 데이터를 Redis에 캐싱 (24시간)
-            redis_cache.set_cached_courses(student_id, db_courses)
-            return db_courses
+            # 정렬 후 반환 및 캐싱 (정규(0) > 비교과(1))
+            sorted_db = dict(sorted(
+                db_courses.items(), 
+                key=lambda x: (0 if x[1]['type'] == 'regular' else 1, get_course_sort_key(x[1]['name']))
+            ))
+            redis_cache.set_cached_courses(student_id, sorted_db)
+            return sorted_db
 
-    # 3. 크롤링 (캐시/DB에 없으면 직접 추출)
+    # 크롤링 (캐시/DB에 없으면 직접 추출)
     dashboard_url = "https://lms.chungbuk.ac.kr/"
     courses = {}
 
@@ -53,6 +75,17 @@ def get_enrolled_courses(session, student_id=None):
                 course_id = urllib.parse.parse_qs(parsed_url.query).get('id', [None])[0]
                 
                 if course_id and course_id not in courses:
+                    # 1. 과목 타입 판정 (오직 배지 클래스만 사용)
+                    course_type = "comparative" # 기본값
+                    
+                    # badge-coursetype-re: 정규 강좌
+                    # badge-coursetype-on: 비교과 과정
+                    if link.select_one('.badge-coursetype-re') or (link.parent and link.parent.select_one('.badge-coursetype-re')):
+                        course_type = "regular"
+                    elif link.select_one('.badge-coursetype-on') or (link.parent and link.parent.select_one('.badge-coursetype-on')):
+                        course_type = "comparative"
+                    
+                    # 2. 과목명 추출
                     raw_text = link.text.strip()
                     course_name = ""
                     
@@ -62,6 +95,7 @@ def get_enrolled_courses(session, student_id=None):
                     if not course_name:
                         lines = [line.strip() for line in raw_text.split('\n') if line.strip()]
                         for line in lines:
+                            # 학기 정보가 있는 줄을 이름으로 우선 선택
                             if re.search(r'\([0-9]+-[0-9]+\)', line):
                                 course_name = line
                                 break
@@ -72,22 +106,35 @@ def get_enrolled_courses(session, student_id=None):
                                 course_name = lines[idx + 1]
                                 
                     if course_name:
-                        courses[course_id] = course_name
+                        courses[course_id] = {
+                            "name": course_name,
+                            "type": course_type
+                        }
 
-        # 4. 결과 저장 (성공적으로 크롤링한 경우 DB와 Redis에 업데이트)
-        if student_id and courses:
-            storage.save_user_courses(student_id, courses)
-            redis_cache.set_cached_courses(student_id, courses)
+        # 최종 정렬 (정규(0) > 비교과(1))
+        sorted_courses = dict(sorted(
+            courses.items(), 
+            key=lambda x: (0 if x[1]['type'] == 'regular' else 1, get_course_sort_key(x[1]['name']))
+        ))
 
-        return courses
+        # 결과 저장 (성공적으로 크롤링한 경우 DB와 Redis에 업데이트)
+        if student_id and sorted_courses:
+            storage.save_user_courses(student_id, sorted_courses)
+            redis_cache.set_cached_courses(student_id, sorted_courses)
+
+        return sorted_courses
 
     except SessionExpiredError:
         raise
     except Exception as e:
         print(f"과목 목록 추출 중 오류 발생: {e}")
-        # 오류 발생 시 DB에 저장된 예전 데이터라도 반환 시도
+        # 오류 발생 시 DB 데이터 정렬하여 반환
         if student_id:
-            return storage.get_user_courses(student_id)
+            db_courses = storage.get_user_courses(student_id)
+            return dict(sorted(
+                db_courses.items(), 
+                key=lambda x: (0 if x[1]['type'] == 'regular' else 1, get_course_sort_key(x[1]['name']))
+            ))
         return {}
 
 # 입력: session (로그인된 세션 객체), student_id (학번)
@@ -246,14 +293,29 @@ def get_assignments_for_course(session, course_id, course_name):
 # 반환: 정렬된 과제 리스트
 def crawl_all_assignments(session, student_id=None):
     all_assignments = []
-
     courses = get_enrolled_courses(session, student_id)
     
-    for course_id, course_name in courses.items():
-        assign_list = get_assignments_for_course(session, course_id, course_name)
+    # 병렬 크롤링을 위한 함수 정의
+    def fetch_course_assignments(course_info):
+        cid, cdata = course_info
+        # cdata가 딕셔너리인 경우와 문자열인 경우 모두 대응
+        cname = cdata['name'] if isinstance(cdata, dict) else str(cdata)
+        try:
+            return get_assignments_for_course(session, cid, cname)
+        except Exception as e:
+            print(f"과목 {cname} 과제 크롤링 실패: {e}")
+            return []
+
+    # ThreadPoolExecutor를 사용하여 병렬로 과제 데이터 수집 (최대 10개 스레드)
+    # 이 방식은 과목별로 별도의 HTTP 요청을 동시에 날리므로 속도가 비약적으로 향상됩니다.
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        results = list(executor.map(fetch_course_assignments, courses.items()))
+    
+    # 결과 통합
+    for assign_list in results:
         all_assignments.extend(assign_list)
     
-    # 마감일 기준 오름차순 정렬
+    # 최종 마감일 기준 오름차순 정렬 (사용자 편의)
     all_assignments.sort(key=lambda x: x['due_date'])
 
     return all_assignments

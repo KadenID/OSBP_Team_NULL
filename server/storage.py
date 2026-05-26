@@ -116,6 +116,7 @@ def init_db():
                         student_id VARCHAR(20) REFERENCES users(student_id) ON DELETE CASCADE,
                         course_id VARCHAR(50) NOT NULL,
                         course_name VARCHAR(200) NOT NULL,
+                        course_type VARCHAR(20) DEFAULT 'regular',
                         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                         PRIMARY KEY (student_id, course_id)
                     );
@@ -470,7 +471,8 @@ def get_custom_assignments(student_id):
     with get_db_connection() as conn:
         try:
             with conn.cursor() as cur:
-                sql = "SELECT id, course_name, assignment_name, due_date, is_submitted, description FROM custom_assignments WHERE student_id = %s ORDER BY created_at DESC;"
+                # 과목명(course_name) 순으로 먼저 정렬하여 API 레이어에서 정렬된 상태를 기대할 수 있게 함
+                sql = "SELECT id, course_name, assignment_name, due_date, is_submitted, description FROM custom_assignments WHERE student_id = %s ORDER BY course_name ASC, due_date ASC;"
                 cur.execute(sql, (student_id,))
                 rows = cur.fetchall()
                 
@@ -510,19 +512,27 @@ def delete_custom_assignment(student_id, assignment_id):
 
 def save_user_courses(student_id, courses_dict):
     """사용자의 수강 과목 목록을 DB에 저장 (동기화)"""
+    # courses_dict: {course_id: {"name": "...", "type": "..."}} 또는 {course_id: "name"} 형식 모두 지원
     with get_db_connection() as conn:
         try:
             with conn.cursor() as cur:
-                # 기존 과목 삭제 후 새로 삽입 (또는 ON CONFLICT 처리)
-                # 여기서는 ON CONFLICT를 사용하여 업데이트 처리
-                for course_id, course_name in courses_dict.items():
+                for course_id, data in courses_dict.items():
+                    if isinstance(data, dict):
+                        course_name = data.get("name")
+                        course_type = data.get("type", "regular")
+                    else:
+                        course_name = data
+                        course_type = "regular"
+
                     sql = """
-                    INSERT INTO user_courses (student_id, course_id, course_name, updated_at)
-                    VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
+                    INSERT INTO user_courses (student_id, course_id, course_name, course_type, updated_at)
+                    VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
                     ON CONFLICT (student_id, course_id)
-                    DO UPDATE SET course_name = EXCLUDED.course_name, updated_at = CURRENT_TIMESTAMP;
+                    DO UPDATE SET course_name = EXCLUDED.course_name, 
+                                 course_type = EXCLUDED.course_type,
+                                 updated_at = CURRENT_TIMESTAMP;
                     """
-                    cur.execute(sql, (student_id, course_id, course_name))
+                    cur.execute(sql, (student_id, course_id, course_name, course_type))
                 
                 # 현재 dict에 없는 과목은 삭제 (수강 취소 등 반영)
                 if courses_dict:
@@ -543,10 +553,11 @@ def get_user_courses(student_id):
     with get_db_connection() as conn:
         try:
             with conn.cursor() as cur:
-                sql = "SELECT course_id, course_name FROM user_courses WHERE student_id = %s;"
+                sql = "SELECT course_id, course_name, course_type FROM user_courses WHERE student_id = %s;"
                 cur.execute(sql, (student_id,))
                 rows = cur.fetchall()
-                return {row[0]: row[1] for row in rows}
+                # 호환성을 위해 {id: {name, type}} 구조로 반환
+                return {row[0]: {"name": row[1], "type": row[2]} for row in rows}
         except Exception as e:
             logger.error(f"사용자 과목 조회 중 오류 발생 (student_id: {student_id}): {e}")
             return {}
