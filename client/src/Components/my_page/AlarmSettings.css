@@ -34,16 +34,21 @@
 .alarm-section {
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 18px 20px;
+  padding: 18px 20px; /* 원래의 컴팩트한 여백으로 복구 */
   background: var(--alarm-section-bg);
+  position: relative;
 }
 
 .alarm-section-header {
   display: flex; 
   justify-content: space-between; 
   align-items: center; 
-  margin-bottom: 16px;
+  margin-bottom: 16px; 
 }
+
+/* 알림 설정 섹션에도 일관성을 위해 가상의 선 공간(padding) 부여, 
+   실제 선은 MyPageCard::before에서 그리기 때문에 padding만 맞춤 */
+
 
 .alarm-disabled {
   opacity: 0.45;
@@ -53,7 +58,7 @@
 
 /* 텍스트 */
 .alarm-section-title {
-  margin: 0 0 14px;
+  margin: 0 0 40px; /* 기존 20px에서 2배인 40px로 확대 */
   font-size: 16px;
   font-weight: 700;
   color: var(--text-heading);
@@ -118,15 +123,15 @@
   width: 240px;
   height: 40px;
   box-sizing: border-box;
-  padding: 10px 12px;
+  padding: 10px 14px;
   font-size: 13px;
   cursor: default;
   background-color: var(--bg);
   color: var(--text-main);
   display: flex;
   align-items: center;
-  border: 1px solid var(--alarm-input-border);
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
   margin: 0;
 }
 
@@ -139,13 +144,13 @@
   width: 240px;
   height: 40px;
   box-sizing: border-box;
-  padding: 10px 12px;
+  padding: 10px 14px;
   font-size: 13px;
   cursor: text;
   background-color: var(--bg-card);
   color: var(--text-main);
-  border: 1px solid var(--alarm-input-border);
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
   margin: 0;
   outline: none;
 }
@@ -234,56 +239,60 @@
 
 /* 과목별 알림 추가 */
 .course-reminder-add-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 180px 70px; /* 시간 설정 공간 확보, 버튼은 컴팩트하게 */
   align-items: center;
-  gap: 10px;
+  gap: 20px; /* 드롭박스와 설정 사이 여백 확대 */
+  padding-right: 20px; /* 추가 버튼을 삭제 버튼과 세로 정렬 */
+  padding-left: 0; /* 좌측 여백 제거 */
 }
 
 .alarm-select,
 .custom-reminder-box input,
 .custom-reminder-box select {
-  padding: 9px 10px;
+  height: 38px; /* 버튼 높이와 통일 */
+  padding: 8px 12px;
   border: 1px solid var(--alarm-input-border);
   border-radius: 10px;
   background-color: var(--bg-card);
   color: var(--text-main);
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px; /* 버튼 폰트 크기와 통일 */
+  font-weight: 600; /* 조금 더 선명하게 두께감 부여 */
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%; /* 셀 너비에 맞춤 */
 }
 
 .alarm-select {
-  min-width: 180px;
   cursor: pointer;
+  text-overflow: ellipsis;
+  min-width: 0; /* flex/grid 내에서 줄어들 수 있도록 설정 */
 }
 
 .custom-reminder-box {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background-color: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-}
-
-/* 섹션 내부 커스텀 박스 (테두리 없음) */
-.alarm-section .custom-reminder-box {
-  border: none;
+  justify-content: center;
+  gap: 8px; /* 내부 요소 간 여백 확대 */
+  padding: 0;
   background: transparent;
-  padding: 0 10px;
+  width: 100%;
 }
 
 .custom-reminder-box input {
-  width: 70px;
+  width: 60px; /* 여유 공간 확보를 위해 소폭 조정 */
+  text-align: center;
+}
+
+.custom-reminder-box select {
+  width: 65px; /* 여유 공간 확보를 위해 소폭 조정 */
 }
 
 .custom-reminder-box span {
   font-size: 14px; 
   font-weight: 500;
   color: var(--text-main);
+  white-space: nowrap;
 }
 
 .alarm-select:focus,
@@ -294,12 +303,14 @@
 }
 
 .add-reminder-button {
-  padding: 10px 16px;
+  width: 100%;
+  padding: 0 12px; /* 세로 패딩 대신 height 사용 */
+  height: 38px; /* 고정 높이 */
   border: 1px solid var(--alarm-button);
   border-radius: 10px;
   background-color: var(--alarm-button);
   color: var(--alarm-white);
-  font-size: 14px;
+  font-size: 13px; /* 글자 크기 원래대로 (14 -> 13) */
   font-weight: 700;
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.2s ease;
@@ -312,6 +323,7 @@
   background-color: var(--bg-card);
   color: var(--text-main);
   border-color: var(--alarm-input-border);
+  width: 60px; /* 수정 버튼 등 원래의 가로 크기 느낌 복구 */
 }
 
 .add-reminder-button:not(:disabled):hover {
@@ -340,9 +352,9 @@
 
 .alarm-course-item {
   display: grid;
-  grid-template-columns: 1fr 140px 60px;
+  grid-template-columns: 1fr 180px 70px; /* 추가 줄과 동일하게 맞춤 */
   align-items: center;
-  gap: 16px;
+  gap: 20px; /* 추가 줄과 gap 통일 */
   padding: 12px 20px;
   background-color: var(--bg-card);
   border: 1px solid var(--border);
@@ -376,7 +388,8 @@
 }
 
 .delete-reminder-button {
-  padding: 8px 0;
+  height: 38px; /* 추가 버튼과 높이 통일 */
+  padding: 0;
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -386,6 +399,9 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .delete-reminder-button:hover {
@@ -470,16 +486,16 @@
 
 /* 메시지 표시 */
 .save-alarm-wrapper {
-  margin-top: 20px;
+  margin-top: 12px; /* 20px -> 12px로 단축 */
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 24px;
+  min-height: auto; /* 불필요한 최소 높이 제거 */
 }
 
 .alarm-save-message {
   margin: 0;
-  padding: 8px 12px;
+  padding: 6px 12px;
   border-radius: 8px;
   background-color: var(--alarm-section-bg);
   color: var(--alarm-success);
