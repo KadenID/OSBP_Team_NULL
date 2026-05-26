@@ -148,6 +148,11 @@ class MessageListResponse(BaseModel): # 쪽지 목록 API 응답 스키마
     message: str
     total_count: int
     data: List[MessageItem] = []
+
+class AssignmentDetailResponse(BaseModel):  # 과제 상세 API 응답 스키마
+    success: bool
+    message: str
+    data: dict
     
 security = HTTPBearer() # 인증 객체
 
@@ -570,6 +575,25 @@ def get_lms_messages(student_id: str = Depends(get_current_user)):
         logger.exception("쪽지 목록 조회 실패")
         raise HTTPException(status_code=500, detail="쪽지 목록 조회 실패")
     
+# 입력: assignment_id (과제 ID), student_id (학번)
+# 기능: 특정 LMS 과제의 상세 정보 크롤링
+# 반환: AssignmentDetailResponse 객체
+@app.get("/api/assignments/{assignment_id}", response_model=AssignmentDetailResponse)
+def get_assignment_detail_api(assignment_id: str, student_id: str = Depends(get_current_user)):
+    session = resolve_lms_session(student_id)
+
+    try:
+        from lms_crawler import get_assignment_detail
+        detail = get_assignment_detail(session, assignment_id)
+        return AssignmentDetailResponse(success=True, message="성공", data=detail)
+    except SessionExpiredError:
+        raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다.")
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"과제 상세 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail="과제 상세 조회 실패")
+
 
 if __name__ == "__main__":
     uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)
