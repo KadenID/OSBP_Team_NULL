@@ -1,4 +1,4 @@
-/* 알림 설정 */
+/* 알림 설정 및 내역 공통 스타일 */
 .alarm-settings {
   --alarm-section-bg: rgba(99, 102, 241, 0.035);
   --alarm-focus-shadow: var(--primary-focus);
@@ -7,6 +7,13 @@
   --alarm-button-hover: var(--accent-hover);
   --alarm-input-border: var(--border);
   --alarm-white: #ffffff;
+  
+  /* 상태 색상 */
+  --alarm-error: #ef4444;
+  --alarm-error-bg: #fef2f2;
+  --alarm-error-border: #fca5a5;
+  --alarm-success: #10b981;
+  --alarm-muted: #9ca3af;
 
   display: flex;
   flex-direction: column;
@@ -14,18 +21,28 @@
   margin-top: 4px;
 }
 
-/* 공통 섹션 */
-.alarm-section,
-.alarm-toggle-row,
-.alarm-course-item,
-.custom-reminder-box {
-  border: 1px solid var(--border);
-  border-radius: 14px;
+[data-theme='dark'] .alarm-settings {
+  --alarm-section-bg: rgba(139, 141, 255, 0.05);
+  --alarm-error: #f87171;
+  --alarm-error-bg: rgba(248, 113, 113, 0.1);
+  --alarm-error-border: rgba(248, 113, 113, 0.2);
+  --alarm-success: #34d399;
+  --alarm-muted: #6b7280;
 }
 
+/* 공통 섹션 */
 .alarm-section {
+  border: 1px solid var(--border);
+  border-radius: 14px;
   padding: 18px 20px;
   background: var(--alarm-section-bg);
+}
+
+.alarm-section-header {
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-bottom: 16px;
 }
 
 .alarm-disabled {
@@ -42,13 +59,35 @@
   color: var(--text-heading);
 }
 
+.alarm-section-header .alarm-section-title {
+  margin: 0;
+}
+
 .alarm-description {
   margin: 4px 0 0;
   font-size: 13px;
   color: var(--text-muted);
 }
 
-/* 전체 알림 토글 */
+.alarm-helper-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.alarm-error-text {
+  color: var(--alarm-error);
+  font-size: 0.75rem;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* 채널 설정 그룹 */
+.alarm-channel-group {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .alarm-toggle-row {
   display: flex;
   align-items: center;
@@ -56,8 +95,67 @@
   gap: 16px;
   padding: 18px 20px;
   background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
 }
 
+/* 섹션 내부 토글 로우 (테두리 없음) */
+.alarm-section .alarm-toggle-row {
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+
+/* 이메일 입력 영역 */
+.alarm-email-input-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.alarm-email-display {
+  width: 240px;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font-size: 13px;
+  cursor: default;
+  background-color: var(--bg);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--alarm-input-border);
+  border-radius: 10px;
+  margin: 0;
+}
+
+.alarm-email-display.empty {
+  opacity: 0.7;
+  color: var(--text-muted);
+}
+
+.alarm-email-input {
+  width: 240px;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font-size: 13px;
+  cursor: text;
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--alarm-input-border);
+  border-radius: 10px;
+  margin: 0;
+  outline: none;
+}
+
+.alarm-email-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--alarm-focus-shadow);
+}
+
+/* 스위치 */
 .alarm-switch {
   position: relative;
   width: 48px;
@@ -98,6 +196,42 @@
   transform: translateX(22px);
 }
 
+.alarm-switch input:disabled + .alarm-slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 테스트 알림 버튼 영역 */
+.alarm-test-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.alarm-test-button {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin: 0;
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.alarm-test-button:not(:disabled):hover {
+  background-color: var(--btn-bg-hover);
+}
+
+.alarm-test-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 /* 과목별 알림 추가 */
 .course-reminder-add-row {
   display: flex;
@@ -131,10 +265,25 @@
   gap: 10px;
   padding: 10px 12px;
   background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+/* 섹션 내부 커스텀 박스 (테두리 없음) */
+.alarm-section .custom-reminder-box {
+  border: none;
+  background: transparent;
+  padding: 0 10px;
 }
 
 .custom-reminder-box input {
   width: 70px;
+}
+
+.custom-reminder-box span {
+  font-size: 14px; 
+  font-weight: 500;
+  color: var(--text-main);
 }
 
 .alarm-select:focus,
@@ -142,13 +291,6 @@
 .custom-reminder-box select:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--alarm-focus-shadow);
-}
-
-.alarm-select:disabled,
-.custom-reminder-box input:disabled,
-.custom-reminder-box select:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
 }
 
 .add-reminder-button {
@@ -161,11 +303,24 @@
   font-weight: 700;
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-reminder-button.secondary {
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  border-color: var(--alarm-input-border);
 }
 
 .add-reminder-button:not(:disabled):hover {
   transform: translateY(-1px);
   background-color: var(--alarm-button-hover);
+}
+
+.add-reminder-button.secondary:not(:disabled):hover {
+  background-color: var(--bg);
 }
 
 .add-reminder-button:disabled {
@@ -174,7 +329,7 @@
   transform: none;
 }
 
-/* 과목별 알림 목록 */
+/* 알림 목록 공통 */
 .alarm-course-list {
   display: flex;
   flex-direction: column;
@@ -185,12 +340,12 @@
 
 .alarm-course-item {
   display: grid;
-  grid-template-columns: 1fr 140px 60px; /* 과목명(자유), 시간(고정), 버튼(고정) */
+  grid-template-columns: 1fr 140px 60px;
   align-items: center;
   gap: 16px;
   padding: 12px 20px;
   background-color: var(--bg-card);
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--border);
   border-radius: 12px;
   transition: border-color 0.2s ease;
 }
@@ -205,7 +360,7 @@
   color: var(--text-heading);
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; /* 긴 과목명 처리 */
+  text-overflow: ellipsis;
 }
 
 .alarm-course-info {
@@ -218,19 +373,15 @@
   font-size: 14px;
   font-weight: 500;
   color: var(--text-muted);
-  white-space: nowrap;
-  background: none; /* 배경 제거 */
-  border: none; /* 테두리 제거 */
-  padding: 0; /* 패딩 제거 */
 }
 
 .delete-reminder-button {
   padding: 8px 0;
   width: 100%;
-  border: 1px solid #e5e7eb; /* 연한 회색 테두리 */
+  border: 1px solid var(--border);
   border-radius: 8px;
   background-color: transparent;
-  color: var(--alarm-white); /* 차분한 회색 텍스트 */
+  color: var(--text-muted);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -238,42 +389,92 @@
 }
 
 .delete-reminder-button:hover {
-  background-color: #fef2f2; /* 아주 연한 레드 배경 */
-  border-color: #fca5a5; /* 연한 레드 테두리 */
-  color: #ef4444; /* 명확한 레드 텍스트 */
+  background-color: var(--alarm-error-bg);
+  border-color: var(--alarm-error-border);
+  color: var(--alarm-error);
 }
 
-/* 저장 버튼 */
+/* 내역 카드 확장 */
+.alarm-history-item {
+  display: block;
+  position: relative;
+  padding: 16px 20px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: default;
+  transition: border-color 0.2s ease;
+}
+
+.alarm-history-item.link {
+  cursor: pointer;
+}
+
+.alarm-history-item:hover {
+  border-color: var(--primary);
+}
+
+.alarm-history-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--alarm-muted);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 4px;
+  z-index: 2;
+  line-height: 1;
+}
+
+.alarm-history-close:hover {
+  color: var(--alarm-error);
+}
+
+.alarm-history-header {
+  display: flex; 
+  justify-content: space-between; 
+  margin-bottom: 4px; 
+  padding-right: 25px;
+}
+
+.alarm-history-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.alarm-history-footer {
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-top: 10px;
+}
+
+.alarm-badge {
+  font-size: 0.7rem; 
+  padding: 2px 6px; 
+  background: var(--alarm-section-bg); 
+  border-radius: 4px;
+  color: var(--alarm-button);
+  font-weight: 600;
+  border: 1px solid rgba(24, 144, 255, 0.1);
+}
+
+.alarm-link-text {
+  font-size: 0.75rem; 
+  color: var(--alarm-button); 
+  font-weight: 600;
+}
+
+/* 메시지 표시 */
 .save-alarm-wrapper {
   margin-top: 20px;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.save-alarm-button {
-  display: block;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 10px;
-  background-color: var(--primary);
-  color: var(--alarm-white);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.save-alarm-button:not(:disabled):hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-.save-alarm-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-  transform: none;
+  align-items: center;
+  min-height: 24px;
 }
 
 .alarm-save-message {
@@ -281,8 +482,17 @@
   padding: 8px 12px;
   border-radius: 8px;
   background-color: var(--alarm-section-bg);
-  color: var(--primary);
+  color: var(--alarm-success);
   font-size: 12px;
+  font-weight: 700;
+}
+
+.alarm-test-status {
+  padding: 6px 10px; 
+  font-size: 12px;
+  background-color: var(--alarm-section-bg);
+  border-radius: 6px;
+  color: var(--primary);
   font-weight: 600;
 }
 
@@ -297,7 +507,6 @@
   font-weight: 500;
 }
 
-
 /* 반응형 */
 @media (max-width: 640px) {
   .alarm-toggle-row,
@@ -306,20 +515,30 @@
     flex-direction: column;
   }
 
+  .alarm-course-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .alarm-email-input-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .alarm-email-display,
+  .alarm-email-input {
+    width: 100%;
+  }
+
   .course-reminder-add-row,
   .alarm-select,
   .custom-reminder-box,
   .add-reminder-button,
-  .delete-reminder-button,
-  .save-alarm-button {
+  .delete-reminder-button {
     width: 100%;
   }
 
   .custom-reminder-box {
     justify-content: space-between;
-  }
-
-  .save-alarm-wrapper {
-    width: 100%;
   }
 }

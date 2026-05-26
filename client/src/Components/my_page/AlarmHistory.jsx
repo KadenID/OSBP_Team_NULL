@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../../apiConfig";
+import "./AlarmSettings.css";
 
 function AlarmHistory({ accessToken }) {
     const [history, setHistory] = useState([]);
@@ -58,9 +59,9 @@ function AlarmHistory({ accessToken }) {
     return (
         <div className="alarm-settings">
             <div className="alarm-section">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h3 className="alarm-section-title" style={{ margin: 0 }}>최근 알림 발송 내역</h3>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--card-content)' }}>최근 30일 내역만 표시됩니다.</span>
+                <div className="alarm-section-header">
+                    <h3 className="alarm-section-title">최근 알림 발송 내역</h3>
+                    <span className="alarm-helper-text">최근 30일 내역만 표시됩니다.</span>
                 </div>
                 <div className="alarm-course-list">
                     {history.length === 0 ? (
@@ -68,52 +69,29 @@ function AlarmHistory({ accessToken }) {
                     ) : (
                         history.map((item) => (
                             <div 
-                                className="alarm-course-item" 
+                                className={`alarm-history-item ${item.url ? 'link' : ''}`} 
                                 key={item.id} 
                                 onClick={() => item.url && window.open(item.url, '_blank')}
-                                style={{ 
-                                    cursor: item.url ? 'pointer' : 'default',
-                                    position: 'relative',
-                                    display: 'block' // grid에서 block으로 변경하여 내부 커스텀 배치
-                                }}
                             >
                                 <button 
+                                    className="alarm-history-close"
                                     onClick={(e) => handleDeleteHistory(e, item.id)}
-                                    style={{
-                                        position: 'absolute',
-                                        top: '10px',
-                                        right: '10px',
-                                        background: 'none',
-                                        border: 'none',
-                                        color: '#9ca3af',
-                                        cursor: 'pointer',
-                                        fontSize: '1.1rem',
-                                        padding: '4px',
-                                        zIndex: 2
-                                    }}
                                     title="삭제"
                                 >
                                     &times;
                                 </button>
 
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', paddingRight: '25px' }}>
-                                    <span className="alarm-course-name" style={{ fontSize: '0.95rem' }}>{item.title}</span>
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--card-content)' }}>{formatDate(item.sent_at)}</span>
+                                <div className="alarm-history-header">
+                                    <span className="alarm-history-title">{item.title}</span>
+                                    <span className="alarm-helper-text">{formatDate(item.sent_at)}</span>
                                 </div>
-                                <p className="alarm-description" style={{ margin: 0, fontSize: '0.85rem', color: 'var(--card-content)' }}>{item.message}</p>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                                    <span style={{ 
-                                        fontSize: '0.7rem', 
-                                        padding: '2px 6px', 
-                                        background: 'var(--alarm-section-bg)', 
-                                        borderRadius: '4px',
-                                        color: 'var(--alarm-button)',
-                                        fontWeight: '600'
-                                    }}>
+                                <p className="alarm-description">{item.message}</p>
+                                <div className="alarm-history-footer">
+                                    <span className="alarm-badge">
                                         {item.channel} 발송 완료
                                     </span>
                                     {item.url && item.url !== "/" && (
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--alarm-button)', fontWeight: '600' }}>
+                                        <span className="alarm-link-text">
                                             과제 바로가기 ↗
                                         </span>
                                     )}
