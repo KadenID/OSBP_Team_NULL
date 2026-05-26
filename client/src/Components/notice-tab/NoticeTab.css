@@ -8,13 +8,6 @@
   border-bottom: 1px solid var(--border);
 }
 
-.notice-header-right {
-  display: flex;
-  flex-direction: column; 
-  align-items: flex-end;  
-  gap: 10px;          
-}
-
 .notice-title-group {
   display: flex;
   align-items: center;
@@ -31,17 +24,6 @@
 
 .notice-emoji {
   font-size: 1.4rem;
-}
-
-.notice-more-btn { 
-  padding: 6px 10px;
-  border: 1px solid var(--accent);
-  font-size: 12px;
-  font-weight: 500;
-  background-color: var(--accent);
-  color: #ffffff;
-  border-radius: 8px;
-  text-decoration: none;
 }
 
 /* 공지사항, 쪽지함 영역 */
@@ -158,7 +140,6 @@
 .notice-course-tag {
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--text-header); 
   margin-right: 8px; 
   flex-shrink: 0; 
 }
@@ -242,26 +223,47 @@
 }
 
 @media screen and (max-width: 1300px) {
-  .notice-section {
-    padding: 22px; 
+  .notice-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+
+  .notice-title-group h2 {
+    font-size: 1.3rem;
+  }
+
+  .notice-item {
+    padding: 14px 16px;
+  }
+  .notice-item:first-child {
+    padding: 14px 16px;
+  }
+  .notice-item:last-child {
+    padding: 14px 16px;
+  }
+
+  .notice-course-tag, 
+  .notice-item-title {
+    font-size: 0.9rem;
   }
 }
 
 @media screen and (max-width: 768px) {
-  .notice-section {
-    padding: 20px;
-    border-radius: 16px; 
-  }
-
   .notice-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
     margin-bottom: 12px;
     padding-bottom: 10px;
+  }
+  
+  .notice-tab-toggles {
+    align-self: flex-end;
   }
 
   /* 제목, 에모지, 버튼 크기 일괄 축소 */
   .notice-title-group h2 { font-size: 1.15rem; }
   .notice-emoji { font-size: 1.2rem; }
-  .notice-more-btn { padding: 4px 8px; font-size: 11px; }
 
   /* 필터 버튼 영역 축소 */
   .notice-filter-tags { gap: 6px; margin-bottom: 14px; }
@@ -270,4 +272,12 @@
   /* 리스트 텍스트 크기 및 간격 일괄 조정 */
   .notice-item { padding: 10px 0; }
   .notice-course-tag, .notice-item-title { font-size: 0.85rem; }
+
+  .notice-item:first-child {
+    padding: 10px 0 10px 0; 
+  }
+  
+  .notice-item:last-child {
+    padding: 10px 0 0 0;   
+  }
 }

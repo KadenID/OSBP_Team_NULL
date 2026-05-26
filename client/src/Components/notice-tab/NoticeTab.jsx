@@ -106,7 +106,7 @@ function NoticeTab({ accessToken }) {
     }
   };
 
-  // 문자를 입력받아 css 변수명 변경(과목 색 변)
+  // 문자를 입력받아 css 변수명 변경(과목 색 변경)
   const getColorForString = (str) => {
   if (!str) return 'var(--text-main)';
 
@@ -132,20 +132,14 @@ function NoticeTab({ accessToken }) {
       <div className="notice-header">
         <div className="notice-title-group">
           <span className="notice-emoji">{isNotice ? '📖' : '✉️'}</span>
-          <h2>{isNotice ? '과목별 공지 및 과제' : '받은 쪽지함'}</h2>
+          <h2>{isNotice ? '과목별 공지' : '받은 쪽지함'}</h2>
         </div>
 
-        <div className="notice-header-right">
           <div className="notice-tab-toggles">
             <button className={`tab-toggle-btn ${isNotice ? 'active' : ''}`} onClick={() => setActiveTab('notices')}>공지사항</button>
             <button className={`tab-toggle-btn ${!isNotice ? 'active' : ''}`} onClick={() => setActiveTab('messages')}>쪽지함</button>
           </div>
-
-          <a href="https://lms.chungbuk.ac.kr" target="_blank" rel="noreferrer" className="notice-more-btn">
-            LMS 바로가기
-          </a>
         </div>
-      </div>
 
       {/* 상단 과목 필터 버튼들 */}
       {isNotice && ( <div className="notice-filter-tags">
