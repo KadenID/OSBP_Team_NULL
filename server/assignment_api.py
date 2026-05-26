@@ -18,6 +18,7 @@ from notice_crawler import crawl_all_notices, get_notice_detail, crawl_all_messa
 import auth
 import storage
 import redis_cache
+import scheduler as scheduler_module
 from scheduler import check_and_send_notifications, refresh_all_user_courses
 
 # 로깅 설정
@@ -26,12 +27,31 @@ logger = logging.getLogger(__name__)
 
 # 스케줄러 설정
 scheduler = BackgroundScheduler()
-# 1시간마다 마감 기한 체크
+# 스케줄러 인스턴스를 모듈에 전달
+scheduler_module.set_scheduler_instance(scheduler)
+
+# 1시간마다 마감 기한 체크 (보조 스케줄러 역할 - 예약 누락 대비)
 scheduler.add_job(check_and_send_notifications, 'interval', hours=1)
 # 매일 새벽 3시에 30일이 지난 모든 알림 관련 기록(중복방지 및 내역) 통합 삭제
 scheduler.add_job(storage.cleanup_old_notifications, 'cron', hour=3, minute=0, args=[30])
 # 매일 새벽 4시에 모든 사용자의 수강 과목 정보 갱신 (캐싱 최신화)
 scheduler.add_job(refresh_all_user_courses, 'cron', hour=4, minute=0)
+
+def restore_all_notifications():
+    """서버 시작 시 모든 사용자의 알림 예약을 복구 (백그라운드 실행용)"""
+    try:
+        student_ids = storage.get_all_student_ids()
+        logger.info(f"총 {len(student_ids)}명의 사용자 알림 예약 복구를 시작합니다...")
+        
+        for student_id in student_ids:
+            # 부하 분산을 위해 각 사용자별로 짧은 지연을 둠
+            scheduler_module.schedule_notifications_for_user(student_id)
+            import time
+            time.sleep(0.1) # 초당 10명 정도 처리
+            
+        logger.info("모든 사용자의 알림 예약 복구가 완료되었습니다.")
+    except Exception as e:
+        logger.error(f"알림 예약 복구 중 오류 발생: {e}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -39,6 +59,11 @@ async def lifespan(app: FastAPI):
     if not scheduler.running:
         scheduler.start()
         logger.info("마감 알림 스케줄러가 시작되었습니다.")
+        
+        # 서버 재시작 시 모든 사용자의 알림 예약 복구 (별도 스레드에서 실행)
+        import threading
+        threading.Thread(target=restore_all_notifications, daemon=True).start()
+            
     yield
     # Shutdown: 스케줄러 종료
     if scheduler.running:
@@ -362,6 +387,8 @@ def get_lms_assignments(student_id: str = Depends(get_current_user)):
     
     try:
         assignments = crawl_all_assignments(session, student_id)
+        # 과제 크롤링 직후 알림 예약 스케줄링 수행 (불필요한 재크롤링 방지를 위해 assignments 전달)
+        scheduler_module.schedule_notifications_for_user(student_id, lms_assignments=assignments)
         return LMSAPIResponse(success=True, message="성공", total_count=len(assignments), data=assignments)
     except Exception as e:
         logger.error(f"Error: {e}")
@@ -431,6 +458,8 @@ def get_custom_assignments(student_id: str = Depends(get_current_user)):
 def create_or_update_custom_assignment(request_data: CustomAssignmentRequest, student_id: str = Depends(get_current_user)):
     try:
         assignment_id = storage.save_custom_assignment(student_id, request_data.model_dump())
+        # 커스텀 과제 저장 후 즉시 알림 예약 갱신
+        scheduler_module.schedule_notifications_for_user(student_id)
         return {"success": True, "message": "저장 성공", "id": str(assignment_id)}
     except Exception as e:
         logger.error(f"Error: {e}")
@@ -440,6 +469,8 @@ def create_or_update_custom_assignment(request_data: CustomAssignmentRequest, st
 def delete_custom_assignment(assignment_id: str, student_id: str = Depends(get_current_user)):
     try:
         storage.delete_custom_assignment(student_id, assignment_id)
+        # 커스텀 과제 삭제 후 즉시 알림 예약 갱신
+        scheduler_module.schedule_notifications_for_user(student_id)
         return {"success": True, "message": "삭제 성공"}
     except Exception as e:
         logger.error(f"Error: {e}")
@@ -475,6 +506,10 @@ def save_user_settings(request_data: dict, student_id: str = Depends(get_current
         # 나머지 설정 저장
         settings = request_data.get("settings", request_data)
         storage.save_user_settings(student_id, settings)
+        
+        # 알림 설정 변경 시 즉시 예약 다시 계산
+        scheduler_module.schedule_notifications_for_user(student_id)
+        
         return {"success": True, "message": "설정 저장 완료"}
     except Exception as e:
         logger.error(f"설정 저장 중 오류 발생: {e}")
