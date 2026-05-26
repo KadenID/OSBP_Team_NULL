@@ -58,12 +58,26 @@ function NoticeTab({ accessToken }) {
   }, [selectedNotice]);
 
 
-  // 과목 태그 목록 생성 (중복 제거)
-  const courses = useMemo(() => [
-    { id: 'all', name: '전체' },
-    ...Array.from(new Map(notices.data.map(n => [n.course_id, n.course_name])).entries())
-      .map(([id, name]) => ({ id, name }))
-  ], [notices.data]);
+  // 과목 태그 목록 생성 (중복 제거 및 정렬)
+  const courses = useMemo(() => {
+    const rawCourses = Array.from(new Map(notices.data.map(n => [n.course_id, n.course_name])).entries())
+      .map(([id, name]) => ({ id, name }));
+      
+    // 정렬 로직 (한글 > 영어 > 숫자 순)
+    const sorted = rawCourses.sort((a, b) => {
+      const getSortKey = (name) => {
+        if (!name) return 'z';
+        const char = name[0];
+        if (/[가-힣]/.test(char)) return '0' + name;
+        if (/[a-zA-Z]/.test(char)) return '1' + name.toLowerCase();
+        if (/[0-9]/.test(char)) return '2' + name;
+        return '3' + name;
+      };
+      return getSortKey(a.name).localeCompare(getSortKey(b.name), 'ko');
+    });
+
+    return [{ id: 'all', name: '전체' }, ...sorted];
+  }, [notices.data]);
 
 
   // 선택한 과목 필터링 리스트

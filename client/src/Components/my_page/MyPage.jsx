@@ -18,11 +18,6 @@ const MY_PAGE_CARDS = [
         title: "알림 설정",
         content: <AlarmSettings />,
     },
-    {
-        id: "timetable",
-        title: "시간표 입력",
-        content: "사용자 시간표 입력 및 관리 영역",
-    },
 ];
 
 function MyPageCard({ title = "", content = "", defaultOpen = true }) {
@@ -66,12 +61,6 @@ function MyPage({ accessToken, onLogout }) {
             title: "알림 내역",
             content: <AlarmHistory accessToken={accessToken} />,
             defaultOpen: false, // 알림 내역은 기본적으로 접어둠
-        },
-        {
-            id: "timetable",
-            title: "시간표 입력",
-            content: "사용자 시간표 입력 및 관리 영역",
-            defaultOpen: false,
         },
     ];
 
