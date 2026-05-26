@@ -46,7 +46,7 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
         <h3>과제 상세 정보</h3>
 
         {/* 과제 기본 정보 요약 */}
-        <div className="detail-info" style={{ marginBottom: '15px', fontSize: '0.9em', color: '#a3a3a3' }}>
+        <div className="detail-info" style={{ marginBottom: '15px', fontSize: '0.9em', color: '#616161' }}>
           <p><strong>강의:</strong> {assignment.subject}</p>
           <p><strong>과제:</strong> {assignment.task}</p>
         </div>

@@ -6,6 +6,7 @@ import MainPage from "./Components/main_page/MainPage";
 import MyPage from "./Components/my_page/MyPage";
 import { API_BASE_URL } from "./apiConfig";
 
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 // 보호된 라우트 컴포넌트: 로그인하지 않은 사용자의 접근을 차단
 const ProtectedRoute = ({ accessToken, children }) => {
   const location = useLocation();
@@ -21,7 +22,7 @@ const PublicRoute = ({ accessToken, children }) => {
   const location = useLocation();
   const from = location.state?.from?.pathname || "/main";
   if (accessToken) {
-    return <Navigate to={from} replace />;
+    return <Navigate to="/main" replace />;
   }
   return children;
 };
@@ -30,6 +31,7 @@ function App() {
   const [accessToken, setAccessToken] = useState(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const refreshPromise = useRef(null); // 진행 중인 refresh 요청 저장
+
 
   // 토큰 갱신 함수
   const refresh = useCallback(async () => {
@@ -105,27 +107,28 @@ function App() {
     }
   }, [accessToken]);
 
-  if (isInitializing) {
-    return (
+  
+
+  return (
+  <ThemeProvider>
+    { isInitializing ? (
       <div style={{ 
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
         height: '100vh',
-        backgroundColor: 'var(--bg-color, #f9f9f9)',
-        color: 'var(--text-color, #333)'
+        backgroundColor: 'var(--bg)',
+        color: 'var(--text-color)'
       }}>
         로딩 중...
       </div>
-    );
-  }
+    ) : (
 
-  return (
     <Router>
       <Routes>
         <Route path="/" element={
           <PublicRoute accessToken={accessToken}>
-            <LoginPage onLogin={setAccessToken} />
+            <LoginPage onLogin={setAccessToken}/>
           </PublicRoute>
         } />
         <Route path="/main" element={
@@ -142,6 +145,8 @@ function App() {
         <Route path="*" element={<Navigate to="/main" replace />} />
       </Routes>
     </Router>
+    )}
+  </ThemeProvider>
   );
 }
 

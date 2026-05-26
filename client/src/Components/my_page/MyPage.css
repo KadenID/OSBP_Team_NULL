@@ -1,49 +1,18 @@
 /* 색상 변수 및 테마 설정 */
-html{
-  color-scheme: light dark;
+.mypage-page {
+  --mypage-card-title: var(--text-heading); 
+  --mypage-card-content: var(--text-muted);  
+  --mypage-focus-ring: var(--primary-focus);
+  
+  min-height: 100vh;
+  background-color: var(--bg); 
 }
 
 .mypage-container {
-  --bg: #f7f7fb;
-  --title: #222;
-  --subtitle: #777;
-  --card-bg: #ffffff;
-  --card-border: #e8e8ef;
-  --card-title: #2b2340;
-  --card-content: #666;
-  --primary: #6366f1;
-  --btn-bg: #e5e7eb;
-  --btn-bg-hover: #d1d5db;
-  --btn-text: #111827;
-  --danger: #e53935;
-  --focus: #6366f1;
-  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
-  --card-hover-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
   max-width: 900px;
   margin: 0 auto;
   padding: 70px 24px;
-  color: var(--title);
-}
-
-/* 다크 모드 색상 변수 */
-@media (prefers-color-scheme: dark) {
-  .mypage-container {
-    --bg: #1e2430;
-    --title: #f3f4f6;
-    --subtitle: #c4c7cf;
-    --card-bg: #2a3142;
-    --card-border: #3b4458;
-    --card-title: #ffffff;
-    --card-content: #c2c8d1;
-    --primary: #8b8dff;
-    --btn-bg: #374155;
-    --btn-bg-hover: #4b556a;
-    --btn-text: #f3f4f6;
-    --danger: #ff7b7b;
-    --focus: #a5b4fc;
-    --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    --card-hover-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
-  }
+  color: var(--text-header);
 }
 
 /* 기본 설정 */
@@ -59,8 +28,9 @@ body {
 .mypage-title-row {
   display: flex;
   justify-content: space-between;
+  flex-direction: row;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   margin-bottom: 8px;
 }
 
@@ -68,18 +38,20 @@ body {
   margin: 0;
   font-size: clamp(24px, 4vw, 34px);
   font-weight: 700;
-  color: var(--title);
+  color: var(--text-header);
+  flex: 1;
 }
 
 .mypage-subtitle {
   margin: 0;
   font-size: 15px;
-  color: var(--subtitle);
+  color: var(--text-muted);
 }
 
 /* 버튼 공통 */
 .main-button,
-.logout-button {
+.logout-button, 
+.dark-button {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -89,15 +61,22 @@ body {
 
 .main-button {
   padding: 7px 13px;
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--border);
   border-radius: 9px;
   background-color: var(--btn-bg);
   color: var(--btn-text);
   font-size: 13px;
-  transform: translateY(2px);
+  transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-.main-button:hover {
+.dark-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 16px;
+}
+
+.main-button:hover, .dark-button:hover {
   background-color: var(--btn-bg-hover);
 }
 
@@ -113,13 +92,12 @@ body {
   gap: 20px;                
 }
 
-
-/* 개별 카드 스타일 */
+/* 개별 마이페이지 카드 */
 .mypage-card {
   position: relative;
   box-sizing: border-box;
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 28px 32px;
   padding-left: 40px;
@@ -127,7 +105,6 @@ body {
   box-shadow: var(--card-shadow);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-
 .mypage-card::before {
   content: "";
   position: absolute;
@@ -173,7 +150,7 @@ body {
 .mypage-card-content {
   margin: 20px 0 0;
   font-size: 15px;
-  color: var(--card-content);
+  color: var(--mypage-card-content);
   overflow: hidden;
   transition: all 0.3s ease-in-out;
 }
@@ -212,7 +189,7 @@ body {
 /* 접근성 */
 .main-button:focus-visible,
 .logout-button:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--primary-focus);
   outline-offset: 2px;
   border-radius: 8px;
 }

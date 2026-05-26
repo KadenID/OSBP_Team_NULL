@@ -4,36 +4,15 @@ import AssignmentTab from "../assignment-tab/AssignmentTab.jsx";
 import NoticeTab from "../notice-tab/NoticeTab.jsx";
 import { useNavigate } from "react-router-dom";
 import { FiHome } from "react-icons/fi";
+import { useTheme } from "../../context/ThemeContext.jsx";
 
 function MainPage({ accessToken, onLogout }) {
 
   const navigate = useNavigate();
-
-  // 초기 테마 설정
-  const [theme, setTheme] = useState(() => {
-
-    const saved = localStorage.getItem('theme');
-    if (saved) return saved;
-
-    const systemDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
-    return systemDark ? 'dark' : 'light';
-    });
-  
-
-// 테마 변경 시 DOM + 저장 동기화
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-
-  const toggleTheme = () => {
-    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
-  };
-
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <>
+    <div className="mainpage">
       <div className="layout">
 
       <header>
@@ -68,7 +47,7 @@ function MainPage({ accessToken, onLogout }) {
 
         </main>
       </div>
-    </>
+    </div>
   );
 }
 
