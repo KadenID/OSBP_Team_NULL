@@ -15,7 +15,6 @@
   place-self: center;
   width: 700px;
   max-height: 80vh;
-  overflow-y: auto;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 20px;
@@ -23,8 +22,6 @@
   position: relative;
   box-shadow: var(--card-shadow-hover);
   color: var(--text-main);
-
-  overflow: hidden;           
   display: flex;
   flex-direction: column;
 }
@@ -35,7 +32,6 @@
   font-size: 15px;
   font-family: inherit;
   color: var(--text-main);
-  overflow-y: auto;
 }
 
 /* 전체 모달 내용 스크롤 영역 */
@@ -70,15 +66,18 @@
 }
 
 .detail-info {
-  margin-bottom: 15px;
-  font-size: 0.9em;
-  color: var(--text-color);
-  overflow-y: auto;
+  margin: 12px 0 4px 0;
+  font-size: 0.95em;
+  line-height: 1.8;
+  color: var(--text-main);
 }
 
 .detail-footer {
-  margin-top: 20px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
   text-align: center;
+  flex-shrink: 0;
 }
 
 .edit-header {
@@ -160,6 +159,79 @@
 }
 
 .cancel-btn:hover { background: var(--shadow); }
+
+/* 로딩 / 에러 */
+.detail-loading { 
+  color: var(--text-muted); 
+  font-size: 0.9em; 
+  padding: 12px 0; 
+}
+
+.detail-error { 
+  color: var(--error); 
+  font-size: 0.9em; 
+  padding: 12px 0; 
+}
+
+.detail-empty { 
+  color: var(--text-muted); 
+  font-size: 0.9em; 
+  padding: 8px 0; 
+}
+
+/* 섹션 구분 */
+.detail-section { margin: 14px 0; }
+
+.detail-section-title {
+  display: block;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+/* HTML 본문 렌더링 영역 */
+.detail-html-content {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-main);
+  word-break: break-word;
+  overflow-x: auto;
+}
+
+/* 이미지 넘침 방지 */
+.detail-html-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 8px 0;
+}
+
+/* 표 스타일 */
+.detail-html-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 0.85rem;
+}
+
+.detail-html-content th,
+.detail-html-content td {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.detail-html-content th {
+  background-color: var(--bg-card);
+  font-weight: 550;
+}
+
+/* 단락 간격 */
+.detail-html-content p {
+  margin: 0 0 8px 0;
+}
 
 @media screen and (max-width: 768px) {
   .detail-modal {
