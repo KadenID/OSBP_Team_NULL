@@ -564,7 +564,7 @@ def get_notices(student_id: str = Depends(get_current_user)):
     session = resolve_lms_session(student_id)
     
     try:
-        notices = crawl_all_notices(session)
+        notices = crawl_all_notices(session, student_id=student_id)
         return NoticeListResponse(
             success=True,
             message="성공",

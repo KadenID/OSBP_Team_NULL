@@ -215,22 +215,24 @@ def get_notice_detail(session, board_id, notice_id):
         raise Exception(f"공지사항 상세 조회 중 오류: {e}")
 
 
-# 입력: session (세션 객체)
+# 입력: session (세션 객체), student_id (학번, 캐싱용)
 # 기능: 전체 수강 과목의 공지사항 통합 크롤링
 # 반환: 공지 리스트
 # ThreadPoolExecutor를 사용한 멀티스레드 병렬 크롤링
-def crawl_all_notices(session, common_board_ids=None):
+def crawl_all_notices(session, student_id=None, common_board_ids=None):
     if common_board_ids is None:
         common_board_ids = COMMON_BOARD_IDS
 
     all_notices = []
-    courses = get_enrolled_courses(session)
+    courses = get_enrolled_courses(session, student_id=student_id)
     if not courses:
         return []
 
     # 과목별 처리를 위한 래퍼 함수 정의 (예외 처리를 개별적으로 수행하기 위함)
     def worker(course_info):
-        cid, cname = course_info
+        cid, cdata = course_info
+        # cdata가 딕셔너리인 경우와 문자열인 경우 모두 대응
+        cname = cdata['name'] if isinstance(cdata, dict) else str(cdata)
         try:
             return get_notices_for_course(session, cid, cname, common_board_ids=common_board_ids)
         except SessionExpiredError:
