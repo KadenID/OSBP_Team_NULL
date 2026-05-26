@@ -71,7 +71,18 @@
   --login-focus-shadow: rgba(33, 150, 243, 0.12);
   --login-button-shadow: rgba(33, 150, 243, 0.25);
   --login-card-shadow: rgba(20, 40, 70, 0.1);
- 
+
+  --tag-color-0: #146bcf; /* 다크 블루 */
+  --tag-color-1: #c62828; /* 다크 레드 */
+  --tag-color-2: #e65100; /* 다크 오렌지 */
+  --tag-color-3: #2e7d32; /* 다크 그린 */
+  --tag-color-4: #ad1457; /* 다크 핑크 */
+  --tag-color-5: #6a1b9a; /* 다크 보라 */
+  --tag-color-6: #00838f; /* 다크 청록 (시안) */
+  --tag-color-7: #ce9614; /* 다크 옐로우 (골드) */
+  --tag-color-8: #003e33; /* 다크 민트 (딥 틸) */
+  --tag-color-9: #3e2723; /* 다크 브라운 */
+
   /* 기타 */
   --backdrop:    blur(8px);
   --spacing-md:  16px;
@@ -149,6 +160,17 @@
   --login-focus-shadow: rgba(96, 165, 250, 0.22);
   --login-button-shadow: rgba(96, 165, 250, 0.25);
   --login-card-shadow: rgba(0, 0, 0, 0.28);
+
+  --tag-color-0: #7daefd; /* 0. 파스텔 파랑 */
+  --tag-color-1: #fe7b6f; /* 1. 파스텔 빨강 */
+  --tag-color-2: #fe8b43; /* 2. 파스텔 주황 */
+  --tag-color-3: #91e0a7; /* 3. 파스텔 초록 */
+  --tag-color-4: #f877a2; /* 4. 파스텔 핑크 */
+  --tag-color-5: #c274f9; /* 5. 파스텔 보라 */
+  --tag-color-6: #4fe9f7; /* 6. 파스텔 청록 */
+  --tag-color-7: #ffe876; /* 7. 파스텔 노랑 */
+  --tag-color-8: #4ddacb; /* 8. 파스텔 민트 */
+  --tag-color-9: #ff9f85; /* 9. 파스텔 코랄 */
 }
  
 @media (prefers-color-scheme: dark) {
@@ -214,6 +236,17 @@
     --login-focus-shadow: rgba(96, 165, 250, 0.22);
     --login-button-shadow: rgba(96, 165, 250, 0.25);
     --login-card-shadow: rgba(0, 0, 0, 0.28);
+
+    --tag-color-0: #7daefd; /* 0. 파스텔 파랑 */
+    --tag-color-1: #fe7b6f; /* 1. 파스텔 빨강 */
+    --tag-color-2: #fe8b43; /* 2. 파스텔 주황 */
+    --tag-color-3: #91e0a7; /* 3. 파스텔 초록 */
+    --tag-color-4: #f877a2; /* 4. 파스텔 핑크 */
+    --tag-color-5: #c274f9; /* 5. 파스텔 보라 */
+    --tag-color-6: #4fe9f7; /* 6. 파스텔 청록 */
+    --tag-color-7: #ffe876; /* 7. 파스텔 노랑 */
+    --tag-color-8: #4ddacb; /* 8. 파스텔 민트 */
+    --tag-color-9: #ff9f85; /* 9. 파스텔 코랄 */
 
   }
 }
