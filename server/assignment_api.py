@@ -14,6 +14,7 @@ import os
 # 내부 모듈 임포트
 from lms_login import login_to_lms
 from lms_crawler import crawl_all_assignments, SessionExpiredError, get_user_profile
+from notice_crawler import crawl_all_notices, get_notice_detail, crawl_all_messages
 import auth
 import storage
 import redis_cache
@@ -115,6 +116,41 @@ class CustomAssignmentRequest(BaseModel):
     isSubmitted: bool = False
     description: Optional[str] = Field(None, max_length=1000)
 
+class NoticeItem(BaseModel): # 공지사항 개별 항목 스키마
+    course_id: str
+    course_name: str
+    board_id: str
+    notice_id: str
+    title: str
+    writer: str
+    date: str
+    description: str
+    url: str
+
+class NoticeListResponse(BaseModel): # 공지사항 목록 응답 스키마
+    success: bool
+    message: str
+    total_count: int
+    data: List[NoticeItem] = []
+
+class NoticeDetailResponse(BaseModel): # 공지사항 상세 응답 스키마
+    success: bool
+    message: str
+    data: dict
+    
+class MessageItem(BaseModel): # 쪽지 개별 항목 스키마
+    message_id: str
+    sender: str
+    content: str
+    date: str
+    url: str
+
+class MessageListResponse(BaseModel): # 쪽지 목록 API 응답 스키마
+    success: bool
+    message: str
+    total_count: int
+    data: List[MessageItem] = []
+    
 security = HTTPBearer() # 인증 객체
 
 # 입력: credentials (HTTP 헤더 인증 정보)
@@ -141,6 +177,49 @@ def set_refresh_cookie(response: Response, refresh_token: str, request: Request)
         max_age=auth.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         path="/"
     )
+
+# 입력: session (requests.Session 객체)
+# 기능: LMS 대시보드 요청으로 세션 유효성 확인
+# 반환: 유효 여부 (bool)
+def _is_lms_session_valid(session: requests.Session) -> bool:
+    try:
+        resp = session.get(
+            "https://lms.chungbuk.ac.kr/",
+            timeout=5,
+            allow_redirects=False
+        )
+        # 302 = 로그인 페이지로 튕김 = 만료
+        return resp.status_code == 200
+    except Exception:
+        return False
+
+# 입력: student_id (학번)
+# 기능: Redis 캐시에서 LMS 세션 복원, 없으면 저장된 계정으로 재로그인
+# 반환: requests.Session 객체
+def resolve_lms_session(student_id: str) -> requests.Session:
+    cached_cookies = redis_cache.get_lms_session(student_id)
+    
+    session = requests.Session()
+    
+    if cached_cookies:
+        session.cookies.update(cached_cookies)
+        
+        if _is_lms_session_valid(session):
+            return session
+        
+        # 만료된 경우 Redis 캐시 삭제 후 재로그인
+        logger.warning(f"캐시된 LMS 세션 만료 감지, 재로그인 시도 (student_id: {student_id})")
+        redis_cache.delete_lms_session(student_id)
+        session = requests.Session()
+   
+   
+    loaded_id, password = storage.load_user(student_id)
+    session, message = login_to_lms(loaded_id, password)
+    if not session:
+        raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다. 다시 로그인해주세요.")
+    redis_cache.set_lms_session(student_id, session.cookies.get_dict())
+    return session
+
 
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -265,17 +344,7 @@ def logout(response: Response, student_id: str = Depends(get_current_user)):
 # 반환: UserProfileResponse 객체
 @app.get("/api/me", response_model=UserProfileResponse)
 def get_my_profile(student_id: str = Depends(get_current_user)):
-    cached_cookies = redis_cache.get_lms_session(student_id)
-
-    session = requests.Session()
-    if cached_cookies:
-        session.cookies.update(cached_cookies)
-    else:
-        loaded_id, password = storage.load_user(student_id)
-        session, _ = login_to_lms(loaded_id, password)
-        if not session:
-            raise HTTPException(status_code=401, detail="LMS 세션을 생성할 수 없습니다.")
-        redis_cache.set_lms_session(student_id, session.cookies.get_dict())
+    session = resolve_lms_session(student_id)
 
     try:
         profile = get_user_profile(session, student_id)
@@ -289,19 +358,7 @@ def get_my_profile(student_id: str = Depends(get_current_user)):
 # 반환: LMSAPIResponse 객체
 @app.get("/api/assignments", response_model=LMSAPIResponse)
 def get_lms_assignments(student_id: str = Depends(get_current_user)):
-    cached_cookies = redis_cache.get_lms_session(student_id)
-
-    session = requests.Session()
-    if cached_cookies:
-        session.cookies.update(cached_cookies)
-    else:
-        loaded_id, password = storage.load_user(student_id)
-        session, message = login_to_lms(loaded_id, password)
-        if not session:
-            logger.error(f"LMS 로그인 실패 (학번: {student_id}): {message}")
-            raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다. 다시 로그인해주세요.")
-        
-        redis_cache.set_lms_session(student_id, session.cookies.get_dict())
+    session = resolve_lms_session(student_id)
     
     try:
         assignments = crawl_all_assignments(session, student_id)
@@ -497,6 +554,75 @@ def delete_notification_history(history_id: int, student_id: str = Depends(get_c
     except Exception as e:
         logger.error(f"알림 내역 삭제 실패: {e}")
         raise HTTPException(status_code=500, detail="삭제 실패")
+    
+    
+# 입력: student_id (학번)
+# 기능: 전체 수강 과목 공지사항 목록 크롤링
+# 반환: NoticeListResponse
+@app.get("/api/notices", response_model=NoticeListResponse)
+def get_notices(student_id: str = Depends(get_current_user)):
+    session = resolve_lms_session(student_id)
+    
+    try:
+        notices = crawl_all_notices(session)
+        return NoticeListResponse(
+            success=True,
+            message="성공",
+            total_count=len(notices),
+            data=notices
+        )
+    except SessionExpiredError:
+        raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다.")
+    except Exception as e:
+        logger.error(f"공지사항 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail="공지사항 조회 실패")
+ 
+ 
+# 입력: board_id (게시판 ID), notice_id (게시글 ID), student_id (학번)
+# 기능: 공지사항 상세 본문 크롤링
+# 반환: NoticeDetailResponse
+
+# 에러 처리:
+#   - 잘못된 board_id/notice_id 입력 시 LMS가 에러 페이지를 반환
+#     → 크롤러에서 title_tag 파싱 실패 → ValueError 발생 → 404 반환
+#   - 위를 통해 사용자의 잘못된 요청(404)과 서버 내부 오류(500)를 구분
+
+@app.get("/api/notices/{board_id}/{notice_id}", response_model=NoticeDetailResponse)
+def get_notice_detail_api(board_id: str, notice_id: str, student_id: str = Depends(get_current_user)):
+    session = resolve_lms_session(student_id)
+
+    try:
+        detail = get_notice_detail(session, board_id, notice_id)
+        return NoticeDetailResponse(success=True, message="성공", data=detail)
+    except SessionExpiredError:
+        raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다.")
+    except ValueError as e:
+        # 크롤러에서 올린 404 케이스 (잘못된 board_id/notice_id)
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"공지사항 상세 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail="공지사항 상세 조회 실패")
+    
+# 입력: student_id (학번)
+# 기능: LMS 받은 쪽지 목록 크롤링 및 반환
+# 반환: MessageListResponse
+@app.get("/api/messages", response_model=MessageListResponse)
+def get_lms_messages(student_id: str = Depends(get_current_user)):
+    session = resolve_lms_session(student_id)
+    try:
+        messages = crawl_all_messages(session)
+        return MessageListResponse(
+            success=True, 
+            message="성공", 
+            total_count=len(messages), 
+            data=messages
+        )
+    except SessionExpiredError:
+        raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다.")
+    except Exception:
+        logger.exception("쪽지 목록 조회 실패")
+        raise HTTPException(status_code=500, detail="쪽지 목록 조회 실패")
+    
 
 if __name__ == "__main__":
     uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)

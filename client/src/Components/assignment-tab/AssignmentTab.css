@@ -470,6 +470,15 @@ body.modal-open .left:hover {
   color: var(--btn-text);
 }
 
+/* JSX 코드 내의 인라인 스타일 대체하는 빈 화면 전용 클래스 추가 */
+.notice-empty {
+  text-align: center;
+  padding: 20px 0;
+  color: var(--text-main);
+  opacity: 0.5;
+  font-size: 0.9rem;
+}
+
 @media screen and (max-width: 768px) {
   .info {
     width: 100%;
