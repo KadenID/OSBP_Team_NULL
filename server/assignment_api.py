@@ -411,7 +411,7 @@ def get_user_courses(include_custom: bool = True, student_id: str = Depends(get_
              redis_cache.set_lms_session(student_id, session.cookies.get_dict())
             
     try:
-        from lms_crawler import get_enrolled_courses, get_course_sort_key
+        from lms_crawler import get_enrolled_courses
         # LMS 공식 과목 가져오기
         lms_courses = get_enrolled_courses(session, student_id)
         
@@ -436,9 +436,8 @@ def get_user_courses(include_custom: bool = True, student_id: str = Depends(get_
             except Exception as ce:
                 logger.error(f"커스텀 과목 병합 중 오류 (무시함): {ce}")
         
-        # 전체 리스트 재정렬 (정규(0) > 비교과(1) > 커스텀(2))
-        type_rank = {"regular": 0, "comparative": 1, "custom": 2}
-        course_list.sort(key=lambda x: (type_rank.get(x.get('type'), 3), get_course_sort_key(x.get('name', ''))))
+        # 이미 lms_crawler에서 저장(캐싱) 시점에 정렬되어 있으므로 추가 정렬 생략
+        # (커스텀 과목은 자연스럽게 마지막에 위치하게 됨)
         
         return {"success": True, "data": course_list}
     except Exception as e:
