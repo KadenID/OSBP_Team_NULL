@@ -37,7 +37,26 @@ const useLMSStore = create((set, get) => ({
   }
 }));
 
+// 색상 변수 목록
+const COLOR_VARS = [
+  'var(--tag-color-0)', 'var(--tag-color-1)', 'var(--tag-color-2)', 
+  'var(--tag-color-3)', 'var(--tag-color-4)', 'var(--tag-color-5)', 
+  'var(--tag-color-6)', 'var(--tag-color-7)', 'var(--tag-color-8)', 
+  'var(--tag-color-9)'
+];
 
+// 문자를 입력받아 css 변수명 변경(과목 색 변경) - 폴백 및 쪽지함 발신자용
+const getColorForString = (str) => {
+  if (!str) return 'var(--text-main)';
+  
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  const index = Math.abs(hash) % COLOR_VARS.length;
+  return COLOR_VARS[index];
+};
 
 function NoticeTab({ accessToken }) {
   const [activeTab, setActiveTab] = useState('notices');
@@ -93,6 +112,17 @@ function NoticeTab({ accessToken }) {
 
     return [{ id: 'all', name: '전체' }, ...sorted];
   }, [notices.data]);
+
+  // 과목별 고정 색상 맵핑 (중복 방지)
+  const courseColorMap = useMemo(() => {
+    const map = {};
+    // '전체' 제외하고 정렬된 순서대로 색상 할당
+    courses.forEach((course, index) => {
+      if (course.id === 'all') return;
+      map[course.name] = COLOR_VARS[(index - 1) % COLOR_VARS.length];
+    });
+    return map;
+  }, [courses]);
 
   // 선택한 과목 필터링 리스트
   const filteredNotices = useMemo(() =>
@@ -150,26 +180,6 @@ function NoticeTab({ accessToken }) {
     }
   };
 
-  // 문자를 입력받아 css 변수명 변경(과목 색 변경)
-  const getColorForString = (str) => {
-  if (!str) return 'var(--text-main)';
-
-  const colorVars = [
-    'var(--tag-color-0)', 'var(--tag-color-1)', 'var(--tag-color-2)', 
-    'var(--tag-color-3)', 'var(--tag-color-4)', 'var(--tag-color-5)', 
-    'var(--tag-color-6)', 'var(--tag-color-7)', 'var(--tag-color-8)', 
-    'var(--tag-color-9)'
-  ];
-  
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  
-  const index = Math.abs(hash) % colorVars.length;
-  return colorVars[index];
-};
-
 
   return (
     <div>
@@ -213,7 +223,8 @@ function NoticeTab({ accessToken }) {
               const title = isNotice ? item.title : item.content;
               const date = isNotice ? item.date?.slice(0, 10) : item.date;
 
-              const tagColor = getColorForString(tag);
+              // 과목일 경우 고정 색상 맵에서 가져오고, 쪽지 발신자 등은 기존 해시 방식 사용
+              const tagColor = isNotice ? (courseColorMap[tag] || getColorForString(tag)) : getColorForString(tag);
 
               return (
             <li 
