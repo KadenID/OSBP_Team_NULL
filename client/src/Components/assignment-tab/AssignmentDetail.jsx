@@ -114,7 +114,12 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
                       {lmsDetail.description_html ? (
                         <div
                           className="detail-html-content"
-                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(lmsDetail.description_html) }}
+                          dangerouslySetInnerHTML={{ 
+                            __html: DOMPurify.sanitize(lmsDetail.description_html).replace(
+                              /href="\/api\/download/g, 
+                              `href="${API_BASE_URL}/api/download`
+                            ) 
+                          }}
                           />
                         ) : (
                         <pre className="detail-text">{lmsDetail.description}</pre>
