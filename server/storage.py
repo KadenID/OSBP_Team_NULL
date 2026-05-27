@@ -412,7 +412,13 @@ def save_custom_assignment(student_id, assignment_data):
     with get_db_connection() as conn:
         try:
             with conn.cursor() as cur:
-                if assignment_data.get('id') and str(assignment_data['id']).isdigit():
+                # 필드명 매핑 (프론트엔드 isSubmitted -> DB is_submitted)
+                is_submitted = assignment_data.get('isSubmitted', False)
+                description = assignment_data.get('description', '')
+                
+                assignment_id = assignment_data.get('id')
+                # id가 존재하고 숫자 형태인 경우 수정(Update), 아니면 신규(Insert)
+                if assignment_id and str(assignment_id).isdigit():
                     # 수정
                     sql = """
                     UPDATE custom_assignments 
@@ -424,9 +430,9 @@ def save_custom_assignment(student_id, assignment_data):
                         assignment_data['subject'],
                         assignment_data['task'],
                         assignment_data['deadline'],
-                        assignment_data.get('isSubmitted', False),
-                        assignment_data.get('description', ''),
-                        int(assignment_data['id']),
+                        is_submitted,
+                        description,
+                        int(assignment_id),
                         student_id
                     ))
                 else:
@@ -441,8 +447,8 @@ def save_custom_assignment(student_id, assignment_data):
                         assignment_data['subject'],
                         assignment_data['task'],
                         assignment_data['deadline'],
-                        assignment_data.get('isSubmitted', False),
-                        assignment_data.get('description', '')
+                        is_submitted,
+                        description
                     ))
                 
                 result = cur.fetchone()
