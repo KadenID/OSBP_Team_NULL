@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import DOMPurify from 'dompurify';
 import { API_BASE_URL } from '../../apiConfig';
 import './AssignmentDetail.css';
@@ -14,6 +15,14 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
   const [lmsDetail, setLmsDetail] = useState(null);
   const [lmsLoading, setLmsLoading] = useState(false);
   const [lmsError, setLmsError] = useState("");
+
+  // 모달 오픈 시 백그라운드 스크롤 방지
+  useEffect(() => {
+    document.body.classList.add('modal-open');
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, []);
 
   // LMS 과제일 때 마운트 시 상세 조회 API 호출
   useEffect(() => {
@@ -74,7 +83,7 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
 
   const isUser = assignment.source === 'user';
 
-  return (
+  return createPortal(
     <div className="detail-overlay" onClick={onClose}>
       <div
         className="detail-modal"
@@ -172,7 +181,8 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

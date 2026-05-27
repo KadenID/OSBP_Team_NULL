@@ -602,6 +602,8 @@ def get_assignment_detail_api(assignment_id: str, student_id: str = Depends(get_
 # 반환: 파일 스트리밍 응답
 # 상세보기 영역 파일 다운로드 관련 보안
 ALLOWED_DOMAINS = ["lms.chungbuk.ac.kr", "cbnu.ac.kr"] 
+ALLOWED_PATH_KEYWORDS = ["pluginfile.php"] # 파일 다운로드 관련 키워드
+
 @app.get("/api/download")
 def proxy_download(url: str, student_id: str = Depends(get_current_user)):
     # URL 디코딩 및 파싱
@@ -616,6 +618,10 @@ def proxy_download(url: str, student_id: str = Depends(get_current_user)):
     host = parsed_url.hostname
     if not host or not any(host == domain or host.endswith("." + domain) for domain in ALLOWED_DOMAINS):
         raise HTTPException(status_code=403, detail="허용되지 않은 도메인입니다.")
+
+    # 추가 보안: 파일 다운로드와 관련된 경로인지 확인 (Open Proxy 방지)
+    if not any(keyword in parsed_url.path for keyword in ALLOWED_PATH_KEYWORDS):
+        raise HTTPException(status_code=403, detail="허용되지 않은 파일 접근 경로입니다.")
     
     # 해당 학생의 유효한 LMS 세션 가져오기
     session = resolve_lms_session(student_id)
