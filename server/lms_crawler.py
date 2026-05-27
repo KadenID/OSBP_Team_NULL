@@ -238,6 +238,8 @@ def crawl_all_assignments(session):
 # 반환: 과제 상세 정보 딕셔너리
 def get_assignment_detail(session, assignment_id):
     detail_url = f"https://lms.chungbuk.ac.kr/mod/assign/view.php?id={assignment_id}"
+    BASE_URL = "https://lms.chungbuk.ac.kr"
+    PROXY_URL = "/api/download?url="
 
     try:
         resp = session.get(detail_url, timeout=10, allow_redirects=False)
@@ -250,37 +252,40 @@ def get_assignment_detail(session, assignment_id):
         soup = BeautifulSoup(resp.text, 'html.parser')
 
         # 과제명
-        title = ""
-        title_tag = soup.select_one('h2') or soup.select_one('.page-header-headings h1')
-        if title_tag:
-            title = title_tag.get_text(strip=True)
+        title = soup.select_one('h2, .page-header-headings h1').get_text(strip=True) if soup.select_one('h2, .page-header-headings h1') else ""
+        desc_tag = soup.select_one('div.box.generalbox div[id^="intro"], div#intro, .assignmentintro')
 
-        # 과제 설명 (텍스트 + HTML 둘 다 추출)
-        description = ""
-        description_html = ""
-        desc_tag = soup.select_one('div.box.generalbox div[id^="intro"]') \
-                or soup.select_one('div#intro') \
-                or soup.select_one('.assignmentintro')
+        description, description_html, attachments = "", "", []
 
         if desc_tag:
-            # 첨부파일 영역 제거 (텍스트/HTML 모두 적용)
-            for tag in desc_tag.find_all(['ul', 'li']):
-                if tag.find('a', href=lambda h: h and ('pluginfile' in h or '.pdf' in h or '.hwp' in h or '.zip' in h or '.docx' in h)):
-                    tag.decompose()
-
-            # 이미지 유무 확인
-            has_image = bool(desc_tag.find('img'))
-
-            if has_image:
-                for img in desc_tag.find_all('img'):
-                    src = img.get('src', '')
-                    if src.startswith('/'):
-                        img['src'] = f"https://lms.chungbuk.ac.kr{src}"
-                description_html = str(desc_tag)
-            else:
-                description_html = ""
+            # 이미지 절대경로 변환
+            for img in desc_tag.find_all('img', src=True):
+                if img['src'].startswith('/'):
+                    img['src'] = f"{BASE_URL}{img['src']}"
 
             description = desc_tag.get_text(separator='\n', strip=True)
+            description_html = str(desc_tag)
+
+        submission_box = soup.select_one('.submissionstatustable, #modulespecific_props')
+        if submission_box:
+            submission_box.decompose() 
+
+        for a in soup.find_all('a', href=True):
+            href = a['href']
+            if 'pluginfile.php' in href:
+                full_url = href if href.startswith('http') else f"{BASE_URL}{href}"
+                proxy_url = f"{PROXY_URL}{urllib.parse.quote(full_url, safe='')}"
+                
+                # HTML 본문 내 링크 변환
+                a['href'] = proxy_url
+                a['target'] = '_blank'
+
+                # 첨부파일 목록에 추가 (중복 방지)
+                if not any(att['url'] == proxy_url for att in attachments):
+                    attachments.append({
+                        'name': a.get_text(strip=True),
+                        'url': proxy_url
+                    })
 
         if not title and not description:
             raise ValueError("과제 정보를 찾을 수 없습니다.")
@@ -290,13 +295,10 @@ def get_assignment_detail(session, assignment_id):
             'title': title,
             'description': description,
             'description_html': description_html,
+            'attachments': attachments,
             'url': detail_url
         }
 
-    except SessionExpiredError:
-        raise
-    except ValueError:
-        raise
     except Exception as e:
         print(f"과제 상세 정보 추출 중 오류 발생: {e}")
-        raise Exception(f"과제 상세 조회 실패: {e}")
+        raise e

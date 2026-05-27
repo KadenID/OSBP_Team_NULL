@@ -183,28 +183,38 @@ def get_notice_detail(session, board_id, notice_id):
             elif '조회수' in text:
                 views = text.replace('조회수', '').replace(':', '').strip()
 
+        # 텍스트 대신 HTML 추출 — 이미지 src를 절대 경로로 변환
+        # 본문 및 이미지 경로 보정
         description = ""
         description_html = ""
         content_tag = soup.select_one('div.article-content div.text_to_html')
         if content_tag:
-            # 첨부파일 영역 제거 (텍스트/HTML 모두 적용)
-            for tag in content_tag.find_all(['ul', 'li']):
-                if tag.find('a', href=lambda h: h and ('pluginfile' in h or '.pdf' in h or '.hwp' in h or '.zip' in h or '.docx' in h)):
-                    tag.decompose()
+            description = content_tag.get_text(separator='\n', strip=True)
 
-            # 이미지 유무 확인
-            has_image = bool(content_tag.find('img'))
-
-            if has_image:
-                for img in content_tag.find_all('img'):
-                    src = img.get('src', '')
-                    if src.startswith('/'):
-                        img['src'] = f"https://lms.chungbuk.ac.kr{src}"
-                description_html = str(content_tag)
-            else:
-                description_html = ""
+            for img in content_tag.find_all('img'):
+                src = img.get('src', '')
+                if src.startswith('/'):
+                    img['src'] = f"https://lms.chungbuk.ac.kr{src}"
+            description_html = str(content_tag)
 
             description = content_tag.get_text(separator='\n', strip=True)
+            
+        attachments = []
+        files_container = soup.select_one('div.article-files') or soup.select_one('ul.files')
+        if files_container:
+            for file_link in files_container.find_all('a', href=True):
+                file_url = file_link['href']
+        
+                if file_url.startswith('/'):
+                    file_url = f"https://lms.chungbuk.ac.kr{file_url}"
+                
+                file_name = file_link.get_text(strip=True)
+                
+                if file_url and file_name:
+                    attachments.append({
+                        'name': file_name,
+                        'url': file_url
+                    })
 
         return {
             'title': title,
@@ -213,6 +223,7 @@ def get_notice_detail(session, board_id, notice_id):
             'views': views,
             'description': description,
             'description_html': description_html,
+            'attachments': attachments,  # 파싱된 첨부파일 배열 포함
             'url': url
         }
 

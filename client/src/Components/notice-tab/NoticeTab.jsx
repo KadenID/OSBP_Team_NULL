@@ -259,7 +259,30 @@ function NoticeTab({ accessToken }) {
             </div>
             <hr />
 
-            
+            {/* 첨부파일 영역 rendering */}
+            {selectedNotice.attachments && selectedNotice.attachments.length > 0 && (
+              <div className="detail-attachments">
+                <strong>첨부파일</strong>
+                <ul className="attachment-list" style={{ listStyle: 'none', paddingLeft: 0, marginTop: '8px' }}>
+                  {selectedNotice.attachments.map((file, idx) => (
+                    <li key={idx} style={{ marginBottom: '6px', display: 'flex', alignItems: 'center' }}>
+                      <span style={{ marginRight: '8px'}}>📕</span>
+                      <a 
+                        href={file.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ textDecoration: 'underline'}}
+                      >
+                        {file.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+                <hr />
+              </div>
+            )}
+
+          
             <span className="detail-section-title">공지 내용</span>
             {noticeLoading && <p className="detail-loading">상세 정보를 불러오는 중...</p>}
             {noticeError && <p className="detail-error">{noticeError}</p>}
