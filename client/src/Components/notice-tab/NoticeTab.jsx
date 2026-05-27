@@ -292,7 +292,12 @@ function NoticeTab({ accessToken }) {
             selectedNotice.description_html ? (
               <div
                 className="detail-html-content"
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedNotice.description_html) }}
+                dangerouslySetInnerHTML={{ 
+                  __html: DOMPurify.sanitize(selectedNotice.description_html).replace(
+                    /href="\/api\/download/g, 
+                    `href="${API_BASE_URL}/api/download`
+                  ) 
+                }}
               />
             ) : (
               <pre className="detail-text">{selectedNotice.description}</pre>
