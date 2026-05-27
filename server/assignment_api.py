@@ -593,7 +593,6 @@ def get_assignment_detail_api(assignment_id: str, student_id: str = Depends(get_
     except Exception as e:
         logger.error(f"과제 상세 조회 실패: {e}")
         raise HTTPException(status_code=500, detail="과제 상세 조회 실패")
-
-
+    
 if __name__ == "__main__":
     uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)

@@ -103,11 +103,6 @@
   cursor: pointer;
 }
 
-.filter-tag-btn:hover {
-  background-color: var(--shadow-hover);
-  transform: translateY(-1px);
-}
-
 /* 활성화 태그 */
 .filter-tag-btn.active {
   background-color: var(--accent);

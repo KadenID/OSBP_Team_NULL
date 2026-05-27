@@ -410,66 +410,6 @@
   font-weight: 500;
 }
 
-/* 생성 과제 삭제창 */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-
-  width: 100%;
-  height: 100%;
-
-  background: var(--modal-overlay);
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  z-index: 99999;
-}
-
-body.modal-open .right:hover,
-body.modal-open .left:hover {
-  transform: none;
-  box-shadow: var(--card-shadow);
-}
-
-.modal {
-  background: var(--bg-card);
-  color: var(--text-main);
-  border: 1px solid var(--border);
-  padding: 20px;
-  border-radius: 12px;
-  width: 300px;
-
-  text-align: center;
-  box-shadow: var(--card-shadow-hover);
-}
-
-.modal-buttons {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 16px;
-}
-
-.modal-buttons button {
-  flex: 1;
-  margin: 0 4px;
-  padding: 8px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.modal-buttons button:first-child {
-  background-color: var(--danger);
-  color: #ffffff;
-}
-
-.modal-buttons button:last-child {
-  background-color: var(--btn-bg-hover);
-  color: var(--btn-text);
-}
-
 /* JSX 코드 내의 인라인 스타일 대체하는 빈 화면 전용 클래스 추가 */
 .notice-empty {
   text-align: center;

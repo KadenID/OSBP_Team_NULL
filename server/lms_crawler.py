@@ -263,13 +263,24 @@ def get_assignment_detail(session, assignment_id):
                 or soup.select_one('.assignmentintro')
 
         if desc_tag:
-            # 이미지 상대경로 → 절대경로 변환
-            for img in desc_tag.find_all('img'):
-                src = img.get('src', '')
-                if src.startswith('/'):
-                    img['src'] = f"https://lms.chungbuk.ac.kr{src}"
+            # 첨부파일 영역 제거 (텍스트/HTML 모두 적용)
+            for tag in desc_tag.find_all(['ul', 'li']):
+                if tag.find('a', href=lambda h: h and ('pluginfile' in h or '.pdf' in h or '.hwp' in h or '.zip' in h or '.docx' in h)):
+                    tag.decompose()
+
+            # 이미지 유무 확인
+            has_image = bool(desc_tag.find('img'))
+
+            if has_image:
+                for img in desc_tag.find_all('img'):
+                    src = img.get('src', '')
+                    if src.startswith('/'):
+                        img['src'] = f"https://lms.chungbuk.ac.kr{src}"
+                description_html = str(desc_tag)
+            else:
+                description_html = ""
+
             description = desc_tag.get_text(separator='\n', strip=True)
-            description_html = str(desc_tag)
 
         if not title and not description:
             raise ValueError("과제 정보를 찾을 수 없습니다.")

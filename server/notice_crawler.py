@@ -162,8 +162,7 @@ def get_notice_detail(session, board_id, notice_id):
             raise SessionExpiredError("LMS 세션이 만료되었습니다.")
 
         soup = BeautifulSoup(resp.text, 'html.parser')
-        
-        # 존재하지 않는 게시글이면 LMS가 에러 메시지 페이지를 반환함
+
         error_box = soup.select_one('div.alert-danger') or soup.select_one('div#notice')
         title_tag = soup.select_one('div.article-subject h3')
         if not title_tag or (error_box and '존재하지' in error_box.get_text()):
@@ -184,19 +183,28 @@ def get_notice_detail(session, board_id, notice_id):
             elif '조회수' in text:
                 views = text.replace('조회수', '').replace(':', '').strip()
 
-        # 텍스트 대신 HTML 추출 — 이미지 src를 절대 경로로 변환
         description = ""
         description_html = ""
         content_tag = soup.select_one('div.article-content div.text_to_html')
         if content_tag:
-            description = content_tag.get_text(separator='\n', strip=True)
+            # 첨부파일 영역 제거 (텍스트/HTML 모두 적용)
+            for tag in content_tag.find_all(['ul', 'li']):
+                if tag.find('a', href=lambda h: h and ('pluginfile' in h or '.pdf' in h or '.hwp' in h or '.zip' in h or '.docx' in h)):
+                    tag.decompose()
 
-            # 이미지 src 상대경로 → 절대경로 변환
-            for img in content_tag.find_all('img'):
-                src = img.get('src', '')
-                if src.startswith('/'):
-                    img['src'] = f"https://lms.chungbuk.ac.kr{src}"
-            description_html = str(content_tag)
+            # 이미지 유무 확인
+            has_image = bool(content_tag.find('img'))
+
+            if has_image:
+                for img in content_tag.find_all('img'):
+                    src = img.get('src', '')
+                    if src.startswith('/'):
+                        img['src'] = f"https://lms.chungbuk.ac.kr{src}"
+                description_html = str(content_tag)
+            else:
+                description_html = ""
+
+            description = content_tag.get_text(separator='\n', strip=True)
 
         return {
             'title': title,
@@ -204,7 +212,7 @@ def get_notice_detail(session, board_id, notice_id):
             'date': date,
             'views': views,
             'description': description,
-            'description_html': description_html,  # HTML 버전 추가
+            'description_html': description_html,
             'url': url
         }
 
@@ -213,8 +221,7 @@ def get_notice_detail(session, board_id, notice_id):
     except Exception as e:
         logger.error(f"공지사항 상세 조회 중 오류 (Notice ID: {notice_id}): {e}")
         raise Exception(f"공지사항 상세 조회 중 오류: {e}")
-
-
+    
 # 입력: session (세션 객체)
 # 기능: 전체 수강 과목의 공지사항 통합 크롤링
 # 반환: 공지 리스트

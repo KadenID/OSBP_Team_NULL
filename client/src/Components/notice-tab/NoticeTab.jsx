@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { create } from 'zustand';
+import DOMPurify from 'dompurify';
 import './NoticeTab.css';
 import '../assignment-tab/AssignmentDetail.css';
 import { API_BASE_URL } from '../../apiConfig';
@@ -11,11 +12,9 @@ const useLMSStore = create((set, get) => ({
   notices: { data: [], isLoading: false, isFetched: false },
   messages: { data: [], isLoading: false, isFetched: false },
 
-
-  fetchData: async (type, accessToken) => { // type: 'notices' | 'messages'
-
+  fetchData: async (type, accessToken) => {
     const state = get()[type];
-    if (state.isFetched || !accessToken) return;  // 중복 호출 방지
+    if (state.isFetched || !accessToken) return;
 
     set((prev) => ({ ...prev, [type]: { ...prev[type], isLoading: true } }));
 
@@ -39,24 +38,40 @@ const useLMSStore = create((set, get) => ({
 }));
 
 
+
 function NoticeTab({ accessToken }) {
   const [activeTab, setActiveTab] = useState('notices');
   const { notices, messages, fetchData } = useLMSStore();
 
-   useEffect(() => {
+  useEffect(() => {
     fetchData(activeTab, accessToken);
   }, [activeTab, fetchData, accessToken]);
 
   const [selectedCourse, setSelectedCourse] = useState('all'); // 선택 과목 ID 상태
-  const [selectedNotice, setSelectedNotice] = useState(null); // 상세보기 모달 상태 (객체 저장)
+  const [selectedNoticeId, setSelectedNoticeId] = useState(null); // 상세보기 모달 상태 (객체 저장)
 
+  // 공지 상세 로딩/에러 상태
+  const [noticeLoading, setNoticeLoading] = useState(false);
+  const [noticeError, setNoticeError] = useState("");
+
+  const selectedNotice = useMemo(() =>
+    notices.data.find(item =>
+      String(item.notice_id) === String(selectedNoticeId)
+    ) ?? null,
+  [notices.data, selectedNoticeId]);
 
   // 모달 오픈 시 백그라운드 스크롤 방지
   useEffect(() => {
-    document.body.classList.toggle('modal-open', !!selectedNotice);
+    document.body.classList.toggle('modal-open', !!selectedNoticeId);
     return () => document.body.classList.remove('modal-open');
-  }, [selectedNotice]);
+  }, [selectedNoticeId]);
 
+  // 모달 닫기
+  const handleCloseModal = () => {
+    setSelectedNoticeId(null);
+    setNoticeLoading(false);
+    setNoticeError("");
+  };
 
   // 과목 태그 목록 생성 (중복 제거)
   const courses = useMemo(() => [
@@ -65,7 +80,6 @@ function NoticeTab({ accessToken }) {
       .map(([id, name]) => ({ id, name }))
   ], [notices.data]);
 
-
   // 선택한 과목 필터링 리스트
   const filteredNotices = useMemo(() =>
     selectedCourse === 'all'
@@ -73,21 +87,23 @@ function NoticeTab({ accessToken }) {
       : notices.data.filter(n => n.course_id === selectedCourse),
   [notices.data, selectedCourse]);
 
-  // 리스트 렌더링용 변수 통합 
+
+  // 리스트 렌더링용 변수 통합
   const isNotice = activeTab === 'notices';
   const currentData = isNotice ? notices : messages;
   const listItems = isNotice ? filteredNotices : messages.data;
   const emptyText = isNotice ? '공지사항이 없습니다.' : '받은 쪽지가 없습니다.';
 
-
   // 공지 클릭 시 상세 모달 — description_html 없으면 상세 API 호출
   const handleNoticeClick = async (item) => {
     if (!isNotice) return;
 
+    setSelectedNoticeId(item.notice_id);
+    setNoticeError("");
+
     // description_html이 없으면 항상 상세 API 호출
-    if (item.description_html) {
-      setSelectedNotice(item);
-    } else {
+     if (!item.description_html) {
+      setNoticeLoading(true);
       try {
         const response = await fetch(
           `${API_BASE_URL}/api/notices/${item.board_id}/${item.notice_id}`,
@@ -98,10 +114,24 @@ function NoticeTab({ accessToken }) {
         );
         const result = await response.json();
         if (result.success) {
-          setSelectedNotice({ ...item, ...result.data });
+          useLMSStore.setState(prev => ({
+            notices: {
+              ...prev.notices,
+              data: prev.notices.data.map(n =>
+                String(n.notice_id) === String(item.notice_id)
+                  ? { ...n, ...result.data }
+                  : n
+              )
+            }
+          }));
+        } else {
+          setNoticeError("공지 내용을 불러오지 못했습니다.");
         }
       } catch (error) {
         console.error("공지 상세 조회 실패:", error);
+        setNoticeError("네트워크 오류가 발생했습니다.");
+      } finally {
+        setNoticeLoading(false);
       }
     }
   };
@@ -215,9 +245,9 @@ function NoticeTab({ accessToken }) {
 
       {/* Portal을 통한 상세 보기 모달 팝업 */}
       {selectedNotice && createPortal(
-        <div className="detail-overlay" onClick={() => setSelectedNotice(null)}>
+         <div className="detail-overlay" onClick={handleCloseModal}>
           <div className="detail-modal" onClick={e => e.stopPropagation()}>
-            <button className="close-btn" onClick={() => setSelectedNotice(null)}>✕</button>
+            <button className="close-btn" onClick={handleCloseModal}>✕</button>
             <h3>공지 상세 정보</h3>
             <div className="detail-modal-body">
             <div className="detail-info">
@@ -228,16 +258,23 @@ function NoticeTab({ accessToken }) {
                 {selectedNotice.date.replace(/(\d{4}-\d{2}-\d{2})\s*(\d{2})(\d{2})(\d{2})/, '$1 $2:$3')}</p>)}
             </div>
             <hr />
+
+            
             <span className="detail-section-title">공지 내용</span>
-            {/* description_html 있으면 HTML로 렌더링, 없으면 텍스트 폴백 */}
-            {selectedNotice.description_html ? (
+            {noticeLoading && <p className="detail-loading">상세 정보를 불러오는 중...</p>}
+            {noticeError && <p className="detail-error">{noticeError}</p>}
+            {!noticeLoading && !noticeError && (
+            
+            /* description_html 있으면 HTML로 렌더링, 없으면 텍스트 폴백 */
+            selectedNotice.description_html ? (
               <div
                 className="detail-html-content"
-                dangerouslySetInnerHTML={{ __html: selectedNotice.description_html }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedNotice.description_html) }}
               />
             ) : (
               <pre className="detail-text">{selectedNotice.description}</pre>
-            )}
+            )
+          )}
             {selectedNotice.url && (
               <div className="detail-footer">
                 <a href={selectedNotice.url} target="_blank" rel="noopener noreferrer" className="lms-link">

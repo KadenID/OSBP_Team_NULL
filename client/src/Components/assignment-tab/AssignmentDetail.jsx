@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import DOMPurify from 'dompurify';
 import { API_BASE_URL } from '../../apiConfig';
 import './AssignmentDetail.css';
 
@@ -93,20 +94,20 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
 
           {/* LMS 과제: 로딩/에러/상세 렌더링 */}
           {!isUser && (
-            <>
+            <><span className="detail-section-title">과제 설명</span>
               {lmsLoading && <p className="detail-loading">상세 정보를 불러오는 중...</p>}
               {lmsError   && <p className="detail-error">{lmsError}</p>}
               {lmsDetail && (
                 <>
                   {(lmsDetail.description_html || lmsDetail.description) ? (
                     <div className="detail-section">
-                      <span className="detail-section-title">과제 설명</span>
+                      
                       {lmsDetail.description_html ? (
                         <div
                           className="detail-html-content"
-                          dangerouslySetInnerHTML={{ __html: lmsDetail.description_html }}
-                        />
-                      ) : (
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(lmsDetail.description_html) }}
+                          />
+                        ) : (
                         <pre className="detail-text">{lmsDetail.description}</pre>
                       )}
                     </div>
@@ -151,7 +152,7 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
         <pre className="detail-text">
             {assignment.description?.trim()
                     ? assignment.description
-                : "상세 설명 데이터가 없습니다. 아래 링크를 참조하거나 LMS를 확인하세요."}
+                : "등록된 상세 설명 데이터가 없습니다."}
         </pre>
         )
       )}
