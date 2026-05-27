@@ -5,7 +5,8 @@
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
-  padding: 28px 36px;
+  padding: 28px 32px; /* 우측 패딩 32px로 통일 */
+  padding-left: 40px; /* 좌측 패딩 40px로 통일 (파란 선 공간 확보) */
   border-radius: 12px;
   background-color: var(--bg-card);
   border: 1px solid var(--border);
@@ -22,6 +23,10 @@
   width: 4px;
   border-radius: 0 999px 999px 0;
   background-color: var(--accent);
+}
+
+[data-theme='dark'] .user-info-card::before {
+  background-color: var(--primary); /* 다크 모드에서 다른 탭들과 색상 통일 */
 }
 
 .user-info-card *,

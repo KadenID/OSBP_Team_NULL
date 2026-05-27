@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { API_BASE_URL } from "../../apiConfig";
 import useAssignmentStore from "../../store/useAssignmentStore";
+import "./AlarmSettings.css";
 
 /* 알림 단위별 최대 입력값 */
 const reminderMaxByUnit = {
@@ -17,7 +18,7 @@ const createReminderId = () => {
 };
 
 function AlarmSettings({ accessToken }) {
-    const { assignment, fetchAssignments } = useAssignmentStore();
+    const { fetchAssignments } = useAssignmentStore();
 
     /* --- 상태 선언 --- */
     const [email, setEmail] = useState("");
@@ -26,6 +27,7 @@ function AlarmSettings({ accessToken }) {
     const [emailAlerts, setEmailAlerts] = useState(false);
     const [browserAlerts, setBrowserAlerts] = useState(false);
     const [courseReminders, setCourseReminders] = useState([]);
+    const [courses, setCourses] = useState([{ id: "all", name: "전체 과목" }]);
     
     const [permissionStatus, setPermissionStatus] = useState(
         typeof Notification !== "undefined" ? Notification.permission : "default"
@@ -53,65 +55,29 @@ function AlarmSettings({ accessToken }) {
         }
     }, [accessToken, fetchAssignments]);
 
-    // 과목명 정렬 기준: 한글 시작 > 영어 시작 > 기타 (사전순)
-    const sortCourseNames = useCallback((a, b) => {
-        if (!a) return 1;
-        if (!b) return -1;
-
-        // 시작 문자가 해당 언어권인지 판별
-        const isKoreanStart = (s) => /^[가-힣]/.test(s);
-        const isEnglishStart = (s) => /^[a-zA-Z]/.test(s);
-        
-        const aKo = isKoreanStart(a);
-        const bKo = isKoreanStart(b);
-        
-        // 1. 한글로 시작하는 과목 우선
-        if (aKo && !bKo) return -1;
-        if (!aKo && bKo) return 1;
-        
-        const aEn = isEnglishStart(a);
-        const bEn = isEnglishStart(b);
-        
-        // 2. 영어로 시작하는 과목 다음
-        if (aEn && !bEn) return -1;
-        if (!aEn && bEn) return 1;
-        
-        // 3. 같은 카테고리 내에서는 사전순 (가나다, ABC)
-        return String(a).localeCompare(String(b), 'ko', { sensitivity: 'base' });
-    }, []);
-
-    const courses = useMemo(() => {
-        // assignment가 없을 경우 빈 배열 반환
-        if (!assignment || !Array.isArray(assignment)) {
-            return [{ id: "all", name: "전체 과목" }];
-        }
-        const uniqueSubjects = Array.from(new Set(assignment.map(a => a.subject))).filter(Boolean);
-        const sortedSubjects = uniqueSubjects.sort(sortCourseNames);
-
-        return [
-            { id: "all", name: "전체 과목" },
-            ...sortedSubjects.map(subject => ({ id: subject, name: subject }))
-        ];
-    }, [assignment, sortCourseNames]);
-
     const getCourseName = useCallback((courseId) => {
-        const course = courses.find((c) => c.id === courseId);
-        return course ? course.name : "알 수 없는 과목";
+        if (courseId === "all") return "전체 과목";
+        const course = courses.find((c) => String(c.id) === String(courseId));
+        return course ? course.name : courseId;
     }, [courses]);
 
     // 정렬된 알림 목록
     const sortedCourseReminders = useMemo(() => {
         if (!courseReminders || !Array.isArray(courseReminders)) return [];
         
+        const courseOrderMap = new Map();
+        courses.forEach((c, index) => {
+            courseOrderMap.set(String(c.id), index);
+        });
+
         return [...courseReminders].sort((a, b) => {
             if (a.courseId === "all" && b.courseId !== "all") return -1;
             if (a.courseId !== "all" && b.courseId === "all") return 1;
             
-            const nameA = getCourseName(a.courseId);
-            const nameB = getCourseName(b.courseId);
+            const orderA = courseOrderMap.has(String(a.courseId)) ? courseOrderMap.get(String(a.courseId)) : 9999;
+            const orderB = courseOrderMap.has(String(b.courseId)) ? courseOrderMap.get(String(b.courseId)) : 9999;
             
-            const nameComp = sortCourseNames(nameA, nameB);
-            if (nameComp !== 0) return nameComp;
+            if (orderA !== orderB) return orderA - orderB;
             
             const getMins = (r) => {
                 const val = Number(r.value);
@@ -122,35 +88,44 @@ function AlarmSettings({ accessToken }) {
             };
             return getMins(a) - getMins(b);
         });
-    }, [courseReminders, getCourseName, sortCourseNames]);
+    }, [courseReminders, courses]);
 
     useEffect(() => {
-        const fetchSettings = async () => {
+        const fetchSettingsAndCourses = async () => {
             if (!accessToken) return;
             try {
-                const response = await fetch(`${API_BASE_URL}/api/user-settings`, {
+                const settingsResponse = await fetch(`${API_BASE_URL}/api/user-settings`, {
                     headers: { 'Authorization': `Bearer ${accessToken}` }
                 });
-                const result = await response.json();
-                if (result.success && result.data) {
-                    setEmail(result.data.email || "");
-                    setTempEmail(result.data.email || "");
-                    setEmailAlerts(result.data.emailAlerts ?? true);
-                    setBrowserAlerts(result.data.browserAlerts ?? true);
-                    setCourseReminders(result.data.courseReminders ?? []);
-                    
-                    // 하이드레이션: 브라우저에 구독 정보가 있는지 확인
-                    if (result.data.browserAlerts) {
+                const settingsResult = await settingsResponse.json();
+                if (settingsResult.success && settingsResult.data) {
+                    setEmail(settingsResult.data.email || "");
+                    setTempEmail(settingsResult.data.email || "");
+                    setEmailAlerts(settingsResult.data.emailAlerts ?? true);
+                    setBrowserAlerts(settingsResult.data.browserAlerts ?? true);
+                    setCourseReminders(settingsResult.data.courseReminders ?? []);
+                    if (settingsResult.data.browserAlerts) {
                         checkAndSyncSubscription();
                     }
                 }
+
+                const coursesResponse = await fetch(`${API_BASE_URL}/api/courses?include_custom=true`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const coursesResult = await coursesResponse.json();
+                if (coursesResult.success && Array.isArray(coursesResult.data)) {
+                    setCourses([
+                        { id: "all", name: "전체 과목" },
+                        ...coursesResult.data
+                    ]);
+                }
             } catch (error) {
-                console.error("설정 로드 오류:", error);
+                console.error("데이터 로드 오류:", error);
             } finally {
-                setTimeout(() => setIsInitialLoad(false), 100);
+                setIsInitialLoad(false);
             }
         };
-        fetchSettings();
+        fetchSettingsAndCourses();
     }, [accessToken]);
 
     /* --- 권한 및 구독 로직 --- */
@@ -170,7 +145,6 @@ function AlarmSettings({ accessToken }) {
                 return;
             }
 
-            // VAPID 키 로드
             const keyResponse = await fetch(`${API_BASE_URL}/api/vapid-public-key`, {
                 headers: { 'Authorization': `Bearer ${accessToken}` }
             });
@@ -179,18 +153,15 @@ function AlarmSettings({ accessToken }) {
                 throw new Error("서버에서 VAPID 키를 가져올 수 없습니다.");
             }
 
-            // 서비스 워커가 준비될 때까지 대기
             const registration = await navigator.serviceWorker.ready;
             
-            // 기존 구독 확인 및 갱신 처리
             try {
                 const existingSubscription = await registration.pushManager.getSubscription();
                 if (existingSubscription) {
                     await existingSubscription.unsubscribe();
-                    console.log("기존 구독 정보를 갱신하기 위해 초기화했습니다.");
                 }
             } catch (subError) {
-                console.warn("기존 구독 해제 중 오류 발생 (무시하고 계속):", subError);
+                console.warn("기존 구독 해제 중 오류 발생:", subError);
             }
 
             const permission = await Notification.requestPermission();
@@ -218,9 +189,7 @@ function AlarmSettings({ accessToken }) {
                 body: JSON.stringify(subscriptionJSON),
             });
 
-            if (saveResponse.ok) {
-                console.log("푸시 알림 구독 및 서버 저장이 완료되었습니다.");
-            } else {
+            if (!saveResponse.ok) {
                 throw new Error("서버에 구독 정보를 저장하지 못했습니다.");
             }
         } catch (error) {
@@ -236,7 +205,6 @@ function AlarmSettings({ accessToken }) {
             if (registration) {
                 const subscription = await registration.pushManager.getSubscription();
                 if (subscription) {
-                    // 서버에서도 구독 정보 삭제 시도
                     const subscriptionJSON = subscription.toJSON();
                     await fetch(`${API_BASE_URL}/api/push-subscription`, {
                         method: 'DELETE',
@@ -246,9 +214,7 @@ function AlarmSettings({ accessToken }) {
                         },
                         body: JSON.stringify(subscriptionJSON),
                     });
-
                     await subscription.unsubscribe();
-                    console.log("푸시 구독 해제 및 서버 삭제 완료");
                 }
             }
         } catch (error) {
@@ -262,7 +228,6 @@ function AlarmSettings({ accessToken }) {
         if (registration) {
             const subscription = await registration.pushManager.getSubscription();
             if (!subscription && browserAlerts) {
-                // 알림은 켜져있는데 구독이 없다면 재구독 시도
                 subscribeToPush();
             }
         }
@@ -273,7 +238,6 @@ function AlarmSettings({ accessToken }) {
     /* --- 이벤트 핸들러 --- */
 
     const handleSaveEmail = () => {
-        // 이메일 형식 검사 정규식
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (tempEmail && !emailRegex.test(tempEmail)) {
             alert("올바른 이메일 형식이 아닙니다.");
@@ -282,7 +246,6 @@ function AlarmSettings({ accessToken }) {
 
         setEmail(tempEmail);
         setIsEditingEmail(false);
-        // 이메일이 비어있으면 알림 자동 비활성화
         if (!tempEmail) {
             setEmailAlerts(false);
         }
@@ -308,12 +271,10 @@ function AlarmSettings({ accessToken }) {
             setTestMessage("오류 발생");
         } finally {
             setIsTestSending(false);
-            // 메시지가 길어질 수 있으므로 3초 후 자동 삭제
             setTimeout(() => setTestMessage(""), 3000);
         }
     };
 
-    /* 자동 저장 로직 */
     useEffect(() => {
         if (isInitialLoad || !accessToken) return;
 
@@ -371,13 +332,13 @@ function AlarmSettings({ accessToken }) {
     return (
         <div className="alarm-settings">
             {/* 1. 채널별 설정 (이메일/푸시) */}
-            <div className="alarm-section" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="alarm-section alarm-channel-group">
                 {/* 이메일 알림 그룹 */}
                 <div>
-                    <div className="alarm-toggle-row" style={{ border: 'none', padding: 0, background: 'transparent', marginBottom: '8px' }}>
+                    <div className="alarm-toggle-row">
                         <div>
                             <h4 className="alarm-course-name">이메일 알림</h4>
-                            <p className="alarm-description" style={{ fontSize: '0.82rem' }}>메일함으로 마감 알림을 보냅니다.</p>
+                            <p className="alarm-description">메일함으로 마감 알림을 보냅니다.</p>
                         </div>
                         <label className="alarm-switch">
                             <input
@@ -386,25 +347,15 @@ function AlarmSettings({ accessToken }) {
                                 disabled={!email}
                                 onChange={(e) => setEmailAlerts(e.target.checked)}
                             />
-                            <span className="alarm-slider" style={{ opacity: !email ? 0.5 : 1, cursor: !email ? 'not-allowed' : 'pointer' }}></span>
+                            <span className="alarm-slider"></span>
                         </label>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
+                    <div className="alarm-email-input-wrapper">
                         {isEditingEmail ? (
                             <>
                                 <input
                                     type="email"
-                                    className="alarm-select"
-                                    style={{ 
-                                        width: '240px',
-                                        height: '40px',
-                                        boxSizing: 'border-box',
-                                        padding: '10px 12px', 
-                                        fontSize: '13px',
-                                        cursor: 'text',
-                                        background: 'var(--card-bg)',
-                                        margin: 0
-                                    }}
+                                    className="alarm-email-input"
                                     placeholder="알림을 받을 이메일 주소 입력"
                                     value={tempEmail}
                                     onChange={(e) => setTempEmail(e.target.value)}
@@ -413,7 +364,6 @@ function AlarmSettings({ accessToken }) {
                                 <button 
                                     type="button" 
                                     className="add-reminder-button"
-                                    style={{ padding: '0 16px', height: '40px', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                     onClick={handleSaveEmail}
                                 >
                                     저장
@@ -421,40 +371,12 @@ function AlarmSettings({ accessToken }) {
                             </>
                         ) : (
                             <>
-                                <div 
-                                    className="alarm-select"
-                                    style={{ 
-                                        width: '240px',
-                                        height: '40px',
-                                        boxSizing: 'border-box',
-                                        padding: '10px 12px', 
-                                        fontSize: '13px',
-                                        cursor: 'default',
-                                        background: 'var(--sub-card-bg)',
-                                        color: email ? 'var(--title)' : 'var(--card-content)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        opacity: email ? 1 : 0.7,
-                                        border: '1px solid var(--alarm-input-border)',
-                                        margin: 0
-                                    }}
-                                >
+                                <div className={`alarm-email-display ${!email ? 'empty' : ''}`}>
                                     {email || "등록된 이메일이 없습니다."}
                                 </div>
                                 <button 
                                     type="button" 
-                                    className="add-reminder-button"
-                                    style={{ 
-                                        padding: '0 16px', 
-                                        height: '40px',
-                                        margin: 0,
-                                        background: 'var(--card-bg)',
-                                        color: 'var(--title)',
-                                        border: '1px solid var(--alarm-input-border)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}
+                                    className="add-reminder-button secondary"
                                     onClick={() => {
                                         setTempEmail(email);
                                         setIsEditingEmail(true);
@@ -466,19 +388,19 @@ function AlarmSettings({ accessToken }) {
                         )}
                     </div>
                     {!email && !isEditingEmail && (
-                        <p style={{ color: '#ff4d4f', fontSize: '0.75rem', marginTop: '4px' }}>
+                        <p className="alarm-error-text">
                             ※ 이메일을 등록해야 알림을 활성화할 수 있습니다.
                         </p>
                     )}
                 </div>
 
                 {/* 브라우저 푸시 알림 그룹 */}
-                <div className="alarm-toggle-row" style={{ border: 'none', padding: 0, background: 'transparent' }}>
+                <div className="alarm-toggle-row">
                     <div>
                         <h4 className="alarm-course-name">브라우저 푸시 알림</h4>
-                        <p className="alarm-description" style={{ fontSize: '0.85rem' }}>브라우저 알림창으로 즉시 알림을 보냅니다.</p>
+                        <p className="alarm-description">브라우저 알림창으로 즉시 알림을 보냅니다.</p>
                         {permissionStatus === 'denied' && (
-                            <p style={{ color: '#ff4d4f', fontSize: '0.75rem', marginTop: '4px', lineHeight: '1.4' }}>
+                            <p className="alarm-error-text">
                                 ※ 브라우저 설정에서 알림 권한이 거부되어 있습니다.<br />
                                 (해제 방법: 주소창 왼쪽 [사이트 정보] 아이콘 클릭 &gt; 알림 [허용]으로 변경)
                             </p>
@@ -501,28 +423,15 @@ function AlarmSettings({ accessToken }) {
             </div>
 
             {/* 3. 테스트 버튼 */}
-            <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'flex-end', 
-                gap: '12px',
-                marginBottom: '20px' 
-            }}>
+            <div className="alarm-test-wrapper">
                 {testMessage && (
-                    <span className="alarm-save-message" style={{ padding: '6px 10px', fontSize: '12px' }}>
+                    <span className="alarm-test-status">
                         {testMessage}
                     </span>
                 )}
                 <button 
                     type="button" 
-                    className="add-reminder-button" 
-                    style={{ 
-                        background: isTestSending ? '#ccc' : '#f0f0f0', 
-                        color: '#333', 
-                        border: '1px solid #ddd',
-                        cursor: isTestSending ? 'not-allowed' : 'pointer',
-                        margin: 0
-                    }}
+                    className="alarm-test-button" 
                     disabled={isTestSending}
                     onClick={handleTestNotification}
                 >
@@ -545,8 +454,8 @@ function AlarmSettings({ accessToken }) {
                             ))}
                         </select>
 
-                        <div className="custom-reminder-box" style={{ border: 'none', background: 'transparent', padding: '0 10px' }}>
-                            <span style={{ fontSize: '14px', fontWeight: '500' }}>마감</span>
+                        <div className="custom-reminder-box">
+                            <span>마감</span>
                             <input
                                type="number"
                                min="1"
@@ -594,9 +503,9 @@ function AlarmSettings({ accessToken }) {
                     </div>
                 </div>
 
-                <div className="save-alarm-wrapper" style={{ minHeight: '24px' }}>
+                <div className="save-alarm-wrapper">
                     {saveMessage && (
-                        <p className="alarm-save-message" style={{ textAlign: 'center', color: '#4caf50', fontWeight: 'bold' }}>
+                        <p className="alarm-save-message">
                             {saveMessage}
                         </p>
                     )}

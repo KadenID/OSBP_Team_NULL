@@ -131,6 +131,14 @@ body {
   user-select: none;
 }
 
+.mypage-card-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--mypage-card-title);
+  transition: color 0.2s ease;
+}
+
 .mypage-card-header:hover .mypage-card-title {
   color: var(--primary);
 }

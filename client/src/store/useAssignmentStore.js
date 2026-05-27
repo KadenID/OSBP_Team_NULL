@@ -26,7 +26,7 @@ const useAssignmentStore = create((set, get) => ({
           subject: item.subject || item.course_name,
           task: item.task || item.assignment_name,
           deadline: item.deadline || item.due_date,
-          isSubmitted: item.isSubmitted || (item.status && item.status.includes('제출 완료')),
+          isSubmitted: item.isSubmitted || (item.status && item.status.includes('제출') && !item.status.includes('미제출')),
           source: 'lms'
         }));
       }
