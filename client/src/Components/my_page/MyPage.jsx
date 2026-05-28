@@ -60,7 +60,7 @@ function MyPage({ accessToken, onLogout }) {
             id: "alarm-history",
             title: "알림 내역",
             content: <AlarmHistory accessToken={accessToken} />,
-            defaultOpen: false, // 알림 내역은 기본적으로 접어둠
+            defaultOpen: true, // 알림 내역 기본 열림
         },
     ];
 
