@@ -147,46 +147,87 @@ function LoginPage({ onLogin }) {
 
     return (
         <main className="login-page">
-            <section className="login-card">
-                <div className="login-title-area">
-                    <p className="login-label">충북대 LMS 학습 대시보드</p>
-                    <h1>로그인</h1>
-                    <p>학습 대시보드를 이용하려면 로그인해주세요.</p>
+            {/* 좌측: 서비스 정체성 및 상세 기능 소개 */}
+            <section className="login-intro-side">
+                <div className="brand-info">
+                    <div className="brand-logo">CBNU TaskHub</div>
                 </div>
 
-                <form className="login-form" onSubmit={handleLogin}>
-                    {loginFields.map((field) => (
-                        <div className="login-field" key={field.id}>
-                            <label htmlFor={field.id}>{field.label}</label>
-                            <input
-                                id={field.id}
-                                name={field.name}
-                                type={field.type}
-                                placeholder={field.placeholder}
-                                value={loginForm[field.name]}
-                                onChange={handleChange}
-                                autoComplete={field.autoComplete}
-                                maxLength={field.maxLength}
-                                disabled={isLoading}
-                            />
+                <div className="intro-content">
+                    <h1>충북대생을 위한 <br />스마트 학업 관리</h1>
+                    <p>
+                        매일 확인해야 하는 과제와 공지사항, <br />
+                        이제 한곳에서 더 빠르고 효율적으로 관리하세요.
+                    </p>
+
+                    <div className="feature-list">
+                        <div className="feature-item">
+                            <span className="icon">📊</span>
+                            <span>통합 대시보드</span>
+                            <p>모든 과목의 과제를 마감순으로 정렬하여<br />한눈에 확인합니다.</p>
                         </div>
-                    ))}
+                        <div className="feature-item">
+                            <span className="icon">🔔</span>
+                            <span>맞춤형 스마트 리마인더</span>
+                            <p>원하는 시간에, 원하는 과목만 선택하여 나만의 마감 알림을 설정하세요.</p>
+                        </div>
+                        <div className="feature-item">
+                            <span className="icon">📢</span>
+                            <span>공지사항 통합 피드</span>
+                            <p>여러 과목 게시판을 돌아다닐 필요 없이,<br />모든 새 소식을 한곳에서 모아보세요.</p>
+                        </div>
+                        <div className="feature-item">
+                            <span className="icon">📅</span>
+                            <span>개인 일정 관리</span>
+                            <p>LMS 과제 외에도 나만의 할 일을 추가하고 관리할 수 있습니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-                    <label className="remember-row">
-                        <input
-                            type="checkbox"
-                            checked={rememberId}
-                            onChange={(e) => setRememberId(e.target.checked)}
-                        />
-                        <span>아이디 기억하기</span>
-                    </label>
+            {/* 우측: 로그인 폼 영역 */}
+            <section className="login-form-side">
+                <div className="login-form-container">
+                    <div className="login-header">
+                        <p>별도의 회원가입 없이<br/>개신누리 계정으로 로그인하세요.</p>
+                    </div>
 
-                    {errorMessage && <p className="login-error">{errorMessage}</p>}
+                    <form className="login-form" onSubmit={handleLogin}>
+                        {loginFields.map((field) => (
+                            <div className="input-field" key={field.id}>
+                                <label htmlFor={field.id}>{field.label}</label>
+                                <input
+                                    id={field.id}
+                                    name={field.name}
+                                    type={field.type}
+                                    placeholder={field.placeholder}
+                                    value={loginForm[field.name]}
+                                    onChange={handleChange}
+                                    autoComplete={field.autoComplete}
+                                    maxLength={field.maxLength}
+                                    disabled={isLoading}
+                                />
+                            </div>
+                        ))}
 
-                    <button type="submit" className="login-button" disabled={isLoading}>
-                        {isLoading ? "로그인 중..." : "로그인"}
-                    </button>
-                </form>
+                        <div className="login-options">
+                            <label className="remember-me">
+                                <input
+                                    type="checkbox"
+                                    checked={rememberId}
+                                    onChange={(e) => setRememberId(e.target.checked)}
+                                />
+                                <span>아이디 기억하기</span>
+                            </label>
+                        </div>
+
+                        {errorMessage && <p className="login-error-msg">{errorMessage}</p>}
+
+                        <button type="submit" className="login-submit-btn" disabled={isLoading}>
+                            {isLoading ? "인증 중..." : "계속하기"}
+                        </button>
+                    </form>
+                </div>
             </section>
         </main>
     );
