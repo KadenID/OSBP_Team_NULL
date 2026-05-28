@@ -348,3 +348,73 @@ def crawl_all_assignments(session, student_id=None):
     all_assignments.sort(key=lambda x: x['due_date'])
 
     return all_assignments
+
+# 입력: session (세션 객체), assignment_id (과제 ID)
+# 기능: 특정 과제의 상세 페이지를 크롤링하여 설명 추출
+# 반환: 과제 상세 정보 딕셔너리
+def get_assignment_detail(session, assignment_id):
+    detail_url = f"https://lms.chungbuk.ac.kr/mod/assign/view.php?id={assignment_id}"
+    BASE_URL = "https://lms.chungbuk.ac.kr"
+    PROXY_URL = "/api/download?url="
+
+    try:
+        resp = session.get(detail_url, timeout=10, allow_redirects=False)
+        if resp.status_code == 302 or "login" in resp.headers.get("Location", ""):
+            raise SessionExpiredError("LMS 세션이 만료되었습니다.")
+        if resp.status_code == 401:
+            raise SessionExpiredError("LMS 세션이 유효하지 않습니다.")
+
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, 'html.parser')
+
+        # 과제명
+        title = soup.select_one('h2, .page-header-headings h1').get_text(strip=True) if soup.select_one('h2, .page-header-headings h1') else ""
+        desc_tag = soup.select_one('div.box.generalbox div[id^="intro"], div#intro, .assignmentintro')
+
+        description, description_html, attachments = "", "", []
+
+        if desc_tag:
+            # 이미지 절대경로 변환
+            for img in desc_tag.find_all('img', src=True):
+                if img['src'].startswith('/'):
+                    img['src'] = f"{BASE_URL}{img['src']}"
+
+            description = desc_tag.get_text(separator='\n', strip=True)
+            description_html = str(desc_tag)
+
+        submission_box = soup.select_one('.submissionstatustable, #modulespecific_props')
+        if submission_box:
+            submission_box.decompose() 
+
+        for a in soup.find_all('a', href=True):
+            href = a['href']
+            if 'pluginfile.php' in href:
+                full_url = href if href.startswith('http') else f"{BASE_URL}{href}"
+                proxy_url = f"{PROXY_URL}{urllib.parse.quote(full_url, safe='')}"
+                
+                # HTML 본문 내 링크 변환
+                a['href'] = proxy_url
+                a['target'] = '_blank'
+
+                # 첨부파일 목록에 추가 (중복 방지)
+                if not any(att['url'] == proxy_url for att in attachments):
+                    attachments.append({
+                        'name': a.get_text(strip=True),
+                        'url': proxy_url
+                    })
+
+        if not title and not description:
+            raise ValueError("과제 정보를 찾을 수 없습니다.")
+
+        return {
+            'assignment_id': assignment_id,
+            'title': title,
+            'description': description,
+            'description_html': description_html,
+            'attachments': attachments,
+            'url': detail_url
+        }
+
+    except Exception as e:
+        print(f"과제 상세 정보 추출 중 오류 발생: {e}")
+        raise e

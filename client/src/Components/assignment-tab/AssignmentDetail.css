@@ -7,15 +7,14 @@
   background: var(--modal-overlay);
   display: grid;
   justify-content: center;
-  align-items: center;
+  align-items: start; /* 상단부터 배치하여 스크롤 가능하게 함 */
+  overflow-y: auto;   /* 오버레이에서 스크롤 담당 */
+  padding: 40px 0;    /* 위아래 여백 추가 */
   z-index: 99999;
 }
 
 .detail-modal {
-  place-self: center;
   width: 700px;
-  max-height: 80vh;
-  overflow-y: auto;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 20px;
@@ -23,10 +22,7 @@
   position: relative;
   box-shadow: var(--card-shadow-hover);
   color: var(--text-main);
-
-  overflow: hidden;           
-  display: flex;
-  flex-direction: column;
+  margin: auto; /* 좌우 중앙 정렬 */
 }
 
 .detail-text {
@@ -35,14 +31,78 @@
   font-size: 15px;
   font-family: inherit;
   color: var(--text-main);
-  overflow-y: auto;
 }
 
-/* 전체 모달 내용 스크롤 영역 */
+/* 내부 스크롤 제거 */
 .detail-modal-body {
-  overflow-y: auto;
   flex: 1;
   padding: 0 4px;
+}
+
+
+/* 생성 과제 삭제창 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  background: var(--modal-overlay);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 99999;
+}
+
+body.modal-open {
+  overflow: hidden;
+  touch-action: none;
+}
+
+body.modal-open .right:hover,
+body.modal-open .left:hover {
+  transform: none;
+  box-shadow: var(--card-shadow);
+}
+
+.modal {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  padding: 20px;
+  border-radius: 12px;
+  width: 300px;
+
+  text-align: center;
+  box-shadow: var(--card-shadow-hover);
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.modal-buttons button {
+  flex: 1;
+  margin: 0 4px;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.modal-buttons button:first-child {
+  background-color: var(--danger);
+  color: #ffffff;
+}
+
+.modal-buttons button:last-child {
+  background-color: var(--btn-bg-hover);
+  color: var(--btn-text);
 }
 
 .close-btn {
@@ -70,15 +130,18 @@
 }
 
 .detail-info {
-  margin-bottom: 15px;
-  font-size: 0.9em;
-  color: var(--text-color);
-  overflow-y: auto;
+  margin: 12px 0 4px 0;
+  font-size: 0.95em;
+  line-height: 1.8;
+  color: var(--text-main);
 }
 
 .detail-footer {
-  margin-top: 20px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
   text-align: center;
+  flex-shrink: 0;
 }
 
 .edit-header {
@@ -86,12 +149,6 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
-}
-
-.detail-section-title {
-  font-size: 0.9em;
-  font-weight: 500;
-  color: var(--text-muted);
 }
 
 .edit-btn {
@@ -160,6 +217,77 @@
 }
 
 .cancel-btn:hover { background: var(--shadow); }
+
+/* 로딩 / 에러 */
+.detail-loading { 
+  color: var(--text-muted); 
+  font-size: 0.9em; 
+  padding: 12px 0; 
+}
+
+.detail-error { 
+  color: var(--error); 
+  font-size: 0.9em; 
+  padding: 12px 0; 
+}
+
+.detail-empty { 
+  color: var(--text-muted); 
+  font-size: 0.9em; 
+  padding: 8px 0; 
+}
+
+/* 섹션 구분 */
+.detail-section { margin: 14px 0; }
+
+.detail-section-title {
+  display: block;
+  margin-bottom: 18px;
+  font-size: 1.0em;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+/* HTML 본문 렌더링 영역 */
+.detail-html-content {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-main);
+  word-break: break-word;
+  overflow-x: auto;
+}
+
+/* 이미지 넘침 방지 */
+.detail-html-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 8px 0;
+}
+
+/* 표 스타일 */
+.detail-html-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 0.85rem;
+}
+
+.detail-html-content th,
+.detail-html-content td {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.detail-html-content th {
+  background-color: var(--bg-card);
+  font-weight: 550;
+}
+
+/* 단락 간격 */
+.detail-html-content p {
+  margin: 0 0 8px 0;
+}
 
 @media screen and (max-width: 768px) {
   .detail-modal {

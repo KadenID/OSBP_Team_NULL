@@ -68,9 +68,16 @@ const useAssignmentStore = create((set, get) => ({
       });
       const result = await response.json();
       if (result.success) {
-        const addedItem = { ...newItem, id: result.id, source: 'user' };
+        // 서버에서 생성된 실제 ID를 포함하여 상태 업데이트
+        const addedItem = { 
+          ...newItem, 
+          id: String(result.id), 
+          source: 'user',
+          isSubmitted: newItem.isSubmitted || false,
+          description: newItem.description || ""
+        };
         set((state) => ({
-          assignment: [...state.assignment, addedItem]
+          assignment: [addedItem, ...state.assignment] // 새 과제를 맨 위에 추가
         }));
       }
     } catch (error) {
@@ -80,7 +87,8 @@ const useAssignmentStore = create((set, get) => ({
 
   // 과제 삭제
   deleteAssignment: async (targetId, accessToken) => {
-    const itemToDelete = get().assignment.find(item => String(item.id) === String(targetId));
+    const state = get();
+    const itemToDelete = state.assignment.find(item => String(item.id) === String(targetId));
     if (!itemToDelete) return;
 
     if (itemToDelete.source === 'user') {
@@ -105,19 +113,23 @@ const useAssignmentStore = create((set, get) => ({
 
   // 제출 상태 토글 및 설명 업데이트 (커스텀 과제 전용)
   updateCustomAssignment: async (id, updates, accessToken) => {
-    const item = get().assignment.find(a => String(a.id) === String(id));
-    if (!item || item.source !== 'user') {
-      // LMS 과제는 메모리 상에서만 토글 (서버 저장 불가)
+    const state = get();
+    const item = state.assignment.find(a => String(a.id) === String(id));
+    if (!item) return;
+
+    // LMS 과제는 메모리 상에서만 토글 (서버 저장 불가)
+    if (item.source !== 'user') {
       set((state) => ({
         assignment: state.assignment.map(a => String(a.id) === String(id) ? { ...a, ...updates } : a)
       }));
       return;
     }
 
+    // 커스텀 과제는 서버 업데이트 수행
     const updatedItem = { ...item, ...updates };
     try {
       const response = await fetch(`${API_BASE_URL}/api/custom-assignments`, {
-        method: 'POST', // 추가/수정 통합
+        method: 'POST', // 추가/수정 통합 엔드포인트
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`
@@ -125,7 +137,8 @@ const useAssignmentStore = create((set, get) => ({
         body: JSON.stringify(updatedItem),
         credentials: 'include'
       });
-      if (response.ok) {
+      const result = await response.json();
+      if (result.success) {
         set((state) => ({
           assignment: state.assignment.map(a => String(a.id) === String(id) ? updatedItem : a)
         }));

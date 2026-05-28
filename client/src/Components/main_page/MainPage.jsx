@@ -13,9 +13,7 @@ function MainPage({ accessToken, onLogout }) {
 
   return (
     <div className="mainpage">
-      <div className="layout">
-
-      <header>
+      <header className="main-header">
           <div className="header-top">
             <h1>학습 대시보드</h1>
 
@@ -37,16 +35,11 @@ function MainPage({ accessToken, onLogout }) {
         </header>
           
         <main className="dashboard">
-
-          <div className="left-section">
-            <div className="left"><AssignmentTab accessToken={accessToken}/></div>
-            <div className="left"><NoticeTab accessToken={accessToken}/></div>
+          <div className="content-stack">
+            <div className="tab-section"><AssignmentTab accessToken={accessToken}/></div>
+            <div className="tab-section"><NoticeTab accessToken={accessToken}/></div>
           </div>
-
-          <div className="right">Ai 기능</div>
-
         </main>
-      </div>
     </div>
   );
 }

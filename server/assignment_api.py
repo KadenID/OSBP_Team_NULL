@@ -6,6 +6,8 @@ from typing import List, Optional
 from datetime import datetime, timedelta, timezone
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
+from fastapi.responses import StreamingResponse
+import urllib.parse
 import uvicorn
 import logging
 import requests
@@ -175,6 +177,11 @@ class MessageListResponse(BaseModel): # 쪽지 목록 API 응답 스키마
     message: str
     total_count: int
     data: List[MessageItem] = []
+
+class AssignmentDetailResponse(BaseModel):  # 과제 상세 API 응답 스키마
+    success: bool
+    message: str
+    data: dict
     
 security = HTTPBearer() # 인증 객체
 
@@ -657,6 +664,80 @@ def get_lms_messages(student_id: str = Depends(get_current_user)):
         logger.exception("쪽지 목록 조회 실패")
         raise HTTPException(status_code=500, detail="쪽지 목록 조회 실패")
     
+# 입력: assignment_id (과제 ID), student_id (학번)
+# 기능: 특정 LMS 과제의 상세 정보 크롤링
+# 반환: AssignmentDetailResponse 객체
+@app.get("/api/assignments/{assignment_id}", response_model=AssignmentDetailResponse)
+def get_assignment_detail_api(assignment_id: str, student_id: str = Depends(get_current_user)):
+    session = resolve_lms_session(student_id)
+
+    try:
+        from lms_crawler import get_assignment_detail
+        detail = get_assignment_detail(session, assignment_id)
+        return AssignmentDetailResponse(success=True, message="성공", data=detail)
+    except SessionExpiredError:
+        raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다.")
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"과제 상세 조회 실패: {e}")
+        raise HTTPException(status_code=500, detail="과제 상세 조회 실패")
+    
+    
+# 입력: url (다운로드할 세부 주소), student_id (인증된 학번)
+# 기능: SSRF 및 무단 파일 접근을 방어하며 LMS 첨부파일을 프록시 다운로드
+# 반환: 파일 스트리밍 응답
+# 상세보기 영역 파일 다운로드 관련 보안
+ALLOWED_DOMAINS = ["lms.chungbuk.ac.kr", "cbnu.ac.kr"] 
+ALLOWED_PATH_KEYWORDS = ["pluginfile.php"] # 파일 다운로드 관련 키워드
+
+@app.get("/api/download")
+def proxy_download(url: str, student_id: str = Depends(get_current_user)):
+    # URL 디코딩 및 파싱
+    decoded_url = urllib.parse.unquote(url)
+    parsed_url = urllib.parse.urlparse(decoded_url)
+    
+    # 스키마 검증 (http, https만 허용하여 file:// 등 차단)
+    if parsed_url.scheme not in ["http", "https"]:
+        raise HTTPException(status_code=400, detail="올바르지 않은 URL 형식입니다.")
+    
+    # SSRF 방어: 화이트리스트 기반 도메인 체크
+    host = parsed_url.hostname
+    if not host or not any(host == domain or host.endswith("." + domain) for domain in ALLOWED_DOMAINS):
+        raise HTTPException(status_code=403, detail="허용되지 않은 도메인입니다.")
+
+    # 추가 보안: 파일 다운로드와 관련된 경로인지 확인 (Open Proxy 방지)
+    if not any(keyword in parsed_url.path for keyword in ALLOWED_PATH_KEYWORDS):
+        raise HTTPException(status_code=403, detail="허용되지 않은 파일 접근 경로입니다.")
+    
+    # 해당 학생의 유효한 LMS 세션 가져오기
+    session = resolve_lms_session(student_id)
+    
+    try:
+        # stream=True를 사용하여 대용량 파일 유입 시 서버 메모리 고갈(DoS) 방지
+        lms_resp = session.get(decoded_url, stream=True, timeout=20)
+
+        if lms_resp.status_code != 200:
+            raise HTTPException(status_code=lms_resp.status_code, detail="LMS에서 파일을 가져오지 못했습니다.")
+            
+        content_disposition = lms_resp.headers.get("Content-Disposition", "")
+        content_type = lms_resp.headers.get("Content-Type", "application/octet-stream")
+        
+        def iterfile():
+            for chunk in lms_resp.iter_content(chunk_size=8192):
+                if chunk:
+                    yield chunk
+
+        return StreamingResponse(
+            iterfile(),
+            media_type=content_type,
+            headers={"Content-Disposition": content_disposition}
+        )
+        
+    except requests.RequestException as e:
+        logger.error(f"LMS 파일 프록시 다운로드 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail="파일 다운로드 중 서버 오류가 발생했습니다.")
+
 
 if __name__ == "__main__":
     uvicorn.run("assignment_api:app", host="0.0.0.0", port=8000, reload=True)

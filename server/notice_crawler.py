@@ -162,8 +162,7 @@ def get_notice_detail(session, board_id, notice_id):
             raise SessionExpiredError("LMS 세션이 만료되었습니다.")
 
         soup = BeautifulSoup(resp.text, 'html.parser')
-        
-        # 존재하지 않는 게시글이면 LMS가 에러 메시지 페이지를 반환함
+
         error_box = soup.select_one('div.alert-danger') or soup.select_one('div#notice')
         title_tag = soup.select_one('div.article-subject h3')
         if not title_tag or (error_box and '존재하지' in error_box.get_text()):
@@ -185,18 +184,37 @@ def get_notice_detail(session, board_id, notice_id):
                 views = text.replace('조회수', '').replace(':', '').strip()
 
         # 텍스트 대신 HTML 추출 — 이미지 src를 절대 경로로 변환
+        # 본문 및 이미지 경로 보정
         description = ""
         description_html = ""
         content_tag = soup.select_one('div.article-content div.text_to_html')
         if content_tag:
             description = content_tag.get_text(separator='\n', strip=True)
 
-            # 이미지 src 상대경로 → 절대경로 변환
             for img in content_tag.find_all('img'):
                 src = img.get('src', '')
                 if src.startswith('/'):
                     img['src'] = f"https://lms.chungbuk.ac.kr{src}"
             description_html = str(content_tag)
+
+            description = content_tag.get_text(separator='\n', strip=True)
+            
+        attachments = []
+        files_container = soup.select_one('div.article-files') or soup.select_one('ul.files')
+        if files_container:
+            for file_link in files_container.find_all('a', href=True):
+                file_url = file_link['href']
+        
+                if file_url.startswith('/'):
+                    file_url = f"https://lms.chungbuk.ac.kr{file_url}"
+                
+                file_name = file_link.get_text(strip=True)
+                
+                if file_url and file_name:
+                    attachments.append({
+                        'name': file_name,
+                        'url': file_url
+                    })
 
         return {
             'title': title,
@@ -204,7 +222,8 @@ def get_notice_detail(session, board_id, notice_id):
             'date': date,
             'views': views,
             'description': description,
-            'description_html': description_html,  # HTML 버전 추가
+            'description_html': description_html,
+            'attachments': attachments,  # 파싱된 첨부파일 배열 포함
             'url': url
         }
 
