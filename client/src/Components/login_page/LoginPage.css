@@ -3,11 +3,15 @@
   height: 100vh;
   height: 100dvh;
   display: flex;
-  /* 세련된 슬레이트 그레이 & 다크 스틸 그라데이션 */
-  background: linear-gradient(135deg, #5E35B1 0%, #120E22 100%);
+  background-color: var(--bg);
   font-family: "Noto Sans CJK KR", "Noto Sans KR", system-ui, sans-serif;
   overflow: hidden;
   position: relative;
+  transition: background-color 0.3s ease;
+}
+
+[data-theme='dark'] .login-page {
+  background: linear-gradient(135deg, #5E35B1 0%, #120E22 100%);
 }
 
 /* 배경에 깊이감을 더하는 은은한 빛 효과 */
@@ -30,8 +34,12 @@
   flex-direction: column;
   justify-content: center;
   align-items: flex-end;
-  color: white;
+  color: var(--text-color);
   z-index: 1;
+}
+
+[data-theme='dark'] .login-intro-side {
+  color: white;
 }
 
 .brand-info {
@@ -46,6 +54,10 @@
   letter-spacing: -0.5px;
   display: flex;
   align-items: center;
+  color: var(--text-heading);
+}
+
+[data-theme='dark'] .brand-logo {
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -62,15 +74,23 @@
   margin: 0 0 16px;
   word-break: keep-all;
   letter-spacing: -1.5px;
+  color: var(--text-heading);
+}
+
+[data-theme='dark'] .intro-content h1 {
   color: white;
 }
 
 .intro-content p {
   font-size: 19px;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-muted);
   margin: 0;
   font-weight: 400;
+}
+
+[data-theme='dark'] .intro-content p {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .feature-list {
@@ -95,14 +115,22 @@
 .feature-item span {
   font-size: 16px;
   font-weight: 600;
+  color: var(--text-color);
+}
+
+[data-theme='dark'] .feature-item span {
   color: white;
 }
 
 .feature-item p {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
   line-height: 1.4;
   margin: 0;
+}
+
+[data-theme='dark'] .feature-item p {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 /* 우측: 로그인 폼 영역 (배경 통합 및 유리 효과) */
@@ -119,11 +147,19 @@
   width: 100%;
   max-width: 520px; /* 폭 확장: 420px -> 520px */
   padding: 50px 60px; /* 안쪽 여백 조정 */
+  background: var(--bg-card);
+  border-radius: 32px;
+  border: 1px solid var(--border);
+  box-shadow: var(--login-card-shadow);
+  transition: all 0.3s ease;
+}
+
+[data-theme='dark'] .login-form-container {
   background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-radius: 32px;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .login-header {
@@ -132,9 +168,13 @@
 
 .login-header p {
   font-size: 17px; /* 폰트 크기 소폭 확대 */
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--login-sub-text);
   margin: 0;
   font-weight: 500;
+}
+
+[data-theme='dark'] .login-header p {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .login-form {
@@ -152,30 +192,46 @@
 .input-field label {
   font-size: 14px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--login-label-text);
   margin-left: 2px;
   letter-spacing: 0.5px;
 }
 
 .input-field input {
   height: 60px; /* 높이 확대: 56px -> 60px */
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--login-input-bg);
+  border: 1px solid var(--login-input-border);
   border-radius: 14px;
   padding: 0 24px;
   font-size: 17px;
-  color: white;
+  color: var(--text-color);
   transition: all 0.3s ease;
 }
 
 .input-field input::placeholder {
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--login-placeholder);
 }
 
 .input-field input:focus {
+  background: var(--login-input-bg);
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 4px var(--login-focus-shadow);
+}
+
+[data-theme='dark'] .input-field input {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+[data-theme='dark'] .input-field input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+[data-theme='dark'] .input-field input:focus {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.3);
-  outline: none;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
@@ -191,20 +247,24 @@
   align-items: center;
   gap: 12px;
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--login-muted-text);
   cursor: pointer;
+}
+
+[data-theme='dark'] .remember-me {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .remember-me input {
   width: 19px;
   height: 19px;
-  accent-color: #5E35B1;
+  accent-color: var(--primary);
 }
 
 .login-submit-btn {
   height: 62px; /* 높이 확대 */
-  background: white;
-  color: #263238;
+  background: var(--primary);
+  color: var(--text-on-accent);
   border: none;
   border-radius: 14px;
   font-size: 18px;
@@ -212,21 +272,33 @@
   cursor: pointer;
   margin-top: 16px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px var(--login-button-shadow);
 }
 
 .login-submit-btn:hover:not(:disabled) {
-  background: #eceff1;
+  background: var(--primary-hover);
   transform: translateY(-2px);
+  box-shadow: 0 8px 20px var(--login-button-shadow);
+}
+
+[data-theme='dark'] .login-submit-btn {
+  background: white;
+  color: #263238;
+  box-shadow: none;
+}
+
+[data-theme='dark'] .login-submit-btn:hover:not(:disabled) {
+  background: #eceff1;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
 }
 
 .login-error-msg {
   font-size: 14px;
-  color: #ff8a80;
+  color: var(--error);
   margin-top: 20px;
   padding: 14px;
-  background: rgba(255, 138, 128, 0.1);
-  border: 1px solid rgba(255, 138, 128, 0.2);
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
   border-radius: 12px;
   text-align: center;
   font-weight: 500;
@@ -272,6 +344,7 @@
     border: none;
     padding: 0;
     backdrop-filter: none;
+    box-shadow: none;
   }
 }
 
@@ -286,3 +359,4 @@
     padding-bottom: 60px;
   }
 }
+
