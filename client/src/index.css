@@ -13,14 +13,12 @@
   --text-heading:  #2b2340;   /* 카드 제목 등 진한 헤딩 */
   --text-header:   #222222;   /* 섹션 헤더 h1/h2 */
  
-  /* 프라이머리 */
+  /* 프라이머리 및 액센트 통일 */
   --primary:        #2196f3;
   --primary-hover:  #1687e0;
-  --primary-focus:  rgba(33, 150, 243, 0.18);  /* focus ring용 */
- 
-  /* 액센트 (notice, detail, assignment 버튼 등 #1890ff 계열 통일) */
-  --accent:        #1890ff;
-  --accent-hover:  #40a9ff;
+  --primary-focus:  rgba(33, 150, 243, 0.18);
+  --accent:         #2196f3;
+  --accent-hover:   #1687e0;
  
   /* 에러/위험 */
   --error:   #e53935;
@@ -103,14 +101,12 @@
   --text-heading:  #ffffff;
   --text-header:   #ffffff;
  
-  /* 프라이머리 */
+  /* 프라이머리 및 액센트 통일 */
   --primary:        #8b8dff;
   --primary-hover:  #7b7df0;
   --primary-focus:  rgba(139, 141, 255, 0.22);
- 
-  /* 액센트 */
-  --accent:        #1890ff;
-  --accent-hover:  #40a9ff;
+  --accent:         #8b8dff;
+  --accent-hover:   #7b7df0;
  
   /* 에러/위험 */
   --error:   #ff7b7b;
@@ -191,8 +187,8 @@
     --primary-hover:  #7b7df0;
     --primary-focus:  rgba(139, 141, 255, 0.22);
  
-    --accent:        #1890ff;
-    --accent-hover:  #40a9ff;
+    --accent:         #8b8dff;
+    --accent-hover:   #7b7df0;
  
     --error:   #ff7b7b;
     --danger:  #ff7b7b;
