@@ -158,6 +158,15 @@ const useAssignmentStore = create((set, get) => ({
 
   updateDescription: (id, description, accessToken) => {
     get().updateCustomAssignment(id, { description }, accessToken);
+  },
+
+  // LMS 과제 상세 정보 캐싱용 업데이트 함수 추가
+  updateAssignmentDetail: (id, detailData) => {
+    set((state) => ({
+      assignment: state.assignment.map(a => 
+        String(a.id) === String(id) ? { ...a, ...detailData, isDetailFetched: true } : a
+      )
+    }));
   }
 }));
 

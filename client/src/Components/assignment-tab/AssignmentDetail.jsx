@@ -3,10 +3,12 @@ import { createPortal } from 'react-dom';
 import DOMPurify from 'dompurify';
 import { API_BASE_URL } from '../../apiConfig';
 import './AssignmentDetail.css';
+import useAssignmentStore from '../../store/useAssignmentStore';
 
 const DESCRIPTION_MAX_LENGTH = 1000;
 
 function AssignmentDetail({ assignment, onClose, updateDescription, accessToken }) {
+  const updateAssignmentDetail = useAssignmentStore(state => state.updateAssignmentDetail);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
@@ -28,6 +30,12 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
   useEffect(() => {
     if (assignment?.source !== 'lms' || !assignment?.id) return;
 
+    // 이미 캐싱된 상세 데이터가 있다면 API 호출 생략
+    if (assignment.isDetailFetched) {
+      setLmsDetail(assignment);
+      return;
+    }
+
     let cancelled = false;
     setLmsLoading(true);
     setLmsError("");
@@ -42,6 +50,8 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
         if (cancelled) return;
         if (result.success) {
           setLmsDetail(result.data);
+          // 상세 정보를 스토어에 캐싱
+          updateAssignmentDetail(assignment.id, result.data);
         } else {
           setLmsError("과제 정보를 불러오지 못했습니다.");
         }
@@ -54,7 +64,7 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
       });
 
     return () => { cancelled = true; };
-  }, [assignment?.id, assignment?.source, accessToken]);
+  }, [assignment?.id, assignment?.source, accessToken, assignment, updateAssignmentDetail]);
 
   if (!assignment) return null;
 
