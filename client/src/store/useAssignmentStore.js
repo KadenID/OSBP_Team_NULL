@@ -54,8 +54,22 @@ const useAssignmentStore = create((set, get) => ({
     }
   },
 
-  // 새로운 사용자 과제 추가
+  // 새로운 사용자 과제 추가 (낙관적 업데이트 적용)
   addAssignment: async (newItem, accessToken) => {
+    const tempId = `temp-${Date.now()}`;
+    const optimisticItem = { 
+      ...newItem, 
+      id: tempId, 
+      source: 'user',
+      isSubmitted: newItem.isSubmitted || false,
+      description: newItem.description || ""
+    };
+
+    // 1. UI 즉시 업데이트
+    set((state) => ({
+      assignment: [optimisticItem, ...state.assignment]
+    }));
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/custom-assignments`, {
         method: 'POST',
@@ -67,29 +81,37 @@ const useAssignmentStore = create((set, get) => ({
         credentials: 'include'
       });
       const result = await response.json();
+      
       if (result.success) {
-        // 서버에서 생성된 실제 ID를 포함하여 상태 업데이트
-        const addedItem = { 
-          ...newItem, 
-          id: String(result.id), 
-          source: 'user',
-          isSubmitted: newItem.isSubmitted || false,
-          description: newItem.description || ""
-        };
+        // 2. 성공 시 서버에서 받은 실제 ID로 교체
         set((state) => ({
-          assignment: [addedItem, ...state.assignment] // 새 과제를 맨 위에 추가
+          assignment: state.assignment.map(a => 
+            a.id === tempId ? { ...a, id: String(result.id) } : a
+          )
         }));
+      } else {
+        throw new Error("서버 저장 실패");
       }
     } catch (error) {
-      console.error("과제 추가 중 오류 발생:", error);
+      console.error("과제 추가 실패 (복구 진행):", error);
+      // 3. 실패 시 롤백
+      set((state) => ({
+        assignment: state.assignment.filter(a => a.id !== tempId)
+      }));
+      alert("과제 추가에 실패했습니다. 다시 시도해주세요.");
     }
   },
 
-  // 과제 삭제
+  // 과제 삭제 (낙관적 업데이트 적용)
   deleteAssignment: async (targetId, accessToken) => {
-    const state = get();
-    const itemToDelete = state.assignment.find(item => String(item.id) === String(targetId));
+    const previousAssignment = get().assignment;
+    const itemToDelete = previousAssignment.find(item => String(item.id) === String(targetId));
     if (!itemToDelete) return;
+
+    // 1. UI 즉시 업데이트
+    set((state) => ({
+      assignment: state.assignment.filter(item => String(item.id) !== String(targetId))
+    }));
 
     if (itemToDelete.source === 'user') {
       try {
@@ -99,37 +121,35 @@ const useAssignmentStore = create((set, get) => ({
           credentials: 'include'
         });
         const result = await response.json();
-        if (!result.success) return;
+        if (!result.success) throw new Error("서버 삭제 실패");
       } catch (error) {
-        console.error("과제 삭제 중 오류 발생:", error);
-        return;
+        console.error("과제 삭제 실패 (복구 진행):", error);
+        // 2. 실패 시 롤백
+        set({ assignment: previousAssignment });
+        alert("과제 삭제에 실패했습니다. 다시 시도해주세요.");
       }
     }
-
-    set((state) => ({
-      assignment: state.assignment.filter(item => String(item.id) !== String(targetId))
-    }));
   },
 
-  // 제출 상태 토글 및 설명 업데이트 (커스텀 과제 전용)
+  // 제출 상태 토글 및 설명 업데이트 (낙관적 업데이트 적용)
   updateCustomAssignment: async (id, updates, accessToken) => {
-    const state = get();
-    const item = state.assignment.find(a => String(a.id) === String(id));
+    const previousAssignment = get().assignment;
+    const item = previousAssignment.find(a => String(a.id) === String(id));
     if (!item) return;
 
-    // LMS 과제는 메모리 상에서만 토글 (서버 저장 불가)
-    if (item.source !== 'user') {
-      set((state) => ({
-        assignment: state.assignment.map(a => String(a.id) === String(id) ? { ...a, ...updates } : a)
-      }));
-      return;
-    }
+    // 1. UI 즉시 업데이트
+    const updatedItem = { ...item, ...updates };
+    set((state) => ({
+      assignment: state.assignment.map(a => String(a.id) === String(id) ? updatedItem : a)
+    }));
+
+    // LMS 과제는 서버 저장 없이 메모리 업데이트로 종료
+    if (item.source !== 'user') return;
 
     // 커스텀 과제는 서버 업데이트 수행
-    const updatedItem = { ...item, ...updates };
     try {
       const response = await fetch(`${API_BASE_URL}/api/custom-assignments`, {
-        method: 'POST', // 추가/수정 통합 엔드포인트
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`
@@ -138,13 +158,12 @@ const useAssignmentStore = create((set, get) => ({
         credentials: 'include'
       });
       const result = await response.json();
-      if (result.success) {
-        set((state) => ({
-          assignment: state.assignment.map(a => String(a.id) === String(id) ? updatedItem : a)
-        }));
-      }
+      if (!result.success) throw new Error("서버 업데이트 실패");
     } catch (error) {
-      console.error("과제 업데이트 중 오류 발생:", error);
+      console.error("과제 업데이트 실패 (복구 진행):", error);
+      // 2. 실패 시 롤백
+      set({ assignment: previousAssignment });
+      alert("상태 변경 저장에 실패했습니다.");
     }
   },
 

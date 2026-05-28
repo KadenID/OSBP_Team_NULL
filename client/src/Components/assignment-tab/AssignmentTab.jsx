@@ -481,8 +481,11 @@ function AssignmentTab({ accessToken }) {
              <li
                 className={`assignment-item ${getItemClass(item.isExpired, item.isSubmitted)}`}
                 key={item.id}
-                onClick={() => setSelectedId(item.id)}
-                style={{ cursor: 'pointer' }} 
+                onClick={() => {
+                  if (String(item.id).startsWith('temp-')) return; // 임시 ID일 때는 상세 창 열기 방지
+                  setSelectedId(item.id);
+                }}
+                style={{ cursor: String(item.id).startsWith('temp-') ? 'wait' : 'pointer' }} 
                 >
 
               <div className="info"> {/* lms 과제인지 생성 과제인지 라벨링 */}
