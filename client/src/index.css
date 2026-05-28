@@ -7,11 +7,13 @@
   --bg-layout:  rgba(240, 248, 255, 0.7);
  
   /* 텍스트 */
+  /* 텍스트 */
   --text-color:    #333333;
-  --text-muted:    #474646;   /* 부제목, 설명 등 흐린 텍스트 */
+  --text-muted:    #474646;
   --text-main:     #1a1a1a;
-  --text-heading:  #2b2340;   /* 카드 제목 등 진한 헤딩 */
-  --text-header:   #222222;   /* 섹션 헤더 h1/h2 */
+  --text-heading:  #2b2340;
+  --text-header:   #222222;
+  --text-on-accent: #ffffff;
  
   /* 프라이머리 및 액센트 통일 */
   --primary:        #2196f3;
@@ -20,9 +22,13 @@
   --accent:         #2196f3;
   --accent-hover:   #1687e0;
  
-  /* 에러/위험 */
-  --error:   #e53935;
-  --danger:  #e53935;         /* --error 별칭, 점진적 통일용 */
+  /* 상태 색상 */
+  --error:          #e53935;
+  --error-bg:       #fef2f2;   /* 부드러운 에러 배경 */
+  --error-border:   #fca5a5;   /* 부드러운 에러 테두리 */
+  --danger:         #e53935;
+  --success:        #4caf50;
+  --info:           #2196f3;
  
   /* 버튼 */
   --btn-bg:       #e5e7eb;
@@ -100,6 +106,7 @@
   --text-main:     #f0f0f0;
   --text-heading:  #ffffff;
   --text-header:   #ffffff;
+  --text-on-accent: #ffffff;
  
   /* 프라이머리 및 액센트 통일 */
   --primary:        #8b8dff;
@@ -108,9 +115,13 @@
   --accent:         #8b8dff;
   --accent-hover:   #7b7df0;
  
-  /* 에러/위험 */
+  /* 상태 색상 */
   --error:   #ff7b7b;
+  --error-bg:       rgba(248, 113, 113, 0.15);
+  --error-border:   rgba(248, 113, 113, 0.3);
   --danger:  #ff7b7b;
+  --success: #66bb6a;
+  --info:    #64b5f6;
  
   /* 버튼 */
   --btn-bg:       #374155;
@@ -182,6 +193,7 @@
     --text-main:     #f0f0f0;
     --text-heading:  #ffffff;
     --text-header:   #ffffff;
+    --text-on-accent: #ffffff;
  
     --primary:        #8b8dff;
     --primary-hover:  #7b7df0;
@@ -192,6 +204,8 @@
  
     --error:   #ff7b7b;
     --danger:  #ff7b7b;
+    --success: #66bb6a;
+    --info:    #64b5f6;
  
     --btn-bg:       #374155;
     --btn-bg-hover: #4b556a;

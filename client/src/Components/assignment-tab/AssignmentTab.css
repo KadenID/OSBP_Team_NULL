@@ -163,7 +163,7 @@
 
 .tag-container button.on {
   background-color: var(--accent);
-  color: #ffffff;
+  color: var(--text-on-accent);
   border-color: var(--accent);
   font-weight: 500;
 }
@@ -193,8 +193,8 @@
   font-size: 12px;
   cursor: pointer;
 }
-.action-btn.toggle { background: var(--assignment-done-accent); color: #ffffff; }
-.action-btn.delete { background: var(--danger); color: #ffffff; }
+.action-btn.toggle { background: var(--assignment-done-accent); color: var(--text-on-accent); }
+.action-btn.delete { background: var(--danger); color: var(--text-on-accent); }
 .lock-msg { font-size: 11px; color: var(--text-muted);}
 
 /* 과제 생성창 */
@@ -386,14 +386,14 @@
 .time-column button:hover,
 .time-column button.selected {
   background: var(--accent);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .add-submit-btn {
   height: 42px;
   padding: 0 15px;
   background-color: var(--accent);
-  color: white;
+  color: var(--text-on-accent);
   border: none;
   border-radius: 8px;
   font-weight: 500;

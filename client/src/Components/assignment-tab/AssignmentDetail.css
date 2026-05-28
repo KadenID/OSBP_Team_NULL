@@ -97,7 +97,7 @@ body.modal-open .left:hover {
 
 .modal-buttons button:first-child {
   background-color: var(--danger);
-  color: #ffffff;
+  color: var(--text-on-accent);
 }
 
 .modal-buttons button:last-child {
@@ -195,7 +195,7 @@ body.modal-open .left:hover {
 .save-btn {
   padding: 6px 16px;
   background-color: var(--accent);
-  color: #ffffff;
+  color: var(--text-on-accent);
   border: none;
   border-radius: 6px;
   cursor: pointer;
