@@ -311,8 +311,8 @@ def get_user_settings(student_id):
                 cur.execute(sql, (student_id,))
                 result = cur.fetchone()
                 return result[0] if result else {
-                    "emailAlerts": False,
-                    "browserAlerts": False,
+                    "emailAlerts": True,
+                    "browserAlerts": True,
                     "courseReminders": []
                 }
         except Exception as e:

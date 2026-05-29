@@ -1,33 +1,42 @@
 import os
 import json
 import logging
-import smtplib
+import resend
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from email.mime.text import MIMEText
-from email.header import Header
 from pywebpush import webpush, WebPushException
 from dotenv import load_dotenv
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
 
-# 환경 변수 로드
-load_dotenv()
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(env_path):
+    load_dotenv(env_path)
+else:
+    load_dotenv()
 
 VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
 VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY")
 VAPID_CLAIMS_EMAIL = os.getenv("VAPID_CLAIMS_EMAIL", "admin@example.com")
 
+# Resend 설정
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", "onboarding@resend.dev")
+
 # 설정 검증 로그
 if not VAPID_PRIVATE_KEY:
-    logger.error("❌ VAPID_PRIVATE_KEY가 설정되지 않았습니다.")
+    logger.error("VAPID_PRIVATE_KEY가 설정되지 않았습니다.")
 else:
-    logger.info(f"✅ VAPID_PRIVATE_KEY 로드 완료 (길이: {len(VAPID_PRIVATE_KEY)})")
+    logger.info(f"VAPID_PRIVATE_KEY 로드 완료 (길이: {len(VAPID_PRIVATE_KEY)})")
 
-if not VAPID_PUBLIC_KEY:
-    logger.error("❌ VAPID_PUBLIC_KEY가 설정되지 않았습니다.")
+if not RESEND_API_KEY:
+    logger.error("RESEND_API_KEY가 설정되지 않았습니다. 이메일 발송이 불가능합니다.")
 else:
-    logger.info(f"✅ VAPID_PUBLIC_KEY 로드 완료 (길이: {len(VAPID_PUBLIC_KEY)})")
+    logger.info(f"RESEND_API_KEY 로드 완료 (길이: {len(RESEND_API_KEY)})")
+    resend.api_key = RESEND_API_KEY
+
+if not SMTP_FROM_EMAIL or SMTP_FROM_EMAIL == "onboarding@resend.dev":
+    logger.warning(f"⚠️ SMTP_FROM_EMAIL이 기본값({SMTP_FROM_EMAIL})입니다. 도메인 인증 전이라면 테스트 수신자에게만 발송됩니다.")
 
 # VAPID_SUB 형식 강제 교정 (반드시 mailto: 포함)
 if VAPID_CLAIMS_EMAIL and not VAPID_CLAIMS_EMAIL.startswith("mailto:"):
@@ -35,29 +44,32 @@ if VAPID_CLAIMS_EMAIL and not VAPID_CLAIMS_EMAIL.startswith("mailto:"):
 else:
     VAPID_SUB = VAPID_CLAIMS_EMAIL or "mailto:admin@example.com"
 
-SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", SMTP_USER)
-
 def send_email_notification(to_email, subject, message_body):
-    if not all([SMTP_USER, SMTP_PASSWORD, to_email]):
-        logger.warning("SMTP 설정 누락")
+    # 실행 시점에 API 키 재확인 (모듈 로드 시점 문제 방지)
+    current_api_key = resend.api_key or os.getenv("RESEND_API_KEY")
+    if not current_api_key:
+        logger.warning("RESEND_API_KEY가 설정되지 않아 이메일을 보낼 수 없습니다.")
         return False
+    
+    if not resend.api_key:
+        resend.api_key = current_api_key
+
+    if not to_email:
+        logger.warning("수신자 이메일이 없어 발송을 건너뜁니다.")
+        return False
+        
     try:
-        msg = MIMEText(message_body, 'plain', 'utf-8')
-        msg['Subject'] = Header(subject, 'utf-8')
-        msg['From'] = SMTP_FROM_EMAIL
-        msg['To'] = to_email
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.sendmail(SMTP_FROM_EMAIL, [to_email], msg.as_string())
-        logger.info(f"이메일 발송 성공: {to_email}")
+        params = {
+            "from": f"OSBP Notification <{SMTP_FROM_EMAIL}>",
+            "to": [to_email],
+            "subject": subject,
+            "text": message_body,
+        }
+        resend.Emails.send(params)
+        logger.info(f"이메일 발송 성공 (Resend): {to_email}")
         return True
     except Exception as e:
-        logger.error(f"이메일 발송 실패: {e}")
+        logger.error(f"이메일 발송 실패 (Resend): {e}")
         return False
 
 def send_push_notification(subscription_info, title, body, url=None):

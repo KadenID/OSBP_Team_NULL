@@ -19,8 +19,8 @@ def schedule_notifications_for_user(student_id, lms_assignments=None):
 
     try:
         settings = storage.get_user_settings(student_id)
-        email_enabled = settings.get("emailAlerts", False)
-        browser_enabled = settings.get("browserAlerts", False)
+        email_enabled = settings.get("emailAlerts", True)
+        browser_enabled = settings.get("browserAlerts", True)
         reminders = settings.get("courseReminders", [])
         
         # 과제 데이터 수집 (LMS + 커스텀)
