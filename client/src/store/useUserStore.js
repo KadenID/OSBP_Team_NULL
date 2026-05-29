@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { API_BASE_URL } from '../apiConfig';
+import useAssignmentStore from './useAssignmentStore';
+import { useLMSStore } from '../Components/notice-tab/NoticeTab';
 
 const useUserStore = create((set, get) => ({
     // 유저 프로필 정보
@@ -174,8 +176,36 @@ const useUserStore = create((set, get) => ({
         }
     },
 
+    // 서비스 탈퇴
+    withdraw: async (accessToken) => {
+        if (!accessToken) return { success: false, message: "인증 정보가 없습니다." };
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/withdraw`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            const result = await response.json();
+            if (result.success) {
+                // 로컬 스토리지 데이터 삭제 (테마, 저장된 아이디 등)
+                localStorage.removeItem("theme");
+                localStorage.removeItem("remembered_student_id");
+                
+                get().clearUserStore();
+                return { success: true };
+            }
+            return { success: false, message: result.message || "탈퇴 처리 중 오류가 발생했습니다." };
+        } catch (error) {
+            console.error("서비스 탈퇴 실패:", error);
+            return { success: false, message: "서버와의 통신에 실패했습니다." };
+        }
+    },
+
     // 로그아웃 시 초기화용
     clearUserStore: () => {
+        // 다른 스토어(과제, 공지 등)도 함께 초기화
+        useAssignmentStore.getState().clearAssignmentStore();
+        useLMSStore.getState().clearLMSStore();
+
         set({
             userInfo: { name: "", studentId: "", department: "", lmsConnected: false, isLoading: false, isFetched: false },
             settings: { email: "", emailAlerts: true, browserAlerts: true, courseReminders: [], courses: [{ id: "all", name: "전체 과목" }], isLoading: false, isFetched: false },

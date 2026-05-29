@@ -640,3 +640,21 @@ def delete_old_notification_history(days=30):
             conn.rollback()
             logger.error(f"오래된 알림 내역 삭제 중 오류 발생: {e}")
             return 0
+
+# --- 사용자 계정 삭제 ---
+
+def delete_user_entirely(student_id):
+    """사용자의 모든 정보를 DB에서 영구 삭제"""
+    with get_db_connection() as conn:
+        try:
+            with conn.cursor() as cur:
+                # users 테이블에서 삭제하면 CASCADE 설정에 의해 연관된 모든 테이블(설정, 토큰, 과제 등) 데이터가 삭제됨
+                sql = "DELETE FROM users WHERE student_id = %s;"
+                cur.execute(sql, (student_id,))
+            conn.commit()
+            logger.info(f"사용자 DB 데이터 전체 삭제 완료 (student_id: {student_id})")
+            return True
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"사용자 DB 데이터 삭제 중 오류 발생 (student_id: {student_id}): {e}")
+            return False

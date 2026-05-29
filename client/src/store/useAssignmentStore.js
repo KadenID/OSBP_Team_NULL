@@ -186,6 +186,15 @@ const useAssignmentStore = create((set, get) => ({
         String(a.id) === String(id) ? { ...a, ...detailData, isDetailFetched: true } : a
       )
     }));
+  },
+
+  // 스토어 초기화 (로그아웃/탈퇴 시 사용)
+  clearAssignmentStore: () => {
+    set({
+      assignment: [],
+      isLoading: false,
+      isFetched: false
+    });
   }
 }));
 
