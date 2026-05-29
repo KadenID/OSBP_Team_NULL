@@ -488,8 +488,4 @@
   .assignment-item {
     min-height: 110px;
   }
-} (max-width: 1300px) {
-  .assignment-item {
-    min-height: 110px;
-  }
 }
