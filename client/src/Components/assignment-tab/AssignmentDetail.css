@@ -96,8 +96,12 @@ body.modal-open .left:hover {
 }
 
 .modal-buttons button:first-child {
-  background-color: var(--danger);
+  background-color: #ff8787;
   color: var(--text-on-accent);
+}
+
+[data-theme='dark'] .modal-buttons button:first-child {
+  background-color: var(--danger);
 }
 
 .modal-buttons button:last-child {

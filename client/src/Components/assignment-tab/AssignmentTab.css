@@ -195,8 +195,10 @@
   font-size: 12px;
   cursor: pointer;
 }
-.action-btn.toggle { background: var(--assignment-done-accent); color: var(--text-on-accent); }
-.action-btn.delete { background: var(--danger); color: var(--text-on-accent); }
+.action-btn.toggle.to-yet { background: var(--assignment-yet-accent); color: var(--text-on-accent); }
+.action-btn.toggle.to-done { background: var(--assignment-done-accent); color: var(--text-on-accent); }
+.action-btn.delete { background: #ff8787; color: var(--text-on-accent); }
+[data-theme='dark'] .action-btn.delete { background: var(--danger); }
 .lock-msg { font-size: 11px; color: var(--text-muted);}
 
 /* 과제 생성창 */

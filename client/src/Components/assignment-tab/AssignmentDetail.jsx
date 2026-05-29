@@ -243,7 +243,6 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
                   setShowConfirmClose(false);
                   onClose();
                 }}
-                style={{ backgroundColor: 'var(--danger)' }}
               >
                 닫기
               </button>
