@@ -311,13 +311,17 @@ def get_user_settings(student_id):
                 cur.execute(sql, (student_id,))
                 result = cur.fetchone()
                 return result[0] if result else {
-                    "emailAlerts": True,
-                    "browserAlerts": True,
+                    "emailAlerts": False,
+                    "browserAlerts": False,
                     "courseReminders": []
                 }
         except Exception as e:
             logger.error(f"사용자 설정 조회 중 오류 발생 (student_id: {student_id}): {e}")
-            raise
+            return {
+                "emailAlerts": False,
+                "browserAlerts": False,
+                "courseReminders": []
+            }
 
 # 모듈 로드 시 DB 초기화 실행
 init_db()

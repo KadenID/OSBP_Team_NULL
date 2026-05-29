@@ -104,6 +104,11 @@
   margin-top: 12px;
 }
 
+.alarm-email-input-wrapper .add-reminder-button {
+  width: 60px;
+  flex-shrink: 0;
+}
+
 .alarm-email-display {
   width: 240px;
   height: 40px;
@@ -118,6 +123,7 @@
   border: 1px solid var(--border);
   border-radius: 14px;
   margin: 0;
+  flex-shrink: 0;
 }
 
 .alarm-email-display.empty {
@@ -138,6 +144,7 @@
   border-radius: 14px;
   margin: 0;
   outline: none;
+  flex-shrink: 0;
 }
 
 .alarm-email-input:focus {

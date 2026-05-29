@@ -17,8 +17,8 @@ const useUserStore = create((set, get) => ({
     // 알림 설정 정보
     settings: {
         email: "",
-        emailAlerts: true,
-        browserAlerts: true,
+        emailAlerts: false,
+        browserAlerts: false,
         courseReminders: [],
         courses: [{ id: "all", name: "전체 과목" }],
         isLoading: false,
@@ -83,8 +83,8 @@ const useUserStore = create((set, get) => ({
 
             if (settingsResult.success && settingsResult.data) {
                 newSettings.email = settingsResult.data.email || "";
-                newSettings.emailAlerts = settingsResult.data.emailAlerts ?? true;
-                newSettings.browserAlerts = settingsResult.data.browserAlerts ?? true;
+                newSettings.emailAlerts = settingsResult.data.emailAlerts ?? false;
+                newSettings.browserAlerts = settingsResult.data.browserAlerts ?? false;
                 newSettings.courseReminders = settingsResult.data.courseReminders ?? [];
             }
 
@@ -208,7 +208,7 @@ const useUserStore = create((set, get) => ({
 
         set({
             userInfo: { name: "", studentId: "", department: "", lmsConnected: false, isLoading: false, isFetched: false },
-            settings: { email: "", emailAlerts: true, browserAlerts: true, courseReminders: [], courses: [{ id: "all", name: "전체 과목" }], isLoading: false, isFetched: false },
+            settings: { email: "", emailAlerts: false, browserAlerts: false, courseReminders: [], courses: [{ id: "all", name: "전체 과목" }], isLoading: false, isFetched: false },
             history: { data: [], isLoading: false, isFetched: false }
         });
     }
