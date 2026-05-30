@@ -188,7 +188,7 @@ const useUserStore = create((set, get) => ({
             if (result.success) {
                 // 로컬 스토리지 데이터 삭제 (테마, 저장된 아이디 등)
                 localStorage.removeItem("theme");
-                localStorage.removeItem("remembered_student_id");
+                localStorage.removeItem("rememberedStudentId");
                 
                 get().clearUserStore();
                 return { success: true };
