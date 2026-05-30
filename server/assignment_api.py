@@ -493,6 +493,20 @@ def create_or_update_custom_assignment(request_data: CustomAssignmentRequest, st
         logger.error(f"Error: {e}")
         raise HTTPException(status_code=500, detail="저장 실패")
 
+@app.put("/api/custom-assignments/{assignment_id}")
+def update_custom_assignment_api(assignment_id: str, request_data: CustomAssignmentRequest, student_id: str = Depends(get_current_user)):
+    try:
+        # URL의 assignment_id를 request_data에 주입하여 수정 로직이 동작하도록 함
+        data = request_data.model_dump()
+        data['id'] = assignment_id
+        
+        storage.save_custom_assignment(student_id, data)
+        scheduler_module.schedule_notifications_for_user(student_id)
+        return {"success": True, "message": "수정 성공"}
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="수정 실패")
+
 @app.delete("/api/custom-assignments/{assignment_id}")
 def delete_custom_assignment(assignment_id: str, student_id: str = Depends(get_current_user)):
     try:

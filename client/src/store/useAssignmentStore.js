@@ -148,8 +148,8 @@ const useAssignmentStore = create((set, get) => ({
 
     // 커스텀 과제는 서버 업데이트 수행
     try {
-      const response = await fetch(`${API_BASE_URL}/api/custom-assignments`, {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/api/custom-assignments/${id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`
