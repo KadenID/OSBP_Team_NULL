@@ -29,3 +29,4 @@ uvicorn==0.46.0
 PyJWT==2.12.1
 pywebpush==1.14.0
 apscheduler==3.10.4
+resend==2.30.1

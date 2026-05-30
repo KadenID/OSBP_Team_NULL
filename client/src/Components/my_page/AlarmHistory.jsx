@@ -1,30 +1,15 @@
-import { useEffect, useState } from "react";
-import { API_BASE_URL } from "../../apiConfig";
+import { useEffect } from "react";
+import useUserStore from "../../store/useUserStore";
 import "./AlarmSettings.css";
 
 function AlarmHistory({ accessToken }) {
-    const [history, setHistory] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const { history, fetchHistory, deleteHistoryItem } = useUserStore();
 
     useEffect(() => {
-        const fetchHistory = async () => {
-            if (!accessToken) return;
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/notification-history`, {
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
-                const result = await response.json();
-                if (result.success) {
-                    setHistory(result.data);
-                }
-            } catch (error) {
-                console.error("알림 내역 로드 오류:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchHistory();
-    }, [accessToken]);
+        if (accessToken) {
+            fetchHistory(accessToken);
+        }
+    }, [accessToken, fetchHistory]);
 
     const formatDate = (isoString) => {
         const date = new Date(isoString);
@@ -38,23 +23,12 @@ function AlarmHistory({ accessToken }) {
 
     const handleDeleteHistory = async (e, historyId) => {
         e.stopPropagation(); // 카드 클릭(URL 이동) 방지
-        if (!accessToken) return;
-        
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/notification-history/${historyId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-            const result = await response.json();
-            if (result.success) {
-                setHistory((prev) => prev.filter(item => item.id !== historyId));
-            }
-        } catch (error) {
-            console.error("알림 내역 삭제 오류:", error);
-        }
+        deleteHistoryItem(historyId, accessToken);
     };
 
-    if (isLoading) return <div className="alarm-empty-text">불러오는 중...</div>;
+    if (history.isLoading && history.data.length === 0) {
+        return <div className="alarm-empty-text">불러오는 중...</div>;
+    }
 
     return (
         <div className="alarm-settings">
@@ -64,10 +38,10 @@ function AlarmHistory({ accessToken }) {
                     <span className="alarm-helper-text">최근 30일 내역만 표시됩니다.</span>
                 </div>
                 <div className="alarm-course-list">
-                    {history.length === 0 ? (
+                    {history.data.length === 0 ? (
                         <p className="alarm-empty-text">최근 30일간 발송된 알림이 없습니다.</p>
                     ) : (
-                        history.map((item) => (
+                        history.data.map((item) => (
                             <div 
                                 className={`alarm-history-item ${item.url ? 'link' : ''}`} 
                                 key={item.id} 

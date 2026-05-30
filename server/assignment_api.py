@@ -371,6 +371,28 @@ def logout(response: Response, student_id: str = Depends(get_current_user)):
     response.delete_cookie(key="refresh_token", httponly=True, secure=True, samesite="none", path="/")
     return {"success": True, "message": "로그아웃 성공"}
 
+# 입력: response (응답 객체), student_id (학번)
+# 기능: 서비스 탈퇴 처리 (모든 개인정보 및 저장 데이터 삭제)
+# 반환: 성공 메시지 딕셔너리
+@app.post("/auth/withdraw")
+def withdraw(response: Response, student_id: str = Depends(get_current_user)):
+    try:
+        # 1. Redis 캐시 데이터 삭제 (세션, 과목 목록, 로그인 시도 등)
+        redis_cache.delete_user_data(student_id)
+        
+        # 2. DB 데이터 삭제 (CASCADE 설정으로 인해 연관 데이터 일괄 삭제됨)
+        # users, refresh_tokens, custom_assignments, user_settings, push_subscriptions 등 포함
+        storage.delete_user_entirely(student_id)
+        
+        # 3. 인증 쿠키 삭제
+        response.delete_cookie(key="refresh_token", httponly=True, secure=True, samesite="none", path="/")
+        
+        logger.info(f"사용자 서비스 탈퇴 완료 (student_id: {student_id})")
+        return {"success": True, "message": "서비스 탈퇴가 완료되었습니다. 모든 개인정보가 삭제되었습니다."}
+    except Exception as e:
+        logger.error(f"서비스 탈퇴 중 오류 발생 (student_id: {student_id}): {e}")
+        raise HTTPException(status_code=500, detail="탈퇴 처리 중 오류가 발생했습니다.")
+
 # 입력: student_id (학번)
 # 기능: 로그인한 사용자의 이름, 학번, 학과 정보 조회
 # 반환: UserProfileResponse 객체
@@ -471,6 +493,20 @@ def create_or_update_custom_assignment(request_data: CustomAssignmentRequest, st
         logger.error(f"Error: {e}")
         raise HTTPException(status_code=500, detail="저장 실패")
 
+@app.put("/api/custom-assignments/{assignment_id}")
+def update_custom_assignment_api(assignment_id: str, request_data: CustomAssignmentRequest, student_id: str = Depends(get_current_user)):
+    try:
+        # URL의 assignment_id를 request_data에 주입하여 수정 로직이 동작하도록 함
+        data = request_data.model_dump()
+        data['id'] = assignment_id
+        
+        storage.save_custom_assignment(student_id, data)
+        scheduler_module.schedule_notifications_for_user(student_id)
+        return {"success": True, "message": "수정 성공"}
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="수정 실패")
+
 @app.delete("/api/custom-assignments/{assignment_id}")
 def delete_custom_assignment(assignment_id: str, student_id: str = Depends(get_current_user)):
     try:
@@ -502,7 +538,14 @@ def get_user_settings(student_id: str = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail="설정 로드 실패")
 
 @app.post("/api/user-settings")
-def save_user_settings(request_data: dict, student_id: str = Depends(get_current_user)):
+def save_user_settings_api(request_data: dict, student_id: str = Depends(get_current_user)):
+    return save_user_settings_logic(request_data, student_id)
+
+@app.put("/api/user-settings")
+def update_user_settings_api(request_data: dict, student_id: str = Depends(get_current_user)):
+    return save_user_settings_logic(request_data, student_id)
+
+def save_user_settings_logic(request_data: dict, student_id: str = Depends(get_current_user)):
     try:
         # 이메일이 포함되어 있다면 별도로 업데이트하고 settings에서는 제거 (중복 방지)
         if "email" in request_data:

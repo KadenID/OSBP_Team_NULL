@@ -171,27 +171,47 @@ body {
 }
 
 
-/* 하단 영역 (로그아웃 버튼) */
+/* 하단 영역 (로그아웃 및 탈퇴 버튼) */
 .mypage-footer {
   display: flex;
   justify-content: flex-end; 
-  margin-top: 30px;
+  align-items: center;
+  margin-top: 40px;
+  gap: 20px;
+}
+
+.logout-button, .withdraw-button {
+  background: none;
+  border: none;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .logout-button {
-  background: none;
-  border: none;
   color: var(--danger);
-  font-size: 14px;
 }
 
-.logout-icon {
+.withdraw-button {
+  color: var(--text-muted);
+}
+
+.logout-icon, .withdraw-icon {
   font-size: 16px;
 }
 
 .logout-button:hover {
   text-decoration: underline;
   opacity: 0.85;
+}
+
+.withdraw-button:hover {
+  color: var(--danger);
+  opacity: 0.8;
 }
 
 /* 접근성 */

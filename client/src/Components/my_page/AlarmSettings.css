@@ -3,18 +3,8 @@
   --alarm-section-bg: rgba(99, 102, 241, 0.035);
   --alarm-focus-shadow: var(--primary-focus);
   --alarm-switch-off: var(--btn-bg-hover);      
-  --alarm-button: var(--accent);                
-  --alarm-button-hover: var(--accent-hover);
-  --alarm-input-border: var(--border);
   --alarm-white: #ffffff;
   
-  /* 상태 색상 */
-  --alarm-error: #ef4444;
-  --alarm-error-bg: #fef2f2;
-  --alarm-error-border: #fca5a5;
-  --alarm-success: #10b981;
-  --alarm-muted: #9ca3af;
-
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -23,11 +13,6 @@
 
 [data-theme='dark'] .alarm-settings {
   --alarm-section-bg: rgba(139, 141, 255, 0.05);
-  --alarm-error: #f87171;
-  --alarm-error-bg: rgba(248, 113, 113, 0.1);
-  --alarm-error-border: rgba(248, 113, 113, 0.2);
-  --alarm-success: #34d399;
-  --alarm-muted: #6b7280;
 }
 
 /* 공통 섹션 */
@@ -80,7 +65,7 @@
 }
 
 .alarm-error-text {
-  color: var(--alarm-error);
+  color: var(--error);
   font-size: 0.75rem;
   margin-top: 4px;
   line-height: 1.4;
@@ -119,6 +104,11 @@
   margin-top: 12px;
 }
 
+.alarm-email-input-wrapper .add-reminder-button {
+  width: 60px;
+  flex-shrink: 0;
+}
+
 .alarm-email-display {
   width: 240px;
   height: 40px;
@@ -133,6 +123,7 @@
   border: 1px solid var(--border);
   border-radius: 14px;
   margin: 0;
+  flex-shrink: 0;
 }
 
 .alarm-email-display.empty {
@@ -153,6 +144,7 @@
   border-radius: 14px;
   margin: 0;
   outline: none;
+  flex-shrink: 0;
 }
 
 .alarm-email-input:focus {
@@ -252,7 +244,7 @@
 .custom-reminder-box select {
   height: 38px; /* 버튼 높이와 통일 */
   padding: 8px 12px;
-  border: 1px solid var(--alarm-input-border);
+  border: 1px solid var(--border);
   border-radius: 10px;
   background-color: var(--bg-card);
   color: var(--text-main);
@@ -306,9 +298,9 @@
   width: 100%;
   padding: 0 12px; /* 세로 패딩 대신 height 사용 */
   height: 38px; /* 고정 높이 */
-  border: 1px solid var(--alarm-button);
+  border: 1px solid var(--accent);
   border-radius: 10px;
-  background-color: var(--alarm-button);
+  background-color: var(--accent);
   color: var(--alarm-white);
   font-size: 13px; /* 글자 크기 원래대로 (14 -> 13) */
   font-weight: 700;
@@ -322,13 +314,13 @@
 .add-reminder-button.secondary {
   background-color: var(--bg-card);
   color: var(--text-main);
-  border-color: var(--alarm-input-border);
+  border-color: var(--border);
   width: 60px; /* 수정 버튼 등 원래의 가로 크기 느낌 복구 */
 }
 
 .add-reminder-button:not(:disabled):hover {
   transform: translateY(-1px);
-  background-color: var(--alarm-button-hover);
+  background-color: var(--accent-hover);
 }
 
 .add-reminder-button.secondary:not(:disabled):hover {
@@ -405,9 +397,9 @@
 }
 
 .delete-reminder-button:hover {
-  background-color: var(--alarm-error-bg);
-  border-color: var(--alarm-error-border);
-  color: var(--alarm-error);
+  background-color: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error);
 }
 
 /* 내역 카드 확장 */
@@ -436,7 +428,7 @@
   right: 10px;
   background: none;
   border: none;
-  color: var(--alarm-muted);
+  color: var(--text-muted);
   cursor: pointer;
   font-size: 1.1rem;
   padding: 4px;
@@ -445,7 +437,7 @@
 }
 
 .alarm-history-close:hover {
-  color: var(--alarm-error);
+  color: var(--error);
 }
 
 .alarm-history-header {
@@ -473,14 +465,14 @@
   padding: 2px 6px; 
   background: var(--alarm-section-bg); 
   border-radius: 4px;
-  color: var(--alarm-button);
+  color: var(--accent);
   font-weight: 600;
-  border: 1px solid rgba(24, 144, 255, 0.1);
+  border: 1px solid var(--border);
 }
 
 .alarm-link-text {
   font-size: 0.75rem; 
-  color: var(--alarm-button); 
+  color: var(--accent); 
   font-weight: 600;
 }
 
@@ -498,7 +490,7 @@
   padding: 6px 12px;
   border-radius: 8px;
   background-color: var(--alarm-section-bg);
-  color: var(--alarm-success);
+  color: var(--success);
   font-size: 12px;
   font-weight: 700;
 }
@@ -515,7 +507,7 @@
 .alarm-empty-text {
   margin: 0;
   padding: 14px 16px;
-  border: 1px dashed var(--alarm-input-border);
+  border: 1px dashed var(--border);
   border-radius: 12px;
   background-color: var(--bg-card);
   color: var(--text-muted);

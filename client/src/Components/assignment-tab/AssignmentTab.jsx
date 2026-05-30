@@ -481,8 +481,11 @@ function AssignmentTab({ accessToken }) {
              <li
                 className={`assignment-item ${getItemClass(item.isExpired, item.isSubmitted)}`}
                 key={item.id}
-                onClick={() => setSelectedId(item.id)}
-                style={{ cursor: 'pointer' }} 
+                onClick={() => {
+                  if (String(item.id).startsWith('temp-')) return; // 임시 ID일 때는 상세 창 열기 방지
+                  setSelectedId(item.id);
+                }}
+                style={{ cursor: String(item.id).startsWith('temp-') ? 'wait' : 'pointer' }} 
                 >
 
               <div className="info"> {/* lms 과제인지 생성 과제인지 라벨링 */}
@@ -504,8 +507,11 @@ function AssignmentTab({ accessToken }) {
                 <div className="item-actions"> {/* 생성과제 - 삭제, 완료 처리 버튼 영역 */}
                     {item.source === 'user' ? (
                       <>
-                        <button onClick={(e) => { e.stopPropagation(); toggleSubmit(item.id, accessToken); }} className="action-btn toggle">
-                          {item.isSubmitted ? '진행으로 변경' : '완료 처리'}
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); toggleSubmit(item.id, accessToken); }} 
+                          className={`action-btn toggle ${item.isSubmitted ? 'to-yet' : 'to-done'}`}
+                        >
+                          {item.isSubmitted ? '다시 진행' : '완료하기'}
                         </button>
                         <button onClick={(e) => {e.stopPropagation(); setTargetId(item.id); setShowModal(true); }} className="action-btn delete">삭제</button>
                       </>

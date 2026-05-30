@@ -3,13 +3,19 @@ import { createPortal } from 'react-dom';
 import DOMPurify from 'dompurify';
 import { API_BASE_URL } from '../../apiConfig';
 import './AssignmentDetail.css';
+import useAssignmentStore from '../../store/useAssignmentStore';
 
 const DESCRIPTION_MAX_LENGTH = 1000;
 
 function AssignmentDetail({ assignment, onClose, updateDescription, accessToken }) {
+  const updateAssignmentDetail = useAssignmentStore(state => state.updateAssignmentDetail);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
+  const [mouseDownOnOverlay, setMouseDownOnOverlay] = useState(false);
+  
+  // 커스텀 확인 모달 상태
+  const [showConfirmClose, setShowConfirmClose] = useState(false);
 
   // LMS 과제 상세 조회 상태
   const [lmsDetail, setLmsDetail] = useState(null);
@@ -24,9 +30,40 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
     };
   }, []);
 
+  // 닫기 시도 처리 (수정 중 확인 포함)
+  const handleAttemptClose = () => {
+    if (isEditing) {
+      setShowConfirmClose(true);
+    } else {
+      onClose();
+    }
+  };
+
+  // 배경(Overlay) 클릭 처리 - 드래그 실수 방지 포함
+  const handleOverlayMouseDown = (e) => {
+    if (e.target === e.currentTarget) {
+      setMouseDownOnOverlay(true);
+    } else {
+      setMouseDownOnOverlay(false);
+    }
+  };
+
+  const handleOverlayMouseUp = (e) => {
+    if (e.target === e.currentTarget && mouseDownOnOverlay) {
+      handleAttemptClose();
+    }
+    setMouseDownOnOverlay(false);
+  };
+
   // LMS 과제일 때 마운트 시 상세 조회 API 호출
   useEffect(() => {
     if (assignment?.source !== 'lms' || !assignment?.id) return;
+
+    // 이미 캐싱된 상세 데이터가 있다면 API 호출 생략
+    if (assignment.isDetailFetched) {
+      setLmsDetail(assignment);
+      return;
+    }
 
     let cancelled = false;
     setLmsLoading(true);
@@ -42,6 +79,8 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
         if (cancelled) return;
         if (result.success) {
           setLmsDetail(result.data);
+          // 상세 정보를 스토어에 캐싱
+          updateAssignmentDetail(assignment.id, result.data);
         } else {
           setLmsError("과제 정보를 불러오지 못했습니다.");
         }
@@ -54,7 +93,7 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
       });
 
     return () => { cancelled = true; };
-  }, [assignment?.id, assignment?.source, accessToken]);
+  }, [assignment?.id, assignment?.source, accessToken, assignment, updateAssignmentDetail]);
 
   if (!assignment) return null;
 
@@ -84,12 +123,18 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
   const isUser = assignment.source === 'user';
 
   return createPortal(
-    <div className="detail-overlay" onClick={onClose}>
+    <div 
+      className="detail-overlay" 
+      onMouseDown={handleOverlayMouseDown}
+      onMouseUp={handleOverlayMouseUp}
+    >
       <div
         className="detail-modal"
+        onMouseDown={e => e.stopPropagation()}
+        onMouseUp={e => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="close-btn" onClick={onClose}>✕</button>
+        <button className="close-btn" onClick={handleAttemptClose}>✕</button>
 
         <h3>과제 상세 정보</h3>
         {/* 과제 기본 정보 요약 */}
@@ -186,6 +231,26 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
           </div>
         )}
       </div>
+
+      {/* 수정 중 닫기 확인 커스텀 모달 */}
+      {showConfirmClose && (
+        <div className="modal-overlay" style={{ zIndex: 100000 }}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <p>수정 중인 내용이 있습니다.<br />저장하지 않고 닫으시겠습니까?</p>
+            <div className="modal-buttons">
+              <button 
+                onClick={() => {
+                  setShowConfirmClose(false);
+                  onClose();
+                }}
+              >
+                닫기
+              </button>
+              <button onClick={() => setShowConfirmClose(false)}>취소</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>,
     document.body
   );

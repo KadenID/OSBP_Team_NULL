@@ -115,14 +115,19 @@ def get_enrolled_courses(session, student_id=None):
                     
                     course_name = ""
                     if link.get('title'):
-                        course_name = link.get('title').strip()
+                        # title 속성에서 과목 코드 제외하고 이름만 추출
+                        title_val = link.get('title').strip()
+                        name_match = re.search(r'^(.*?)\s*\([0-9]+-[0-9]+\)', title_val)
+                        course_name = name_match.group(1).strip() if name_match else title_val
                     
                     if not course_name:
                         raw_text = link.text.strip()
                         lines = [line.strip() for line in raw_text.split('\n') if line.strip()]
                         for line in lines:
-                            if re.search(r'\([0-9]+-[0-9]+\)', line):
-                                course_name = line
+                            # 텍스트 라인에서 과목 코드 제외하고 이름만 추출
+                            name_match = re.search(r'^(.*?)\s*\([0-9]+-[0-9]+\)', line)
+                            if name_match:
+                                course_name = name_match.group(1).strip()
                                 break
                                 
                         if not course_name and '진행중' in lines:

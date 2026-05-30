@@ -8,7 +8,7 @@ import { API_BASE_URL } from '../../apiConfig';
 
 
 // Zustand 스토어
-const useLMSStore = create((set, get) => ({
+export const useLMSStore = create((set, get) => ({
   notices: { data: [], isLoading: false, isFetched: false },
   messages: { data: [], isLoading: false, isFetched: false },
 
@@ -34,6 +34,14 @@ const useLMSStore = create((set, get) => ({
       console.error(`${type} 로드 실패:`, error);
       set((prev) => ({ ...prev, [type]: { ...prev[type], isLoading: false } }));
     }
+  },
+
+  // 스토어 초기화 (로그아웃/탈퇴 시 사용)
+  clearLMSStore: () => {
+    set({
+      notices: { data: [], isLoading: false, isFetched: false },
+      messages: { data: [], isLoading: false, isFetched: false }
+    });
   }
 }));
 

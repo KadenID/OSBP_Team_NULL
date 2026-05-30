@@ -95,6 +95,23 @@ def delete_lms_session(student_id: str):
     except Exception as e:
         logger.error(f"Redis 세션 삭제 오류: {e}")
 
+# 입력: student_id (학번)
+# 기능: 해당 사용자와 관련된 모든 Redis 데이터(세션, 과목 캐시, 로그인 시도 기록) 삭제
+def delete_user_data(student_id: str):
+    if not redis_client:
+        return
+    try:
+        keys = [
+            f"lms_session:{student_id}",
+            f"user_courses:{student_id}",
+            f"login_attempts:{student_id}"
+        ]
+        for key in keys:
+            redis_client.delete(key)
+        logger.info(f"사용자 Redis 데이터 전체 삭제 완료 (student_id: {student_id})")
+    except Exception as e:
+        logger.error(f"사용자 Redis 데이터 삭제 중 오류 발생: {e}")
+
 # 입력: student_id (학번), max_attempts (최대 시도 횟수), window_seconds (제한 시간)
 # 기능: 학번 기반의 로그인 시도 횟수 제한 확인
 # 반환: 통과 여부 (bool)
