@@ -136,7 +136,7 @@ const useUserStore = create((set, get) => ({
         try {
             const currentSettings = get().settings;
             await fetch(`${API_BASE_URL}/api/user-settings`, {
-                method: 'POST',
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${accessToken}`
@@ -186,8 +186,8 @@ const useUserStore = create((set, get) => ({
             });
             const result = await response.json();
             if (result.success) {
-                // 로컬 스토리지 데이터 삭제 (테마, 저장된 아이디 등)
-                localStorage.removeItem("theme");
+                // 로컬 스토리지 데이터 삭제 (저장된 아이디 등)
+                // 테마는 사용자 환경 설정이므로 삭제하지 않고 유지함
                 localStorage.removeItem("rememberedStudentId");
                 
                 get().clearUserStore();

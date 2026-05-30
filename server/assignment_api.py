@@ -538,7 +538,14 @@ def get_user_settings(student_id: str = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail="설정 로드 실패")
 
 @app.post("/api/user-settings")
-def save_user_settings(request_data: dict, student_id: str = Depends(get_current_user)):
+def save_user_settings_api(request_data: dict, student_id: str = Depends(get_current_user)):
+    return save_user_settings_logic(request_data, student_id)
+
+@app.put("/api/user-settings")
+def update_user_settings_api(request_data: dict, student_id: str = Depends(get_current_user)):
+    return save_user_settings_logic(request_data, student_id)
+
+def save_user_settings_logic(request_data: dict, student_id: str = Depends(get_current_user)):
     try:
         # 이메일이 포함되어 있다면 별도로 업데이트하고 settings에서는 제거 (중복 방지)
         if "email" in request_data:

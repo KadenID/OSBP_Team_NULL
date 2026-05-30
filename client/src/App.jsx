@@ -103,6 +103,10 @@ function App() {
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
+      // 모든 상태 스토어 초기화
+      import("./store/useUserStore").then((module) => {
+        module.default.getState().clearUserStore();
+      });
       setAccessToken(null);
     }
   }, [accessToken]);
