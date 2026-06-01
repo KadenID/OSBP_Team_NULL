@@ -62,6 +62,7 @@ function AssignmentDetail({ assignment, onClose, updateDescription, accessToken 
     // 이미 캐싱된 상세 데이터가 있다면 API 호출 생략
     if (assignment.isDetailFetched) {
       setLmsDetail(assignment);
+      setLmsLoading(false); // 로딩 상태 종료 추가
       return;
     }
 

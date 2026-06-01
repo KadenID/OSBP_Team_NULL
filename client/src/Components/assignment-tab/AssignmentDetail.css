@@ -297,6 +297,5 @@ body.modal-open .left:hover {
   .detail-modal {
     width: 90vw;
     padding: 20px;
-    max-height: 90vh;
   }
 }
