@@ -183,22 +183,18 @@ class AssignmentDetailResponse(BaseModel):  # 과제 상세 API 응답 스키마
     message: str
     data: dict
     
-security = HTTPBearer() # 인증 객체
+security = HTTPBearer()
 
-# 입력: credentials (HTTP 헤더 인증 정보)
-# 기능: 현재 액세스 토큰 사용자 학번 추출
-# 반환: 학번(str)
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """액세스 토큰에서 사용자 학번 추출"""
     token = credentials.credentials
     payload = auth.decode_token(token)
     if not payload or not auth.verify_token_type(payload, "access"):
         raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")
     return payload.get("sub")
 
-# 입력: response (응답 객체), refresh_token (리프레시 토큰), request (요청 객체)
-# 기능: 리프레시 토큰을 HTTP-only 쿠키에 설정
-# 반환: 없음
 def set_refresh_cookie(response: Response, refresh_token: str, request: Request):
+    """리프레시 토큰을 HTTP-only 쿠키에 설정"""
     is_local = request.url.hostname in ["localhost", "127.0.0.1"]
     response.set_cookie(
         key="refresh_token",
@@ -210,40 +206,31 @@ def set_refresh_cookie(response: Response, refresh_token: str, request: Request)
         path="/"
     )
 
-# 입력: session (requests.Session 객체)
-# 기능: LMS 대시보드 요청으로 세션 유효성 확인
-# 반환: 유효 여부 (bool)
 def _is_lms_session_valid(session: requests.Session) -> bool:
+    """LMS 세션 유효성 확인"""
     try:
         resp = session.get(
             "https://lms.chungbuk.ac.kr/",
             timeout=5,
             allow_redirects=False
         )
-        # 302 = 로그인 페이지로 튕김 = 만료
         return resp.status_code == 200
     except Exception:
         return False
 
-# 입력: student_id (학번)
-# 기능: Redis 캐시에서 LMS 세션 복원, 없으면 저장된 계정으로 재로그인
-# 반환: requests.Session 객체
 def resolve_lms_session(student_id: str) -> requests.Session:
+    """캐시된 세션 복원 또는 재로그인 수행"""
     cached_cookies = redis_cache.get_lms_session(student_id)
-    
     session = requests.Session()
     
     if cached_cookies:
         session.cookies.update(cached_cookies)
-        
         if _is_lms_session_valid(session):
             return session
         
-        # 만료된 경우 Redis 캐시 삭제 후 재로그인
         logger.warning(f"캐시된 LMS 세션 만료 감지, 재로그인 시도 (student_id: {student_id})")
         redis_cache.delete_lms_session(student_id)
         session = requests.Session()
-   
    
     loaded_id, password = storage.load_user(student_id)
     session, message = login_to_lms(loaded_id, password)
@@ -251,7 +238,6 @@ def resolve_lms_session(student_id: str) -> requests.Session:
         raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다. 다시 로그인해주세요.")
     redis_cache.set_lms_session(student_id, session.cookies.get_dict())
     return session
-
 
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
