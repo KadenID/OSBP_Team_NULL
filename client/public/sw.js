@@ -13,35 +13,41 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('push', function (event) {
     console.log('[Service Worker] Push Received.');
     
+    let title = '과제 알림';
+    let options = {
+        body: '과제 마감 기한을 확인하세요!',
+        icon: '/vite.svg',
+        badge: '/vite.svg',
+        vibrate: [100, 50, 100],
+        renotify: true,
+        tag: 'assignment-alert',
+        data: { url: '/' }
+    };
+
     if (event.data) {
         try {
             const data = event.data.json();
             console.log('[Service Worker] Push Data:', data);
 
-            const title = data.title || '과제 알림';
-            const options = {
-                body: data.body || '과제 마감 기한을 확인하세요!',
-                // 아이콘 파일이 없을 경우를 대비하여 기본값 설정 유지
-                icon: data.icon || '/vite.svg', 
-                badge: data.badge || '/vite.svg',
-                data: {
-                    url: data.url || '/'
-                },
-                vibrate: [100, 50, 100],
-                // 알림이 왔을 때 화면을 깨우거나 알림 소리를 내도록 설정
-                renotify: true,
-                tag: 'assignment-alert' // 동일 태그는 최신 알림으로 교체
-            };
-
-            event.waitUntil(
-                self.registration.showNotification(title, options)
-            );
+            title = data.title || title;
+            options.body = data.body || options.body;
+            if (data.icon) options.icon = data.icon;
+            if (data.badge) options.badge = data.badge;
+            if (data.url) options.data.url = data.url;
         } catch (e) {
-            console.error('[Service Worker] Push data parse error:', e);
+            console.error('[Service Worker] Push data parse error (falling back to text):', e);
+            // JSON 파싱 실패 시 텍스트로 시도
+            try {
+                options.body = event.data.text();
+            } catch (textErr) {
+                console.error('[Service Worker] Push text read error:', textErr);
+            }
         }
-    } else {
-        console.warn('[Service Worker] Push event but no data.');
     }
+
+    event.waitUntil(
+        self.registration.showNotification(title, options)
+    );
 });
 
 self.addEventListener('notificationclick', function (event) {

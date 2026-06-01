@@ -585,7 +585,7 @@ def delete_push_subscription(subscription: dict, student_id: str = Depends(get_c
 
 @app.get("/api/vapid-public-key")
 def get_vapid_public_key(student_id: str = Depends(get_current_user)):
-    public_key = os.getenv("VAPID_PUBLIC_KEY")
+    public_key = os.getenv("VAPID_PUBLIC_KEY", "").strip().strip("'").strip('"')
     if not public_key:
         logger.error("VAPID_PUBLIC_KEY가 설정되지 않았습니다.")
         raise HTTPException(status_code=500, detail="서버 VAPID 설정 오류")
@@ -595,8 +595,16 @@ def get_vapid_public_key(student_id: str = Depends(get_current_user)):
 def send_test_notification(student_id: str = Depends(get_current_user)):
     try:
         from notification_service import send_all_notifications
+        import storage
+        
         title = "테스트 알림"
         body = "알림 설정이 정상적으로 작동하고 있습니다!"
+        
+        # 구독 정보가 있는지 미리 확인 (디버깅용)
+        subs = storage.get_push_subscriptions(student_id)
+        email = storage.get_user_email(student_id)
+        logger.info(f"테스트 알림 시도 (student_id: {student_id}) - 구독: {len(subs)}개, 이메일: {email}")
+
         # 테스트 발송이므로 설정을 무시하고 현재 등록된 모든 수단으로 발송 시도
         results = send_all_notifications(student_id, title, body, ignore_settings=True)
         
@@ -607,18 +615,20 @@ def send_test_notification(student_id: str = Depends(get_current_user)):
         email_ok = email_status is True
         push_ok = any(r is True for r in push_results)
         
+        logger.info(f"테스트 알림 결과 - 이메일: {email_ok}, 푸시: {push_ok}")
+        
         if not email_ok and not push_ok:
-            msg = "발송 가능한 수단이 없습니다. "
+            msg = "발송 가능한 수단이 없거나 발송에 실패했습니다. "
             if email_status == "MISSING_EMAIL":
                 msg += "이메일을 먼저 등록해주세요. "
             if not push_results or "MISSING_SUBSCRIPTION" in push_results:
-                msg += "푸시 알림 권한을 허용해주세요."
+                msg += "브라우저 알림 권한을 허용하고 구독을 완료해주세요."
             return {"success": False, "message": msg.strip(), "details": results}
 
-        return {"success": True, "message": "테스트 알림이 발송되었습니다.", "details": results}
+        return {"success": True, "message": "테스트 알림 발송 시도가 완료되었습니다.", "details": results}
     except Exception as e:
-        logger.error(f"테스트 알림 발송 실패: {e}")
-        raise HTTPException(status_code=500, detail="발송 실패")
+        logger.error(f"테스트 알림 API 내부 오류: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
 
 @app.get("/api/notification-history")
 def get_notification_history(student_id: str = Depends(get_current_user)):

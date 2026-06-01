@@ -17,7 +17,7 @@ else:
     load_dotenv()
 
 # 환경 변수 로드
-DATABASE_URL = os.getenv("DATABASE_URL") # DB 연결 URL
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip().strip("'").strip('"')
 
 if not DATABASE_URL:
     logger.error("DATABASE_URL이 설정되지 않았습니다.")

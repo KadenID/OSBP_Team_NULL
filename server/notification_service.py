@@ -15,8 +15,8 @@ if os.path.exists(env_path):
 else:
     load_dotenv()
 
-VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
-VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY")
+VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "").strip().strip("'").strip('"')
+VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "").strip().strip("'").strip('"')
 VAPID_CLAIMS_EMAIL = os.getenv("VAPID_CLAIMS_EMAIL", "admin@example.com")
 
 # Resend 설정
@@ -39,20 +39,23 @@ if not SMTP_FROM_EMAIL or SMTP_FROM_EMAIL == "onboarding@resend.dev":
     logger.warning(f"⚠️ SMTP_FROM_EMAIL이 기본값({SMTP_FROM_EMAIL})입니다. 도메인 인증 전이라면 테스트 수신자에게만 발송됩니다.")
 
 # VAPID_SUB 형식 강제 교정 (반드시 mailto: 포함)
-if VAPID_CLAIMS_EMAIL and not VAPID_CLAIMS_EMAIL.startswith("mailto:"):
-    VAPID_SUB = f"mailto:{VAPID_CLAIMS_EMAIL}"
-else:
-    VAPID_SUB = VAPID_CLAIMS_EMAIL or "mailto:admin@example.com"
+def get_vapid_sub():
+    email = os.getenv("VAPID_CLAIMS_EMAIL", "admin@example.com")
+    if email and not email.startswith("mailto:"):
+        return f"mailto:{email}"
+    return email or "mailto:admin@example.com"
 
 def send_email_notification(to_email, subject, message_body):
-    # 실행 시점에 API 키 재확인 (모듈 로드 시점 문제 방지)
-    current_api_key = resend.api_key or os.getenv("RESEND_API_KEY")
-    if not current_api_key:
-        logger.warning("RESEND_API_KEY가 설정되지 않아 이메일을 보낼 수 없습니다.")
+    # 실행 시점에 API 키 및 발신 이메일 재확인
+    api_key = os.getenv("RESEND_API_KEY")
+    from_email = os.getenv("SMTP_FROM_EMAIL", "onboarding@resend.dev")
+    
+    if not api_key:
+        logger.error("RESEND_API_KEY가 설정되지 않았습니다.")
         return False
     
-    if not resend.api_key:
-        resend.api_key = current_api_key
+    # 전역 객체 설정 (발송 직전)
+    resend.api_key = api_key
 
     if not to_email:
         logger.warning("수신자 이메일이 없어 발송을 건너뜁니다.")
@@ -60,22 +63,33 @@ def send_email_notification(to_email, subject, message_body):
         
     try:
         params = {
-            "from": f"OSBP Notification <{SMTP_FROM_EMAIL}>",
+            "from": f"OSBP Notification <{from_email}>",
             "to": [to_email],
             "subject": subject,
             "text": message_body,
         }
-        resend.Emails.send(params)
-        logger.info(f"이메일 발송 성공 (Resend): {to_email}")
-        return True
+        r = resend.Emails.send(params)
+        
+        if (isinstance(r, dict) and r.get("id")) or (hasattr(r, "id") and r.id):
+            logger.info(f"이메일 발송 성공: {to_email}")
+            return True
+        else:
+            logger.error(f"이메일 발송 실패 (응답 이상): {r}")
+            return False
     except Exception as e:
-        logger.error(f"이메일 발송 실패 (Resend): {e}")
+        logger.error(f"이메일 발송 예외: {e}")
         return False
 
 def send_push_notification(subscription_info, title, body, url=None):
-    if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
-        logger.error("VAPID 키 설정 누락")
+    # 실행 시점에 VAPID 키 재확인 (모듈 로드 시점 문제 방지)
+    priv_key = os.getenv("VAPID_PRIVATE_KEY", "").strip().strip("'").strip('"')
+    pub_key = os.getenv("VAPID_PUBLIC_KEY", "").strip().strip("'").strip('"')
+    sub = get_vapid_sub()
+
+    if not priv_key or not pub_key:
+        logger.error("VAPID 키가 설정되지 않아 푸시를 보낼 수 없습니다.")
         return False
+        
     try:
         payload = {
             "title": title,
@@ -83,22 +97,19 @@ def send_push_notification(subscription_info, title, body, url=None):
             "url": url or "/"
         }
         
-        # subscription_info가 문자열이면 dict로 변환, 이미 dict면 그대로 사용
         if isinstance(subscription_info, str):
             subscription_dict = json.loads(subscription_info)
         else:
             subscription_dict = subscription_info
 
-        # 필수 필드 확인
         if not subscription_dict.get("endpoint"):
-            logger.error("구독 정보에 endpoint가 없습니다.")
             return False
 
         webpush(
             subscription_info=subscription_dict,
             data=json.dumps(payload),
-            vapid_private_key=VAPID_PRIVATE_KEY,
-            vapid_claims={"sub": VAPID_SUB},
+            vapid_private_key=priv_key,
+            vapid_claims={"sub": sub},
             ttl=43200
         )
 
@@ -106,11 +117,10 @@ def send_push_notification(subscription_info, title, body, url=None):
         return True
     except WebPushException as ex:
         if ex.response is not None:
-            if ex.response.status_code in [404, 410]:
+            if ex.response.status_code == 403:
+                logger.error(f"VAPID 인증 실패 (403): {ex.response.text}")
+            elif ex.response.status_code in [404, 410]:
                 return "EXPIRED"
-            logger.error(f"푸시 서비스 응답 에러 ({ex.response.status_code}): {ex.response.text}")
-        else:
-            logger.error(f"푸시 네트워크 에러: {ex}")
         return False
     except Exception as e:
         logger.error(f"푸시 내부 오류: {e}")
@@ -141,18 +151,30 @@ def send_all_notifications(student_id, title, body, url=None, ignore_settings=Fa
         if push_enabled:
             subscriptions = storage.get_push_subscriptions(student_id)
             if not subscriptions:
+                logger.info(f"사용자 {student_id}: 저장된 푸시 구독 정보가 없음")
                 results["push"].append("MISSING_SUBSCRIPTION")
             else:
+                logger.info(f"사용자 {student_id}: {len(subscriptions)}개의 구독 정보 발견. 파싱 시도 중...")
                 # 중복 제거 (endpoint 기준)
                 unique_subs = {}
                 for sub in subscriptions:
                     try:
                         s_dict = json.loads(sub) if isinstance(sub, str) else sub
+                        if not isinstance(s_dict, dict):
+                            logger.warning(f"사용자 {student_id}: 구독 정보 파싱 결과가 dict가 아님 ({type(s_dict)})")
+                            continue
+                            
                         endpoint = s_dict.get("endpoint")
                         if endpoint:
                             unique_subs[endpoint] = s_dict
-                    except:
+                        else:
+                            logger.warning(f"사용자 {student_id}: 구독 정보에 endpoint 필드 누락")
+                    except Exception as pe:
+                        logger.error(f"사용자 {student_id}: 구독 정보 JSON 파싱 오류: {pe}")
                         continue
+                
+                if not unique_subs:
+                    logger.warning(f"사용자 {student_id}: 유효한 푸시 엔드포인트가 하나도 없음")
                 
                 for sub_dict in unique_subs.values():
                     f = executor.submit(send_push_notification, sub_dict, title, body, url)
