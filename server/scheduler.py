@@ -105,7 +105,7 @@ def schedule_notifications_for_user(student_id, lms_assignments=None):
                     
                 applicable_reminders = [
                     r for r in reminders 
-                    if r.get("courseId") == "all" or str(r.get("courseId")) == str(assignment.get("course_id"))
+                    if str(r.get("courseId")).lower() == "all" or str(r.get("courseId")) == str(assignment.get("course_id"))
                 ]
 
                 for r in applicable_reminders:

@@ -290,9 +290,9 @@ function AlarmSettings({ accessToken }) {
                     <h3 className="alarm-section-title">과목별 알림 추가</h3>
                     <div className="course-reminder-add-row">
                         <select className="alarm-select" value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)}>
+                            <option value="all">전체 과목</option>
                             {settings.courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
-                        <div className="custom-reminder-box">
+                        </select>                        <div className="custom-reminder-box">
                             <span>마감</span>
                             <input type="number" min="1" value={reminderValue} onChange={(e) => setReminderValue(e.target.value)} />
                             <select value={reminderUnit} onChange={(e) => setReminderUnit(e.target.value)}>
