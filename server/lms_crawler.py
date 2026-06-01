@@ -69,7 +69,6 @@ def get_enrolled_courses(session, student_id=None):
         try:
             cached = redis_cache.get_cached_courses(student_id)
             if cached:
-                logger.info(f"[{student_id}] Redis 캐시에서 과목 목록 로드 성공 ({len(cached)}개)")
                 return sort_courses(cached)
         except Exception as re_err:
             logger.warning(f"Redis 캐시 로드 실패: {re_err}")
@@ -79,17 +78,14 @@ def get_enrolled_courses(session, student_id=None):
     courses = {}
 
     try:
-        logger.info(f"[{student_id}] LMS 대시보드에서 과목 목록 크롤링 시도...")
         resp = session.get(dashboard_url, timeout=15, allow_redirects=False)
         
         # 302 리다이렉트 발생 시 세션 만료로 간주
         if resp.status_code == 302 or "login" in resp.headers.get("Location", ""):
-            logger.warning(f"[{student_id}] LMS 세션 만료 감지 (302 Redirect)")
             raise SessionExpiredError("LMS 세션이 만료되었습니다.")
             
         # 401 Unauthorized 발생 시 세션 만료로 간주
         if resp.status_code == 401:
-            logger.warning(f"[{student_id}] LMS 세션 만료 감지 (401 Unauthorized)")
             raise SessionExpiredError("LMS 세션이 유효하지 않습니다.")
             
         resp.raise_for_status()
@@ -97,7 +93,6 @@ def get_enrolled_courses(session, student_id=None):
 
         # 개별 과목 페이지 URL 구조 탐색
         links = soup.find_all('a', href=True)
-        logger.info(f"[{student_id}] 대시보드 내 링크 총 {len(links)}개 탐색 중...")
 
         for link in links:
             href = link['href']
@@ -138,8 +133,6 @@ def get_enrolled_courses(session, student_id=None):
                     if course_name:
                         courses[course_id] = {"name": course_name, "type": course_type}
 
-        logger.info(f"[{student_id}] 크롤링 완료: 총 {len(courses)}개 과목 발견")
-
         if courses:
             sorted_courses = sort_courses(courses)
             if student_id:
@@ -149,7 +142,6 @@ def get_enrolled_courses(session, student_id=None):
             
         # 크롤링 결과가 하나도 없는 경우 DB에서 백업 로드
         if student_id:
-            logger.warning(f"[{student_id}] 크롤링된 과목이 없습니다. DB에서 백업을 시도합니다.")
             db_courses = storage.get_user_courses(student_id)
             if db_courses:
                 return sort_courses(db_courses)
@@ -159,13 +151,12 @@ def get_enrolled_courses(session, student_id=None):
     except SessionExpiredError:
         raise
     except Exception as e:
-        logger.error(f"[{student_id}] 과목 목록 추출 중 예외 발생: {e}")
+        logger.error(f"과목 목록 추출 중 예외 발생: {e}")
         # 오류 발생 시 DB 데이터라도 반환
         if student_id:
             try:
                 db_courses = storage.get_user_courses(student_id)
                 if db_courses:
-                    logger.info(f"[{student_id}] 예외 발생으로 DB에서 과목 목록 로드 ({len(db_courses)}개)")
                     return sort_courses(db_courses)
             except Exception as db_err:
                 logger.error(f"DB 백업 로드 중 오류: {db_err}")

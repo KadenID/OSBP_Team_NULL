@@ -183,22 +183,18 @@ class AssignmentDetailResponse(BaseModel):  # 과제 상세 API 응답 스키마
     message: str
     data: dict
     
-security = HTTPBearer() # 인증 객체
+security = HTTPBearer()
 
-# 입력: credentials (HTTP 헤더 인증 정보)
-# 기능: 현재 액세스 토큰 사용자 학번 추출
-# 반환: 학번(str)
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """액세스 토큰에서 사용자 학번 추출"""
     token = credentials.credentials
     payload = auth.decode_token(token)
     if not payload or not auth.verify_token_type(payload, "access"):
         raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")
     return payload.get("sub")
 
-# 입력: response (응답 객체), refresh_token (리프레시 토큰), request (요청 객체)
-# 기능: 리프레시 토큰을 HTTP-only 쿠키에 설정
-# 반환: 없음
 def set_refresh_cookie(response: Response, refresh_token: str, request: Request):
+    """리프레시 토큰을 HTTP-only 쿠키에 설정"""
     is_local = request.url.hostname in ["localhost", "127.0.0.1"]
     response.set_cookie(
         key="refresh_token",
@@ -210,40 +206,31 @@ def set_refresh_cookie(response: Response, refresh_token: str, request: Request)
         path="/"
     )
 
-# 입력: session (requests.Session 객체)
-# 기능: LMS 대시보드 요청으로 세션 유효성 확인
-# 반환: 유효 여부 (bool)
 def _is_lms_session_valid(session: requests.Session) -> bool:
+    """LMS 세션 유효성 확인"""
     try:
         resp = session.get(
             "https://lms.chungbuk.ac.kr/",
             timeout=5,
             allow_redirects=False
         )
-        # 302 = 로그인 페이지로 튕김 = 만료
         return resp.status_code == 200
     except Exception:
         return False
 
-# 입력: student_id (학번)
-# 기능: Redis 캐시에서 LMS 세션 복원, 없으면 저장된 계정으로 재로그인
-# 반환: requests.Session 객체
 def resolve_lms_session(student_id: str) -> requests.Session:
+    """캐시된 세션 복원 또는 재로그인 수행"""
     cached_cookies = redis_cache.get_lms_session(student_id)
-    
     session = requests.Session()
     
     if cached_cookies:
         session.cookies.update(cached_cookies)
-        
         if _is_lms_session_valid(session):
             return session
         
-        # 만료된 경우 Redis 캐시 삭제 후 재로그인
         logger.warning(f"캐시된 LMS 세션 만료 감지, 재로그인 시도 (student_id: {student_id})")
         redis_cache.delete_lms_session(student_id)
         session = requests.Session()
-   
    
     loaded_id, password = storage.load_user(student_id)
     session, message = login_to_lms(loaded_id, password)
@@ -251,7 +238,6 @@ def resolve_lms_session(student_id: str) -> requests.Session:
         raise HTTPException(status_code=401, detail="LMS 세션이 만료되었습니다. 다시 로그인해주세요.")
     redis_cache.set_lms_session(student_id, session.cookies.get_dict())
     return session
-
 
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -345,7 +331,7 @@ def refresh_token(request: Request, response: Response, refresh_token_cookie: Op
         raise HTTPException(status_code=401, detail="인증 세션이 존재하지 않습니다.")
 
     if refresh_token_cookie != stored_token_data[0]:
-        logger.warning(f"Refresh token mismatch for user {student_id}. Possible concurrent request.")
+        logger.warning("Refresh token mismatch. Possible concurrent request.")
         raise HTTPException(status_code=401, detail="세션 갱신 중 충돌이 발생했습니다. 다시 로그인해주세요.")
 
     exp = payload.get("exp")
@@ -387,10 +373,10 @@ def withdraw(response: Response, student_id: str = Depends(get_current_user)):
         # 3. 인증 쿠키 삭제
         response.delete_cookie(key="refresh_token", httponly=True, secure=True, samesite="none", path="/")
         
-        logger.info(f"사용자 서비스 탈퇴 완료 (student_id: {student_id})")
+        logger.info("사용자 서비스 탈퇴 완료")
         return {"success": True, "message": "서비스 탈퇴가 완료되었습니다. 모든 개인정보가 삭제되었습니다."}
     except Exception as e:
-        logger.error(f"서비스 탈퇴 중 오류 발생 (student_id: {student_id}): {e}")
+        logger.error("서비스 탈퇴 중 오류 발생")
         raise HTTPException(status_code=500, detail="탈퇴 처리 중 오류가 발생했습니다.")
 
 # 입력: student_id (학번)
@@ -585,7 +571,7 @@ def delete_push_subscription(subscription: dict, student_id: str = Depends(get_c
 
 @app.get("/api/vapid-public-key")
 def get_vapid_public_key(student_id: str = Depends(get_current_user)):
-    public_key = os.getenv("VAPID_PUBLIC_KEY")
+    public_key = os.getenv("VAPID_PUBLIC_KEY", "").strip().strip("'").strip('"')
     if not public_key:
         logger.error("VAPID_PUBLIC_KEY가 설정되지 않았습니다.")
         raise HTTPException(status_code=500, detail="서버 VAPID 설정 오류")
@@ -595,8 +581,16 @@ def get_vapid_public_key(student_id: str = Depends(get_current_user)):
 def send_test_notification(student_id: str = Depends(get_current_user)):
     try:
         from notification_service import send_all_notifications
+        import storage
+        
         title = "테스트 알림"
         body = "알림 설정이 정상적으로 작동하고 있습니다!"
+        
+        # 구독 정보가 있는지 미리 확인 (디버깅용)
+        subs = storage.get_push_subscriptions(student_id)
+        email = storage.get_user_email(student_id)
+        logger.info(f"테스트 알림 시도 (student_id: {student_id}) - 구독: {len(subs)}개, 이메일: {email}")
+
         # 테스트 발송이므로 설정을 무시하고 현재 등록된 모든 수단으로 발송 시도
         results = send_all_notifications(student_id, title, body, ignore_settings=True)
         
@@ -607,18 +601,20 @@ def send_test_notification(student_id: str = Depends(get_current_user)):
         email_ok = email_status is True
         push_ok = any(r is True for r in push_results)
         
+        logger.info(f"테스트 알림 결과 - 이메일: {email_ok}, 푸시: {push_ok}")
+        
         if not email_ok and not push_ok:
-            msg = "발송 가능한 수단이 없습니다. "
+            msg = "발송 가능한 수단이 없거나 발송에 실패했습니다. "
             if email_status == "MISSING_EMAIL":
                 msg += "이메일을 먼저 등록해주세요. "
             if not push_results or "MISSING_SUBSCRIPTION" in push_results:
-                msg += "푸시 알림 권한을 허용해주세요."
+                msg += "브라우저 알림 권한을 허용하고 구독을 완료해주세요."
             return {"success": False, "message": msg.strip(), "details": results}
 
-        return {"success": True, "message": "테스트 알림이 발송되었습니다.", "details": results}
+        return {"success": True, "message": "테스트 알림 발송 시도가 완료되었습니다.", "details": results}
     except Exception as e:
-        logger.error(f"테스트 알림 발송 실패: {e}")
-        raise HTTPException(status_code=500, detail="발송 실패")
+        logger.error(f"테스트 알림 API 내부 오류: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
 
 @app.get("/api/notification-history")
 def get_notification_history(student_id: str = Depends(get_current_user)):

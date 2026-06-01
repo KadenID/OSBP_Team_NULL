@@ -307,6 +307,13 @@
 .deadline-control:focus-within {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--primary-focus);
+  background: var(--bg-card);
+}
+
+[data-theme='dark'] .deadline-control:focus-within {
+  background: #161b25; 
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(139, 141, 255, 0.25);
 }
 
 .deadline-control input[type="date"],
@@ -373,10 +380,13 @@
   transform: translate(-50%, -65%) rotate(45deg);
 }
 
-.deadline-control input:focus,
+.input-field .deadline-control input:focus,
+[data-theme='dark'] .input-field .deadline-control input:focus,
 .time-picker-toggle:focus {
-  outline: none;
-  box-shadow: none;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-color: transparent !important;
 }
 
 .time-picker-panel {

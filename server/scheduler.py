@@ -68,6 +68,7 @@ def schedule_notifications_for_user(student_id, lms_assignments=None):
         for a in lms_assignments:
             all_assignments.append({
                 "id": a["assignment_id"],
+                "course_id": a["course_id"],
                 "course_name": a["course_name"],
                 "title": f"[{a['course_name']}] {a['assignment_name']}",
                 "deadline": a["due_date"],
@@ -80,6 +81,7 @@ def schedule_notifications_for_user(student_id, lms_assignments=None):
         for a in custom_assignments:
             all_assignments.append({
                 "id": f"custom_{a['id']}",
+                "course_id": a["subject"], # 커스텀 과제는 과목명이 곧 ID 역할을 함
                 "course_name": a["subject"],
                 "title": f"[{a['subject']}] {a['task']}",
                 "deadline": a["deadline"],
@@ -103,7 +105,7 @@ def schedule_notifications_for_user(student_id, lms_assignments=None):
                     
                 applicable_reminders = [
                     r for r in reminders 
-                    if r.get("courseId") == "all" or r.get("courseId") == assignment.get("course_name")
+                    if str(r.get("courseId")).lower() == "all" or str(r.get("courseId")) == str(assignment.get("course_id"))
                 ]
 
                 for r in applicable_reminders:
@@ -244,17 +246,24 @@ def parse_deadline(date_str):
     if not date_str:
         return None
     try:
-        # ISO 형식 (2024-05-25T23:59:00)
-        dt = datetime.fromisoformat(date_str.replace('Z', ''))
-    except Exception:
-        try:
-            # 일반 공백 형식 (2024-05-25 23:59)
-            dt = datetime.strptime(date_str, "%Y-%m-%d %H:%M")
-        except Exception:
-            return None
-    
-    # 한국 시간(KST)을 UTC로 변환하여 반환
-    return dt.replace(tzinfo=timezone.utc) - timedelta(hours=9)
+        # ISO 형식 (2024-05-25T23:59:00) 처리
+        clean_date = date_str.replace('Z', '')
+        if 'T' in clean_date:
+            dt = datetime.fromisoformat(clean_date)
+        else:
+            dt = datetime.strptime(clean_date, "%Y-%m-%d %H:%M")
+        
+        # 1. naive datetime인 경우 KST(+09:00)로 간주하여 타임존 설정
+        if dt.tzinfo is None:
+            # 아시아/서울 시간대 (UTC+9) 설정
+            kst_tz = timezone(timedelta(hours=9))
+            dt = dt.replace(tzinfo=kst_tz)
+        
+        # 2. UTC로 변환하여 반환
+        return dt.astimezone(timezone.utc)
+    except Exception as e:
+        logger.error(f"날짜 파싱 실패 ({date_str}): {e}")
+        return None
 
 def check_and_send_notifications():
     """전체 사용자를 대상으로 알림 예약을 최신화하는 안전망 스케줄러 (Redis 락 적용)"""

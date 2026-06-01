@@ -158,9 +158,17 @@ function AlarmSettings({ accessToken }) {
             alert("올바른 이메일 형식이 아닙니다.");
             return;
         }
-        updateSettings({ email: tempEmail, emailAlerts: !!tempEmail && settings.emailAlerts }, accessToken);
+
+        const isEmailEmpty = !tempEmail.trim();
+        const willDisableAlerts = isEmailEmpty && settings.emailAlerts;
+
+        updateSettings({ 
+            email: tempEmail, 
+            emailAlerts: isEmailEmpty ? false : settings.emailAlerts 
+        }, accessToken);
+
         setIsEditingEmail(false);
-        setSaveMessage("이메일이 저장되었습니다.");
+        setSaveMessage(willDisableAlerts ? "이메일이 삭제되어 알림이 비활성화되었습니다." : "이메일이 저장되었습니다.");
     };
 
     const handleToggleEmailAlerts = (checked) => {
@@ -179,6 +187,19 @@ function AlarmSettings({ accessToken }) {
     const handleAddReminder = () => {
         if (isAddButtonDisabled) return;
         const newVal = Math.min(reminderMaxValue, Math.max(1, Number(reminderValue) || 1));
+        
+        // 중복 체크 로직
+        const isDuplicate = settings.courseReminders.some(
+            (r) => String(r.courseId) === String(selectedCourseId) && 
+                   Number(r.value) === newVal && 
+                   r.unit === reminderUnit
+        );
+
+        if (isDuplicate) {
+            alert("이미 동일한 조건의 알림이 존재합니다.");
+            return;
+        }
+
         const newReminders = [
             ...settings.courseReminders,
             { id: createReminderId(), courseId: selectedCourseId, value: newVal, unit: reminderUnit }
@@ -291,8 +312,7 @@ function AlarmSettings({ accessToken }) {
                     <div className="course-reminder-add-row">
                         <select className="alarm-select" value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)}>
                             {settings.courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
-                        <div className="custom-reminder-box">
+                        </select>                        <div className="custom-reminder-box">
                             <span>마감</span>
                             <input type="number" min="1" value={reminderValue} onChange={(e) => setReminderValue(e.target.value)} />
                             <select value={reminderUnit} onChange={(e) => setReminderUnit(e.target.value)}>

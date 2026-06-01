@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import resend
+import urllib.parse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pywebpush import webpush, WebPushException
 from dotenv import load_dotenv
@@ -15,67 +16,76 @@ if os.path.exists(env_path):
 else:
     load_dotenv()
 
-VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
-VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY")
+VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "").strip().strip("'").strip('"')
+VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "").strip().strip("'").strip('"')
 VAPID_CLAIMS_EMAIL = os.getenv("VAPID_CLAIMS_EMAIL", "admin@example.com")
 
 # Resend 설정
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", "onboarding@resend.dev")
 
-# 설정 검증 로그
+# 설정 검증
 if not VAPID_PRIVATE_KEY:
     logger.error("VAPID_PRIVATE_KEY가 설정되지 않았습니다.")
-else:
-    logger.info(f"VAPID_PRIVATE_KEY 로드 완료 (길이: {len(VAPID_PRIVATE_KEY)})")
 
 if not RESEND_API_KEY:
     logger.error("RESEND_API_KEY가 설정되지 않았습니다. 이메일 발송이 불가능합니다.")
 else:
-    logger.info(f"RESEND_API_KEY 로드 완료 (길이: {len(RESEND_API_KEY)})")
     resend.api_key = RESEND_API_KEY
 
 if not SMTP_FROM_EMAIL or SMTP_FROM_EMAIL == "onboarding@resend.dev":
-    logger.warning(f"⚠️ SMTP_FROM_EMAIL이 기본값({SMTP_FROM_EMAIL})입니다. 도메인 인증 전이라면 테스트 수신자에게만 발송됩니다.")
+    logger.warning("⚠️ SMTP_FROM_EMAIL이 기본값입니다. 도메인 인증 전이라면 테스트 수신자에게만 발송됩니다.")
 
 # VAPID_SUB 형식 강제 교정 (반드시 mailto: 포함)
-if VAPID_CLAIMS_EMAIL and not VAPID_CLAIMS_EMAIL.startswith("mailto:"):
-    VAPID_SUB = f"mailto:{VAPID_CLAIMS_EMAIL}"
-else:
-    VAPID_SUB = VAPID_CLAIMS_EMAIL or "mailto:admin@example.com"
+def get_vapid_sub():
+    email = os.getenv("VAPID_CLAIMS_EMAIL", "admin@example.com")
+    if email and not email.startswith("mailto:"):
+        return f"mailto:{email}"
+    return email or "mailto:admin@example.com"
 
 def send_email_notification(to_email, subject, message_body):
-    # 실행 시점에 API 키 재확인 (모듈 로드 시점 문제 방지)
-    current_api_key = resend.api_key or os.getenv("RESEND_API_KEY")
-    if not current_api_key:
-        logger.warning("RESEND_API_KEY가 설정되지 않아 이메일을 보낼 수 없습니다.")
+    # 실행 시점에 API 키 및 발신 이메일 재확인
+    api_key = os.getenv("RESEND_API_KEY")
+    from_email = os.getenv("SMTP_FROM_EMAIL", "onboarding@resend.dev")
+    
+    if not api_key:
+        logger.error("RESEND_API_KEY가 설정되지 않았습니다.")
         return False
     
-    if not resend.api_key:
-        resend.api_key = current_api_key
+    # 전역 객체 설정 (발송 직전)
+    resend.api_key = api_key
 
     if not to_email:
-        logger.warning("수신자 이메일이 없어 발송을 건너뜁니다.")
         return False
         
     try:
         params = {
-            "from": f"OSBP Notification <{SMTP_FROM_EMAIL}>",
+            "from": f"OSBP Notification <{from_email}>",
             "to": [to_email],
             "subject": subject,
             "text": message_body,
         }
-        resend.Emails.send(params)
-        logger.info(f"이메일 발송 성공 (Resend): {to_email}")
-        return True
+        r = resend.Emails.send(params)
+        
+        if (isinstance(r, dict) and r.get("id")) or (hasattr(r, "id") and r.id):
+            return True
+        else:
+            logger.error("이메일 발송 실패 (응답 이상)")
+            return False
     except Exception as e:
-        logger.error(f"이메일 발송 실패 (Resend): {e}")
+        logger.error(f"이메일 발송 예외 발생")
         return False
 
 def send_push_notification(subscription_info, title, body, url=None):
-    if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
-        logger.error("VAPID 키 설정 누락")
+    # 실행 시점에 VAPID 키 재확인 (모듈 로드 시점 문제 방지)
+    priv_key = os.getenv("VAPID_PRIVATE_KEY", "").strip().strip("'").strip('"')
+    pub_key = os.getenv("VAPID_PUBLIC_KEY", "").strip().strip("'").strip('"')
+    sub = get_vapid_sub()
+
+    if not priv_key or not pub_key:
+        logger.error("VAPID 키가 설정되지 않아 푸시를 보낼 수 없습니다.")
         return False
+        
     try:
         payload = {
             "title": title,
@@ -83,37 +93,38 @@ def send_push_notification(subscription_info, title, body, url=None):
             "url": url or "/"
         }
         
-        # subscription_info가 문자열이면 dict로 변환, 이미 dict면 그대로 사용
         if isinstance(subscription_info, str):
             subscription_dict = json.loads(subscription_info)
         else:
             subscription_dict = subscription_info
 
-        # 필수 필드 확인
         if not subscription_dict.get("endpoint"):
-            logger.error("구독 정보에 endpoint가 없습니다.")
             return False
+
+        # 엔드포인트에서 오리진(aud) 추출
+        parsed_endpoint = urllib.parse.urlparse(subscription_dict.get("endpoint"))
+        aud = f"{parsed_endpoint.scheme}://{parsed_endpoint.netloc}"
 
         webpush(
             subscription_info=subscription_dict,
             data=json.dumps(payload),
-            vapid_private_key=VAPID_PRIVATE_KEY,
-            vapid_claims={"sub": VAPID_SUB},
+            vapid_private_key=priv_key,
+            vapid_claims={
+                "sub": sub,
+                "aud": aud
+            },
             ttl=43200
         )
 
-        logger.info(f"푸시 발송 성공: {title}")
         return True
     except WebPushException as ex:
         if ex.response is not None:
-            if ex.response.status_code in [404, 410]:
+            if ex.response.status_code == 403:
+                logger.error("VAPID 인증 실패 (403)")
+            elif ex.response.status_code in [404, 410]:
                 return "EXPIRED"
-            logger.error(f"푸시 서비스 응답 에러 ({ex.response.status_code}): {ex.response.text}")
-        else:
-            logger.error(f"푸시 네트워크 에러: {ex}")
         return False
     except Exception as e:
-        logger.error(f"푸시 내부 오류: {e}")
         return False
 
 def send_all_notifications(student_id, title, body, url=None, ignore_settings=False, assignment_id=None):
@@ -140,14 +151,15 @@ def send_all_notifications(student_id, title, body, url=None, ignore_settings=Fa
         push_enabled = settings.get("browserAlerts", True) if not ignore_settings else True
         if push_enabled:
             subscriptions = storage.get_push_subscriptions(student_id)
-            if not subscriptions:
-                results["push"].append("MISSING_SUBSCRIPTION")
-            else:
+            if subscriptions:
                 # 중복 제거 (endpoint 기준)
                 unique_subs = {}
                 for sub in subscriptions:
                     try:
                         s_dict = json.loads(sub) if isinstance(sub, str) else sub
+                        if not isinstance(s_dict, dict):
+                            continue
+                            
                         endpoint = s_dict.get("endpoint")
                         if endpoint:
                             unique_subs[endpoint] = s_dict
@@ -172,14 +184,12 @@ def send_all_notifications(student_id, title, body, url=None, ignore_settings=Fa
                 else:
                     # 만료된 구독 정보 처리
                     if res == "EXPIRED":
-                        logger.info(f"만료된 푸시 구독 발견 및 삭제 시도: {student_id}")
                         storage.delete_push_subscription(student_id, task_data)
                         results["push"].append("EXPIRED_REMOVED")
                     else:
                         results["push"].append(res)
                         if res is True: push_sent_count += 1
-            except Exception as e:
-                logger.error(f"{task_type} 발송 중 예외 발생 ({task_data}): {e}")
+            except:
                 if task_type == "email": results["email"] = False
                 else: results["push"].append(False)
 
