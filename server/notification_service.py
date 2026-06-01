@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import resend
+import urllib.parse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pywebpush import webpush, WebPushException
 from dotenv import load_dotenv
@@ -105,11 +106,18 @@ def send_push_notification(subscription_info, title, body, url=None):
         if not subscription_dict.get("endpoint"):
             return False
 
+        # 엔드포인트에서 오리진(aud) 추출
+        parsed_endpoint = urllib.parse.urlparse(subscription_dict.get("endpoint"))
+        aud = f"{parsed_endpoint.scheme}://{parsed_endpoint.netloc}"
+
         webpush(
             subscription_info=subscription_dict,
             data=json.dumps(payload),
             vapid_private_key=priv_key,
-            vapid_claims={"sub": sub},
+            vapid_claims={
+                "sub": sub,
+                "aud": aud
+            },
             ttl=43200
         )
 
@@ -117,10 +125,14 @@ def send_push_notification(subscription_info, title, body, url=None):
         return True
     except WebPushException as ex:
         if ex.response is not None:
+            logger.error(f"푸시 발송 실패 (상태 코드: {ex.response.status_code}, 본문: {ex.response.text})")
             if ex.response.status_code == 403:
-                logger.error(f"VAPID 인증 실패 (403): {ex.response.text}")
+                logger.error(f"VAPID 인증 실패 (403): 키 설정이나 서명 형식을 확인하세요.")
             elif ex.response.status_code in [404, 410]:
+                logger.info(f"푸시 구독 만료 또는 유효하지 않음 (404/410): 삭제 예정")
                 return "EXPIRED"
+        else:
+            logger.error(f"푸시 발송 실패 (상태 코드 없음): {str(ex)}")
         return False
     except Exception as e:
         logger.error(f"푸시 내부 오류: {e}")
