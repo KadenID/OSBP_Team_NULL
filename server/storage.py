@@ -300,365 +300,365 @@ def save_user_settings(student_id, settings):
             conn.commit()
         except Exception as e:
             conn.rollback()
-            logger.error(f"사용자 설정 저장 중 오류 발생 (student_id: {student_id}): {e}")
+            logger.error(f"사용자 설정 저장 중 오류 발생: {e}")
             raise
 
-def get_user_settings(student_id):
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                sql = "SELECT settings FROM user_settings WHERE student_id = %s;"
-                cur.execute(sql, (student_id,))
-                result = cur.fetchone()
-                return result[0] if result else {
+        def get_user_settings(student_id):
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    sql = "SELECT settings FROM user_settings WHERE student_id = %s;"
+                    cur.execute(sql, (student_id,))
+                    result = cur.fetchone()
+                    return result[0] if result else {
+                        "emailAlerts": False,
+                        "browserAlerts": False,
+                        "courseReminders": []
+                    }
+            except Exception as e:
+                logger.error(f"사용자 설정 조회 중 오류 발생: {e}")
+                return {
                     "emailAlerts": False,
                     "browserAlerts": False,
                     "courseReminders": []
                 }
-        except Exception as e:
-            logger.error(f"사용자 설정 조회 중 오류 발생 (student_id: {student_id}): {e}")
-            return {
-                "emailAlerts": False,
-                "browserAlerts": False,
-                "courseReminders": []
-            }
 
-# 모듈 로드 시 DB 초기화 실행
-init_db()
+        # 모듈 로드 시 DB 초기화 실행
+        init_db()
 
-# 입력: student_id (학번), password (비밀번호)
-# 기능: 사용자 학번과 암호화된 비밀번호를 데이터베이스에 저장
-# 반환: 없음
-def save_user(student_id, password):
-    encrypted_pw = encrypt(password)
-    
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                sql = """
-                INSERT INTO users (student_id, lms_password)
-                VALUES (%s, %s)
-                ON CONFLICT (student_id)
-                DO UPDATE SET lms_password = EXCLUDED.lms_password;
-                """
-                cur.execute(sql, (student_id, encrypted_pw))
-            conn.commit()
-        except Exception as e:
-            conn.rollback()
-            logger.error(f"사용자 정보 저장 중 오류 발생 (student_id: {student_id}): {e}")
-            raise
+        # 입력: student_id (학번), password (비밀번호)
+        # 기능: 사용자 학번과 암호화된 비밀번호를 데이터베이스에 저장
+        # 반환: 없음
+        def save_user(student_id, password):
+        encrypted_pw = encrypt(password)
 
-# 입력: student_id (학번)
-# 기능: 데이터베이스에서 학번으로 사용자 정보를 조회하고 비밀번호를 복호화하여 반환
-# 반환: (학번, 복호화된 비밀번호) 튜플
-def load_user(student_id):
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                sql = "SELECT lms_password FROM users WHERE student_id = %s;"
-                cur.execute(sql, (student_id,))
-                result = cur.fetchone()
-                
-                if result:
-                    encrypted_pw = result[0]
-                    password = decrypt(encrypted_pw)
-                    return student_id, password
-                else:
-                    return None, None
-        except Exception as e:
-            logger.error(f"사용자 정보 로드 중 오류 발생 (student_id: {student_id}): {e}")
-            raise
-
-# 입력: student_id (학번), token_value (토큰), expires_at (만료 시간)
-# 기능: 리프레시 토큰 정보를 데이터베이스에 저장하거나 업데이트
-# 반환: 없음
-def save_refresh_token(student_id, token_value, expires_at):
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                sql = """
-                INSERT INTO refresh_tokens (student_id, token_value, expires_at)
-                VALUES (%s, %s, %s)
-                ON CONFLICT (student_id)
-                DO UPDATE SET token_value = EXCLUDED.token_value, expires_at = EXCLUDED.expires_at;
-                """
-                cur.execute(sql, (student_id, token_value, expires_at))
-            conn.commit()
-        except Exception as e:
-            conn.rollback()
-            logger.error(f"리프레시 토큰 저장 중 오류 발생 (student_id: {student_id}): {e}")
-            raise
-
-# 입력: student_id (학번)
-# 기능: 데이터베이스에서 학번으로 저장된 리프레시 토큰 정보를 조회
-# 반환: (토큰, 만료시간) 튜플
-def get_refresh_token(student_id):
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                sql = "SELECT token_value, expires_at FROM refresh_tokens WHERE student_id = %s;"
-                cur.execute(sql, (student_id,))
-                return cur.fetchone()
-        except Exception as e:
-            logger.error(f"리프레시 토큰 조회 중 오류 발생 (student_id: {student_id}): {e}")
-            raise
-
-# 입력: student_id (학번)
-# 기능: 데이터베이스에서 해당 학번의 리프레시 토큰 정보를 영구 삭제
-# 반환: 없음
-def delete_refresh_token(student_id):
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                sql = "DELETE FROM refresh_tokens WHERE student_id = %s;"
-                cur.execute(sql, (student_id,))
-            conn.commit()
-        except Exception as e:
-            conn.rollback()
-            logger.error(f"리프레시 토큰 삭제 중 오류 발생 (student_id: {student_id}): {e}")
-            raise
-
-# 커스텀 과제 CRUD
-
-# 입력: student_id (학번), assignment_data (딕셔너리)
-# 기능: 커스텀 과제를 DB에 저장하거나 수정
-# 반환: 저장된 과제의 ID
-def save_custom_assignment(student_id, assignment_data):
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                # 필드명 매핑 (프론트엔드 isSubmitted -> DB is_submitted)
-                is_submitted = assignment_data.get('isSubmitted', False)
-                description = assignment_data.get('description', '')
-                
-                assignment_id = assignment_data.get('id')
-                # id가 존재하고 숫자 형태인 경우 수정(Update), 아니면 신규(Insert)
-                if assignment_id and str(assignment_id).isdigit():
-                    # 수정
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
                     sql = """
-                    UPDATE custom_assignments 
-                    SET course_name = %s, assignment_name = %s, due_date = %s, is_submitted = %s, description = %s
-                    WHERE id = %s AND student_id = %s
-                    RETURNING id;
+                    INSERT INTO users (student_id, lms_password)
+                    VALUES (%s, %s)
+                    ON CONFLICT (student_id)
+                    DO UPDATE SET lms_password = EXCLUDED.lms_password;
                     """
-                    cur.execute(sql, (
-                        assignment_data['subject'],
-                        assignment_data['task'],
-                        assignment_data['deadline'],
-                        is_submitted,
-                        description,
-                        int(assignment_id),
-                        student_id
-                    ))
-                else:
-                    # 신규 추가
-                    sql = """
-                    INSERT INTO custom_assignments (student_id, course_name, assignment_name, due_date, is_submitted, description)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                    RETURNING id;
-                    """
-                    cur.execute(sql, (
-                        student_id,
-                        assignment_data['subject'],
-                        assignment_data['task'],
-                        assignment_data['deadline'],
-                        is_submitted,
-                        description
-                    ))
-                
-                result = cur.fetchone()
+                    cur.execute(sql, (student_id, encrypted_pw))
                 conn.commit()
-                return result[0] if result else None
-        except Exception as e:
-            conn.rollback()
-            logger.error(f"커스텀 과제 저장 중 오류 발생 (student_id: {student_id}): {e}")
-            raise
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"사용자 정보 저장 중 오류 발생: {e}")
+                raise
 
-# 입력: student_id (학번)
-# 기능: 해당 사용자의 모든 커스텀 과제 조회
-# 반환: 과제 리스트
-def get_custom_assignments(student_id):
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                # 과목명(course_name) 순으로 먼저 정렬하여 API 레이어에서 정렬된 상태를 기대할 수 있게 함
-                sql = "SELECT id, course_name, assignment_name, due_date, is_submitted, description FROM custom_assignments WHERE student_id = %s ORDER BY course_name ASC, due_date ASC;"
-                cur.execute(sql, (student_id,))
-                rows = cur.fetchall()
-                
-                assignments = []
-                for row in rows:
-                    assignments.append({
-                        "id": str(row[0]),
-                        "subject": row[1],
-                        "task": row[2],
-                        "deadline": row[3],
-                        "isSubmitted": row[4],
-                        "description": row[5],
-                        "source": "user"
-                    })
-                return assignments
-        except Exception as e:
-            logger.error(f"커스텀 과제 조회 중 오류 발생 (student_id: {student_id}): {e}")
-            raise
+        # 입력: student_id (학번)
+        # 기능: 데이터베이스에서 학번으로 사용자 정보를 조회하고 비밀번호를 복호화하여 반환
+        # 반환: (학번, 복호화된 비밀번호) 튜플
+        def load_user(student_id):
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    sql = "SELECT lms_password FROM users WHERE student_id = %s;"
+                    cur.execute(sql, (student_id,))
+                    result = cur.fetchone()
 
-# 입력: student_id (학번), assignment_id (과제 ID)
-# 기능: 특정 커스텀 과제 삭제
-# 반환: 성공 여부
-def delete_custom_assignment(student_id, assignment_id):
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                sql = "DELETE FROM custom_assignments WHERE id = %s AND student_id = %s;"
-                cur.execute(sql, (int(assignment_id), student_id))
-            conn.commit()
-            return True
-        except Exception as e:
-            conn.rollback()
-            logger.error(f"커스텀 과제 삭제 중 오류 발생 (id: {assignment_id}): {e}")
-            raise
-
-# --- 알림 내역 관리 ---
-
-def save_user_courses(student_id, courses_dict):
-    """사용자의 수강 과목 목록을 DB에 저장 (동기화)"""
-    # courses_dict: {course_id: {"name": "...", "type": "..."}} 또는 {course_id: "name"} 형식 모두 지원
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                for course_id, data in courses_dict.items():
-                    if isinstance(data, dict):
-                        course_name = data.get("name")
-                        course_type = data.get("type", "regular")
+                    if result:
+                        encrypted_pw = result[0]
+                        password = decrypt(encrypted_pw)
+                        return student_id, password
                     else:
-                        course_name = data
-                        course_type = "regular"
+                        return None, None
+            except Exception as e:
+                logger.error(f"사용자 정보 로드 중 오류 발생: {e}")
+                raise
 
+        # 입력: student_id (학번), token_value (토큰), expires_at (만료 시간)
+        # 기능: 리프레시 토큰 정보를 데이터베이스에 저장하거나 업데이트
+        # 반환: 없음
+        def save_refresh_token(student_id, token_value, expires_at):
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
                     sql = """
-                    INSERT INTO user_courses (student_id, course_id, course_name, course_type, updated_at)
-                    VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
-                    ON CONFLICT (student_id, course_id)
-                    DO UPDATE SET course_name = EXCLUDED.course_name, 
-                                 course_type = EXCLUDED.course_type,
-                                 updated_at = CURRENT_TIMESTAMP;
+                    INSERT INTO refresh_tokens (student_id, token_value, expires_at)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (student_id)
+                    DO UPDATE SET token_value = EXCLUDED.token_value, expires_at = EXCLUDED.expires_at;
                     """
-                    cur.execute(sql, (student_id, course_id, course_name, course_type))
-                
-                # 현재 dict에 없는 과목은 삭제 (수강 취소 등 반영)
-                if courses_dict:
-                    placeholders = ', '.join(['%s'] * len(courses_dict))
-                    delete_sql = f"DELETE FROM user_courses WHERE student_id = %s AND course_id NOT IN ({placeholders});"
-                    cur.execute(delete_sql, [student_id] + list(courses_dict.keys()))
-                else:
-                    cur.execute("DELETE FROM user_courses WHERE student_id = %s;", (student_id,))
-                    
-            conn.commit()
-            logger.info(f"사용자 과목 정보 업데이트 완료 (student_id: {student_id})")
-        except Exception as e:
-            conn.rollback()
-            logger.error(f"사용자 과목 저장 중 오류 발생 (student_id: {student_id}): {e}")
+                    cur.execute(sql, (student_id, token_value, expires_at))
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"리프레시 토큰 저장 중 오류 발생: {e}")
+                raise
 
-def get_user_courses(student_id):
-    """DB에서 사용자의 수강 과목 목록 조회"""
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                sql = "SELECT course_id, course_name, course_type FROM user_courses WHERE student_id = %s;"
-                cur.execute(sql, (student_id,))
-                rows = cur.fetchall()
-                # 호환성을 위해 {id: {name, type}} 구조로 반환
-                return {row[0]: {"name": row[1], "type": row[2]} for row in rows}
-        except Exception as e:
-            logger.error(f"사용자 과목 조회 중 오류 발생 (student_id: {student_id}): {e}")
-            return {}
+        # 입력: student_id (학번)
+        # 기능: 데이터베이스에서 학번으로 저장된 리프레시 토큰 정보를 조회
+        # 반환: (토큰, 만료시간) 튜플
+        def get_refresh_token(student_id):
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    sql = "SELECT token_value, expires_at FROM refresh_tokens WHERE student_id = %s;"
+                    cur.execute(sql, (student_id,))
+                    return cur.fetchone()
+            except Exception as e:
+                logger.error(f"리프레시 토큰 조회 중 오류 발생: {e}")
+                raise
 
-def add_notification_history(student_id, title, message, channel, assignment_id=None, url=None):
-    """사용자에게 보여줄 알림 내역을 저장 (과제 ID 및 URL 포함)"""
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                sql = """
-                INSERT INTO notification_history (student_id, title, message, channel, assignment_id, url)
-                VALUES (%s, %s, %s, %s, %s, %s);
-                """
-                cur.execute(sql, (student_id, title, message, channel, assignment_id, url))
-            conn.commit()
-        except Exception as e:
-            conn.rollback()
-            logger.error(f"알림 내역 저장 중 오류 발생: {e}")
+        # 입력: student_id (학번)
+        # 기능: 데이터베이스에서 해당 학번의 리프레시 토큰 정보를 영구 삭제
+        # 반환: 없음
+        def delete_refresh_token(student_id):
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    sql = "DELETE FROM refresh_tokens WHERE student_id = %s;"
+                    cur.execute(sql, (student_id,))
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"리프레시 토큰 삭제 중 오류 발생: {e}")
+                raise
 
-def get_notification_history(student_id, limit=50):
-    """사용자의 최근 알림 내역을 조회"""
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                sql = """
-                SELECT id, title, message, channel, sent_at, assignment_id, url
-                FROM notification_history 
-                WHERE student_id = %s 
-                ORDER BY sent_at DESC 
-                LIMIT %s;
-                """
-                cur.execute(sql, (student_id, limit))
-                rows = cur.fetchall()
-                return [
-                    {
-                        "id": row[0],
-                        "title": row[1],
-                        "message": row[2],
-                        "channel": row[3],
-                        "sent_at": row[4].isoformat(),
-                        "assignment_id": row[5],
-                        "url": row[6]
-                    } for row in rows
-                ]
-        except Exception as e:
-            logger.error(f"알림 내역 조회 중 오류 발생: {e}")
-            return []
+        # 커스텀 과제 CRUD
 
-def delete_specific_notification_history(student_id, history_id):
-    """특정 알림 내역 삭제"""
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                sql = "DELETE FROM notification_history WHERE id = %s AND student_id = %s;"
-                cur.execute(sql, (history_id, student_id))
-            conn.commit()
-            return cur.rowcount > 0
-        except Exception as e:
-            conn.rollback()
-            logger.error(f"알림 내역 개별 삭제 중 오류 발생: {e}")
-            return False
+        # 입력: student_id (학번), assignment_data (딕셔너리)
+        # 기능: 커스텀 과제를 DB에 저장하거나 수정
+        # 반환: 저장된 과제의 ID
+        def save_custom_assignment(student_id, assignment_data):
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    # 필드명 매핑 (프론트엔드 isSubmitted -> DB is_submitted)
+                    is_submitted = assignment_data.get('isSubmitted', False)
+                    description = assignment_data.get('description', '')
 
-def delete_old_notification_history(days=30):
-    """오래된 알림 내역 삭제"""
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                sql = "DELETE FROM notification_history WHERE sent_at < CURRENT_TIMESTAMP - (INTERVAL '1 day' * %s);"
-                cur.execute(sql, (days,))
-                count = cur.rowcount
-            conn.commit()
-            return count
-        except Exception as e:
-            conn.rollback()
-            logger.error(f"오래된 알림 내역 삭제 중 오류 발생: {e}")
-            return 0
+                    assignment_id = assignment_data.get('id')
+                    # id가 존재하고 숫자 형태인 경우 수정(Update), 아니면 신규(Insert)
+                    if assignment_id and str(assignment_id).isdigit():
+                        # 수정
+                        sql = """
+                        UPDATE custom_assignments 
+                        SET course_name = %s, assignment_name = %s, due_date = %s, is_submitted = %s, description = %s
+                        WHERE id = %s AND student_id = %s
+                        RETURNING id;
+                        """
+                        cur.execute(sql, (
+                            assignment_data['subject'],
+                            assignment_data['task'],
+                            assignment_data['deadline'],
+                            is_submitted,
+                            description,
+                            int(assignment_id),
+                            student_id
+                        ))
+                    else:
+                        # 신규 추가
+                        sql = """
+                        INSERT INTO custom_assignments (student_id, course_name, assignment_name, due_date, is_submitted, description)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                        RETURNING id;
+                        """
+                        cur.execute(sql, (
+                            student_id,
+                            assignment_data['subject'],
+                            assignment_data['task'],
+                            assignment_data['deadline'],
+                            is_submitted,
+                            description
+                        ))
 
-# --- 사용자 계정 삭제 ---
+                    result = cur.fetchone()
+                    conn.commit()
+                    return result[0] if result else None
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"커스텀 과제 저장 중 오류 발생: {e}")
+                raise
 
-def delete_user_entirely(student_id):
-    """사용자의 모든 정보를 DB에서 영구 삭제"""
-    with get_db_connection() as conn:
-        try:
-            with conn.cursor() as cur:
-                # users 테이블에서 삭제하면 CASCADE 설정에 의해 연관된 모든 테이블(설정, 토큰, 과제 등) 데이터가 삭제됨
-                sql = "DELETE FROM users WHERE student_id = %s;"
-                cur.execute(sql, (student_id,))
-            conn.commit()
-            logger.info(f"사용자 DB 데이터 전체 삭제 완료 (student_id: {student_id})")
-            return True
-        except Exception as e:
-            conn.rollback()
-            logger.error(f"사용자 DB 데이터 삭제 중 오류 발생 (student_id: {student_id}): {e}")
-            return False
+        # 입력: student_id (학번)
+        # 기능: 해당 사용자의 모든 커스텀 과제 조회
+        # 반환: 과제 리스트
+        def get_custom_assignments(student_id):
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    # 과목명(course_name) 순으로 먼저 정렬하여 API 레이어에서 정렬된 상태를 기대할 수 있게 함
+                    sql = "SELECT id, course_name, assignment_name, due_date, is_submitted, description FROM custom_assignments WHERE student_id = %s ORDER BY course_name ASC, due_date ASC;"
+                    cur.execute(sql, (student_id,))
+                    rows = cur.fetchall()
+
+                    assignments = []
+                    for row in rows:
+                        assignments.append({
+                            "id": str(row[0]),
+                            "subject": row[1],
+                            "task": row[2],
+                            "deadline": row[3],
+                            "isSubmitted": row[4],
+                            "description": row[5],
+                            "source": "user"
+                        })
+                    return assignments
+            except Exception as e:
+                logger.error(f"커스텀 과제 조회 중 오류 발생: {e}")
+                raise
+
+        # 입력: student_id (학번), assignment_id (과제 ID)
+        # 기능: 특정 커스텀 과제 삭제
+        # 반환: 성공 여부
+        def delete_custom_assignment(student_id, assignment_id):
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    sql = "DELETE FROM custom_assignments WHERE id = %s AND student_id = %s;"
+                    cur.execute(sql, (int(assignment_id), student_id))
+                conn.commit()
+                return True
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"커스텀 과제 삭제 중 오류 발생: {e}")
+                raise
+
+        # --- 알림 내역 관리 ---
+
+        def save_user_courses(student_id, courses_dict):
+        """사용자의 수강 과목 목록을 DB에 저장 (동기화)"""
+        # courses_dict: {course_id: {"name": "...", "type": "..."}} 또는 {course_id: "name"} 형식 모두 지원
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    for course_id, data in courses_dict.items():
+                        if isinstance(data, dict):
+                            course_name = data.get("name")
+                            course_type = data.get("type", "regular")
+                        else:
+                            course_name = data
+                            course_type = "regular"
+
+                        sql = """
+                        INSERT INTO user_courses (student_id, course_id, course_name, course_type, updated_at)
+                        VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+                        ON CONFLICT (student_id, course_id)
+                        DO UPDATE SET course_name = EXCLUDED.course_name, 
+                                     course_type = EXCLUDED.course_type,
+                                     updated_at = CURRENT_TIMESTAMP;
+                        """
+                        cur.execute(sql, (student_id, course_id, course_name, course_type))
+
+                    # 현재 dict에 없는 과목은 삭제 (수강 취소 등 반영)
+                    if courses_dict:
+                        placeholders = ', '.join(['%s'] * len(courses_dict))
+                        delete_sql = f"DELETE FROM user_courses WHERE student_id = %s AND course_id NOT IN ({placeholders});"
+                        cur.execute(delete_sql, [student_id] + list(courses_dict.keys()))
+                    else:
+                        cur.execute("DELETE FROM user_courses WHERE student_id = %s;", (student_id,))
+
+                conn.commit()
+                logger.info("사용자 과목 정보 업데이트 완료")
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"사용자 과목 저장 중 오류 발생: {e}")
+
+        def get_user_courses(student_id):
+        """DB에서 사용자의 수강 과목 목록 조회"""
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    sql = "SELECT course_id, course_name, course_type FROM user_courses WHERE student_id = %s;"
+                    cur.execute(sql, (student_id,))
+                    rows = cur.fetchall()
+                    # 호환성을 위해 {id: {name, type}} 구조로 반환
+                    return {row[0]: {"name": row[1], "type": row[2]} for row in rows}
+            except Exception as e:
+                logger.error(f"사용자 과목 조회 중 오류 발생: {e}")
+                return {}
+
+        def add_notification_history(student_id, title, message, channel, assignment_id=None, url=None):
+        """사용자에게 보여줄 알림 내역을 저장 (과제 ID 및 URL 포함)"""
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    sql = """
+                    INSERT INTO notification_history (student_id, title, message, channel, assignment_id, url)
+                    VALUES (%s, %s, %s, %s, %s, %s);
+                    """
+                    cur.execute(sql, (student_id, title, message, channel, assignment_id, url))
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"알림 내역 저장 중 오류 발생: {e}")
+
+        def get_notification_history(student_id, limit=50):
+        """사용자의 최근 알림 내역을 조회"""
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    sql = """
+                    SELECT id, title, message, channel, sent_at, assignment_id, url
+                    FROM notification_history 
+                    WHERE student_id = %s 
+                    ORDER BY sent_at DESC 
+                    LIMIT %s;
+                    """
+                    cur.execute(sql, (student_id, limit))
+                    rows = cur.fetchall()
+                    return [
+                        {
+                            "id": row[0],
+                            "title": row[1],
+                            "message": row[2],
+                            "channel": row[3],
+                            "sent_at": row[4].isoformat(),
+                            "assignment_id": row[5],
+                            "url": row[6]
+                        } for row in rows
+                    ]
+            except Exception as e:
+                logger.error(f"알림 내역 조회 중 오류 발생: {e}")
+                return []
+
+        def delete_specific_notification_history(student_id, history_id):
+        """특정 알림 내역 삭제"""
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    sql = "DELETE FROM notification_history WHERE id = %s AND student_id = %s;"
+                    cur.execute(sql, (history_id, student_id))
+                conn.commit()
+                return cur.rowcount > 0
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"알림 내역 개별 삭제 중 오류 발생: {e}")
+                return False
+
+        def delete_old_notification_history(days=30):
+        """오래된 알림 내역 삭제"""
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    sql = "DELETE FROM notification_history WHERE sent_at < CURRENT_TIMESTAMP - (INTERVAL '1 day' * %s);"
+                    cur.execute(sql, (days,))
+                    count = cur.rowcount
+                conn.commit()
+                return count
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"오래된 알림 내역 삭제 중 오류 발생: {e}")
+                return 0
+
+        # --- 사용자 계정 삭제 ---
+
+        def delete_user_entirely(student_id):
+        """사용자의 모든 정보를 DB에서 영구 삭제"""
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    # users 테이블에서 삭제하면 CASCADE 설정에 의해 연관된 모든 테이블(설정, 토큰, 과제 등) 데이터가 삭제됨
+                    sql = "DELETE FROM users WHERE student_id = %s;"
+                    cur.execute(sql, (student_id,))
+                conn.commit()
+                logger.info("사용자 DB 데이터 전체 삭제 완료")
+                return True
+            except Exception as e:
+                conn.rollback()
+                logger.error("사용자 DB 데이터 삭제 중 오류 발생")
+                return False
