@@ -28,7 +28,7 @@ export const useLMSStore = create((set, get) => ({
 
       const result = await response.json();
       if (result.success) {
-        set((prev) => ({ ...prev, [type]: { data: result.data, isLoading: false, isFetched: true } }));
+        set((prev) => ({ ...prev, [type]: { data: result.data || [], isLoading: false, isFetched: true } }));
       }
     } catch (error) {
       console.error(`${type} 로드 실패:`, error);
@@ -69,6 +69,7 @@ const getColorForString = (str) => {
 function NoticeTab({ accessToken }) {
   const [activeTab, setActiveTab] = useState('notices');
   const { notices, messages, fetchData } = useLMSStore();
+  const currentData = activeTab === 'notices' ? notices : messages;
 
   useEffect(() => {
     fetchData(activeTab, accessToken);
@@ -81,11 +82,10 @@ function NoticeTab({ accessToken }) {
   const [noticeLoading, setNoticeLoading] = useState(false);
   const [noticeError, setNoticeError] = useState("");
 
-  const selectedNotice = useMemo(() =>
-    notices.data.find(item =>
-      String(item.notice_id) === String(selectedNoticeId)
-    ) ?? null,
-  [notices.data, selectedNoticeId]);
+  const selectedNotice = useMemo(() => {
+    const data = (notices && Array.isArray(notices.data)) ? notices.data : [];
+    return data.find(item => String(item.notice_id) === String(selectedNoticeId)) ?? null;
+  }, [notices, selectedNoticeId]);
 
   // 모달 오픈 시 백그라운드 스크롤 방지
   useEffect(() => {
@@ -102,10 +102,10 @@ function NoticeTab({ accessToken }) {
 
   // 과목 태그 목록 생성 (중복 제거 및 정렬)
   const courses = useMemo(() => {
-    const rawCourses = Array.from(new Map(notices.data.map(n => [n.course_id, n.course_name])).entries())
+    const data = (notices && Array.isArray(notices.data)) ? notices.data : [];
+    const rawCourses = Array.from(new Map(data.map(n => [n.course_id, n.course_name])).entries())
       .map(([id, name]) => ({ id, name }));
       
-    // 정렬 로직 (한글 > 영어 > 숫자 순)
     const sorted = rawCourses.sort((a, b) => {
       const getSortKey = (name) => {
         if (!name) return 'z';
@@ -119,7 +119,8 @@ function NoticeTab({ accessToken }) {
     });
 
     return [{ id: 'all', name: '전체' }, ...sorted];
-  }, [notices.data]);
+  }, [notices]);
+
 
   // 과목별 고정 색상 맵핑 (중복 방지)
   const courseColorMap = useMemo(() => {
@@ -135,15 +136,15 @@ function NoticeTab({ accessToken }) {
   // 선택한 과목 필터링 리스트
   const filteredNotices = useMemo(() =>
     selectedCourse === 'all'
-      ? notices.data
-      : notices.data.filter(n => n.course_id === selectedCourse),
-  [notices.data, selectedCourse]);
+      ? (notices?.data || [])
+      : (notices?.data || []).filter(n => n.course_id === selectedCourse),
+  [notices?.data, selectedCourse]);
 
 
   // 리스트 렌더링용 변수 통합
   const isNotice = activeTab === 'notices';
-  const currentData = isNotice ? notices : messages;
-  const listItems = isNotice ? filteredNotices : messages.data;
+  const rawData = isNotice ? (filteredNotices || []) : (messages?.data || []);
+  const listItems = Array.isArray(rawData) ? rawData : []; 
   const emptyText = isNotice ? '공지사항이 없습니다.' : '받은 쪽지가 없습니다.';
 
   // 공지 클릭 시 상세 모달 — description_html 없으면 상세 API 호출
@@ -164,12 +165,13 @@ function NoticeTab({ accessToken }) {
             credentials: 'include'
           }
         );
+        
         const result = await response.json();
         if (result.success) {
           useLMSStore.setState(prev => ({
             notices: {
               ...prev.notices,
-              data: prev.notices.data.map(n =>
+              data: (prev.notices?.data || []).map(n =>
                 String(n.notice_id) === String(item.notice_id)
                   ? { ...n, ...result.data }
                   : n
@@ -222,7 +224,7 @@ function NoticeTab({ accessToken }) {
       ) : (
 
       <ul className="notice-list">
-        {listItems.length === 0 ? (
+        {(!listItems || listItems.length === 0) ? (
           <p className="notice-empty">{emptyText}</p>
         ) : (
            listItems.map((item, index) => { // 탭에 따라 매핑할 데이터 다르게 설정
