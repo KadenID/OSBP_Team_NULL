@@ -1,14 +1,18 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
-import App from '../../Project/client/src/App'; // 경로 수정
+import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import App from '../../Project/client/src/App';
 import { MemoryRouter } from 'react-router-dom';
 
 describe('App Component', () => {
-  it('renders without crashing', () => {
+  it('renders without crashing and performs initial auth check', async () => {
     render(
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>
+      <App />
     );
+
+    // fetch가 최소 한 번은 호출되었는지 확인 (silent refresh)
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
   });
 });
+
