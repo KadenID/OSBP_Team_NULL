@@ -391,4 +391,369 @@ describe('AlarmSettings Component', () => {
 
     expect(global.fetch).not.toHaveBeenCalled();
   });
+    it('브라우저 알림을 끄면 updateSettings를 호출한다', () => {
+    mocks.mockSettings = {
+      ...mocks.mockSettings,
+      browserAlerts: true,
+    };
+
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        getRegistration: vi.fn(() =>
+          Promise.resolve({
+            pushManager: {
+              getSubscription: vi.fn(() =>
+                Promise.resolve({
+                  toJSON: () => ({ endpoint: 'mock-endpoint' }),
+                  unsubscribe: vi.fn(),
+                })
+              ),
+            },
+          })
+        ),
+      },
+    });
+
+    const { container } = render(<AlarmSettings accessToken="mock-token" />);
+
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    const browserAlertCheckbox = checkboxes[1];
+
+    fireEvent.click(browserAlertCheckbox);
+
+    expect(mocks.updateSettings).toHaveBeenCalledWith(
+      { browserAlerts: false },
+      'mock-token'
+    );
+  });
+
+  it('브라우저 푸시 알림 미지원 환경이면 알림을 끄도록 updateSettings를 호출한다', async () => {
+    delete window.PushManager;
+    delete navigator.serviceWorker;
+
+    const { container } = render(<AlarmSettings accessToken="mock-token" />);
+
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    const browserAlertCheckbox = checkboxes[1];
+
+    fireEvent.click(browserAlertCheckbox);
+
+    expect(mocks.updateSettings).toHaveBeenCalledWith(
+      { browserAlerts: true },
+      'mock-token'
+    );
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith('푸시 알림 미지원 브라우저입니다.');
+      expect(mocks.updateSettings).toHaveBeenCalledWith(
+        { browserAlerts: false },
+        'mock-token'
+      );
+    });
+  });
+
+  it('브라우저 푸시 알림 권한이 거부되면 알림을 끄도록 updateSettings를 호출한다', async () => {
+    window.PushManager = vi.fn();
+
+    global.Notification = {
+      permission: 'default',
+      requestPermission: vi.fn(() => Promise.resolve('denied')),
+    };
+
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        json: () =>
+          Promise.resolve({
+            success: true,
+            publicKey: 'AAAA',
+          }),
+      })
+    );
+
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        ready: Promise.resolve({
+          pushManager: {
+            getSubscription: vi.fn(() => Promise.resolve(null)),
+          },
+        }),
+        getRegistration: vi.fn(() => Promise.resolve(null)),
+      },
+    });
+
+    const { container } = render(<AlarmSettings accessToken="mock-token" />);
+
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    const browserAlertCheckbox = checkboxes[1];
+
+    fireEvent.click(browserAlertCheckbox);
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith('알림 권한이 필요합니다.');
+      expect(mocks.updateSettings).toHaveBeenCalledWith(
+        { browserAlerts: false },
+        'mock-token'
+      );
+    });
+  });
+
+  it('브라우저 푸시 알림 권한이 허용되면 구독 정보를 서버에 저장한다', async () => {
+    window.PushManager = vi.fn();
+
+    global.Notification = {
+      permission: 'default',
+      requestPermission: vi.fn(() => Promise.resolve('granted')),
+    };
+
+    const mockUnsubscribe = vi.fn();
+    const mockSubscribe = vi.fn(() =>
+      Promise.resolve({
+        toJSON: () => ({ endpoint: 'new-endpoint' }),
+      })
+    );
+
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        json: () =>
+          Promise.resolve({
+            success: true,
+            publicKey: 'AAAA',
+          }),
+      })
+      .mockResolvedValueOnce({
+        json: () => Promise.resolve({ success: true }),
+      });
+
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        ready: Promise.resolve({
+          pushManager: {
+            getSubscription: vi.fn(() =>
+              Promise.resolve({
+                unsubscribe: mockUnsubscribe,
+              })
+            ),
+            subscribe: mockSubscribe,
+          },
+        }),
+        getRegistration: vi.fn(() => Promise.resolve(null)),
+      },
+    });
+
+    const { container } = render(<AlarmSettings accessToken="mock-token" />);
+
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    const browserAlertCheckbox = checkboxes[1];
+
+    fireEvent.click(browserAlertCheckbox);
+
+    await waitFor(() => {
+      expect(mockUnsubscribe).toHaveBeenCalled();
+      expect(mockSubscribe).toHaveBeenCalled();
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/push-subscription'),
+        expect.objectContaining({
+          method: 'POST',
+        })
+      );
+    });
+  });
+
+  it('브라우저 푸시 알림 VAPID 키 조회 실패 시 브라우저 알림을 끈다', async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+
+    window.PushManager = vi.fn();
+
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        json: () =>
+          Promise.resolve({
+            success: false,
+          }),
+      })
+    );
+
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        ready: Promise.resolve({
+          pushManager: {
+            getSubscription: vi.fn(() => Promise.resolve(null)),
+          },
+        }),
+        getRegistration: vi.fn(() => Promise.resolve(null)),
+      },
+    });
+
+    const { container } = render(<AlarmSettings accessToken="mock-token" />);
+
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    const browserAlertCheckbox = checkboxes[1];
+
+    fireEvent.click(browserAlertCheckbox);
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(mocks.updateSettings).toHaveBeenCalledWith(
+        { browserAlerts: false },
+        'mock-token'
+      );
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('기존 푸시 구독이 없어도 권한 허용 시 새 구독 정보를 저장한다', async () => {
+    window.PushManager = vi.fn();
+
+    global.Notification = {
+      permission: 'default',
+      requestPermission: vi.fn(() => Promise.resolve('granted')),
+    };
+
+    const mockSubscribe = vi.fn(() =>
+      Promise.resolve({
+        toJSON: () => ({ endpoint: 'new-endpoint' }),
+      })
+    );
+
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        json: () =>
+          Promise.resolve({
+            success: true,
+            publicKey: 'AAAA',
+          }),
+      })
+      .mockResolvedValueOnce({
+        json: () => Promise.resolve({ success: true }),
+      });
+
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        ready: Promise.resolve({
+          pushManager: {
+            getSubscription: vi.fn(() => Promise.resolve(null)),
+            subscribe: mockSubscribe,
+          },
+        }),
+        getRegistration: vi.fn(() => Promise.resolve(null)),
+      },
+    });
+
+    const { container } = render(<AlarmSettings accessToken="mock-token" />);
+
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    const browserAlertCheckbox = checkboxes[1];
+
+    fireEvent.click(browserAlertCheckbox);
+
+    await waitFor(() => {
+      expect(mockSubscribe).toHaveBeenCalled();
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/push-subscription'),
+        expect.objectContaining({
+          method: 'POST',
+        })
+      );
+    });
+  });
+
+  it('브라우저 알림 해제 시 기존 구독이 없으면 삭제 요청을 보내지 않는다', async () => {
+    mocks.mockSettings = {
+      ...mocks.mockSettings,
+      browserAlerts: true,
+    };
+
+    global.fetch = vi.fn();
+
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        getRegistration: vi.fn(() =>
+          Promise.resolve({
+            pushManager: {
+              getSubscription: vi.fn(() => Promise.resolve(null)),
+            },
+          })
+        ),
+      },
+    });
+
+    const { container } = render(<AlarmSettings accessToken="mock-token" />);
+
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+    const browserAlertCheckbox = checkboxes[1];
+
+    fireEvent.click(browserAlertCheckbox);
+
+    expect(mocks.updateSettings).toHaveBeenCalledWith(
+      { browserAlerts: false },
+      'mock-token'
+    );
+
+    await waitFor(() => {
+      expect(global.fetch).not.toHaveBeenCalledWith(
+        expect.stringContaining('/api/push-subscription'),
+        expect.objectContaining({
+          method: 'DELETE',
+        })
+      );
+    });
+  });
+
+  it('알림 목록에서 알 수 없는 과목 id는 id 값을 그대로 표시한다', () => {
+    mocks.mockSettings = {
+      ...mocks.mockSettings,
+      courseReminders: [
+        {
+          id: 'unknown-reminder',
+          courseId: 'unknown-course',
+          value: 5,
+          unit: 'hour',
+        },
+      ],
+    };
+
+    render(<AlarmSettings accessToken="mock-token" />);
+
+    expect(screen.getByText('unknown-course')).toBeInTheDocument();
+    expect(screen.getByText(/마감\s*5\s*시간\s*전/)).toBeInTheDocument();
+  });
+
+  it('전체 과목 알림을 다른 과목 알림보다 먼저 표시한다', () => {
+    mocks.mockSettings = {
+      ...mocks.mockSettings,
+      courseReminders: [
+        {
+          id: 'course-reminder',
+          courseId: 'course-1',
+          value: 2,
+          unit: 'hour',
+        },
+        {
+          id: 'all-reminder',
+          courseId: 'all',
+          value: 1,
+          unit: 'hour',
+        },
+      ],
+    };
+
+    const { container } = render(<AlarmSettings accessToken="mock-token" />);
+
+    const courseNames = Array.from(
+      container.querySelectorAll('.alarm-course-list .alarm-course-name')
+    ).map((element) => element.textContent);
+
+    expect(courseNames).toEqual(['전체 과목', '자료구조']);
+  });
 });
