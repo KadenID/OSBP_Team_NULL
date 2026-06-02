@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import useUserStore from "../../store/useUserStore";
-import "./User-Info.css";
+import "./UserInfo.css";
 
 function UserInfo({ accessToken }) {
     const { userInfo, fetchUserInfo } = useUserStore();

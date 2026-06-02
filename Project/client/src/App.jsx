@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 
-import LoginPage from "./Components/login_page/LoginPage";
-import MainPage from "./Components/main_page/MainPage";
-import MyPage from "./Components/my_page/MyPage";
+import LoginPage from "./Components/login-page/LoginPage";
+import MainPage from "./Components/main-page/MainPage";
+import MyPage from "./Components/my-page/MyPage";
 import { API_BASE_URL } from "./apiConfig";
 
 import { ThemeProvider } from "./context/ThemeContext.jsx";
