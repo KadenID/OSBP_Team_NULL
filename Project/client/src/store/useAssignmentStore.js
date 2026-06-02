@@ -5,6 +5,7 @@ const useAssignmentStore = create((set, get) => ({
   assignment: [],
   isLoading: false,
   isFetched: false,
+  error: null,
 
   // LMS 과제 및 DB 저장된 커스텀 과제 통합 로드
   fetchAssignments: async (accessToken) => {
@@ -49,6 +50,7 @@ const useAssignmentStore = create((set, get) => ({
       });
     } catch (error) {
       console.error("데이터 로드 중 오류 발생:", error);
+      set({ error: "과제를 불러오는 중 오류가 발생했습니다." });
     } finally {
       set({ isLoading: false });
     }

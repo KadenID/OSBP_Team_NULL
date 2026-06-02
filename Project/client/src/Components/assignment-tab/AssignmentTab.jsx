@@ -67,6 +67,7 @@ function AssignmentTab({ accessToken }) {
   const { 
     assignment, 
     isLoading, 
+    error,
     fetchAssignments,
     addAssignment,
     deleteAssignment, 
@@ -472,7 +473,11 @@ function AssignmentTab({ accessToken }) {
     <div className="assignment-container">
       <header> <p className="tab-title">과제 목록({filteredList.length})</p></header>
       {/* 로딩 중일 때와 아닐 때를 구분해서 렌더링 */}
-      {isLoading && assignment.length === 0 ? (
+
+      {/* 에러 발생 시 에러 메시지 렌더링 */}
+      {error ? (
+        <p className="notice-empty">{error}</p>
+      ) : isLoading && assignment.length === 0 ? (
         <p className="notice-empty">데이터를 불러오는 중입니다...</p>
       ) : (
       <ul className="mainbox"> {/* 과제 없는 경우 */}
