@@ -326,4 +326,69 @@ describe('AlarmSettings Component', () => {
     expect(screen.getByText(/마감\s*30\s*분\s*전/)).toBeInTheDocument();
     expect(screen.getByText(/마감\s*2\s*일\s*전/)).toBeInTheDocument();
   });
+    it('테스트 알림 발송 버튼 클릭 시 fetch를 호출하고 발송 완료 문구를 표시한다', async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        json: () => Promise.resolve({ success: true }),
+      })
+    );
+
+    render(<AlarmSettings accessToken="mock-token" />);
+
+    fireEvent.click(screen.getByText('테스트 알림 발송'));
+
+    expect(screen.getByText('발송 중...')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/test-notification'),
+        expect.objectContaining({
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer mock-token',
+          },
+        })
+      );
+
+      expect(screen.getByText('발송 완료!')).toBeInTheDocument();
+    });
+  });
+
+  it('테스트 알림 발송 실패 시 발송 실패 문구를 표시한다', async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        json: () => Promise.resolve({ success: false }),
+      })
+    );
+
+    render(<AlarmSettings accessToken="mock-token" />);
+
+    fireEvent.click(screen.getByText('테스트 알림 발송'));
+
+    await waitFor(() => {
+      expect(screen.getByText('발송 실패')).toBeInTheDocument();
+    });
+  });
+
+  it('테스트 알림 발송 중 오류가 발생하면 오류 발생 문구를 표시한다', async () => {
+    global.fetch = vi.fn(() => Promise.reject(new Error('network error')));
+
+    render(<AlarmSettings accessToken="mock-token" />);
+
+    fireEvent.click(screen.getByText('테스트 알림 발송'));
+
+    await waitFor(() => {
+      expect(screen.getByText('오류 발생')).toBeInTheDocument();
+    });
+  });
+
+  it('테스트 알림 발송 시 accessToken이 없으면 fetch를 호출하지 않는다', () => {
+    global.fetch = vi.fn();
+
+    render(<AlarmSettings accessToken={null} />);
+
+    fireEvent.click(screen.getByText('테스트 알림 발송'));
+
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
 });
