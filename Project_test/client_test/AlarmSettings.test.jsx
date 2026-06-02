@@ -192,4 +192,138 @@ describe('AlarmSettings Component', () => {
 
     expect(mocks.updateSettings).not.toHaveBeenCalled();
   });
+    it('설정된 알림이 없으면 빈 문구를 표시한다', () => {
+    render(<AlarmSettings accessToken="mock-token" />);
+
+    expect(screen.getByText('설정된 알림이 없습니다.')).toBeInTheDocument();
+  });
+
+  it('과목별 알림 추가 시 updateSettings를 호출한다', () => {
+    render(<AlarmSettings accessToken="mock-token" />);
+
+    const selects = screen.getAllByRole('combobox');
+    const courseSelect = selects[0];
+    const unitSelect = selects[1];
+    const numberInput = screen.getByRole('spinbutton');
+
+    fireEvent.change(courseSelect, {
+      target: { value: 'course-1' },
+    });
+
+    fireEvent.change(numberInput, {
+      target: { value: '2' },
+    });
+
+    fireEvent.change(unitSelect, {
+      target: { value: 'day' },
+    });
+
+    fireEvent.click(screen.getByText('추가'));
+
+    expect(mocks.updateSettings).toHaveBeenCalledWith(
+      {
+        courseReminders: [
+          expect.objectContaining({
+            courseId: 'course-1',
+            value: 2,
+            unit: 'day',
+          }),
+        ],
+      },
+      'mock-token'
+    );
+
+    expect(screen.getByText('알림이 추가되었습니다.')).toBeInTheDocument();
+  });
+
+  it('중복 알림 추가 시 alert를 호출하고 updateSettings를 호출하지 않는다', () => {
+    mocks.mockSettings = {
+      ...mocks.mockSettings,
+      courseReminders: [
+        {
+          id: 'reminder-1',
+          courseId: 'all',
+          value: 1,
+          unit: 'hour',
+        },
+      ],
+    };
+
+    render(<AlarmSettings accessToken="mock-token" />);
+
+    fireEvent.click(screen.getByText('추가'));
+
+    expect(window.alert).toHaveBeenCalledWith('이미 동일한 조건의 알림이 존재합니다.');
+    expect(mocks.updateSettings).not.toHaveBeenCalled();
+  });
+
+  it('기존 알림 삭제 시 updateSettings를 호출한다', () => {
+    mocks.mockSettings = {
+      ...mocks.mockSettings,
+      courseReminders: [
+        {
+          id: 'reminder-1',
+          courseId: 'course-1',
+          value: 3,
+          unit: 'hour',
+        },
+      ],
+    };
+
+    render(<AlarmSettings accessToken="mock-token" />);
+
+    expect(screen.getAllByText('자료구조')).toHaveLength(2);
+    expect(screen.getByText(/마감\s*3\s*시간\s*전/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('삭제'));
+
+    expect(mocks.updateSettings).toHaveBeenCalledWith(
+      { courseReminders: [] },
+      'mock-token'
+    );
+
+    expect(screen.getByText('알림이 삭제되었습니다.')).toBeInTheDocument();
+  });
+
+  it('알림 값이 최대값을 넘으면 추가 버튼이 비활성화된다', () => {
+    render(<AlarmSettings accessToken="mock-token" />);
+
+    const unitSelect = screen.getAllByRole('combobox')[1];
+    const numberInput = screen.getByRole('spinbutton');
+
+    fireEvent.change(unitSelect, {
+      target: { value: 'minute' },
+    });
+
+    fireEvent.change(numberInput, {
+      target: { value: '60' },
+    });
+
+    expect(screen.getByText('추가')).toBeDisabled();
+  });
+
+  it('알림 목록에서 분/일 단위 문구를 표시한다', () => {
+    mocks.mockSettings = {
+      ...mocks.mockSettings,
+      courseReminders: [
+        {
+          id: 'reminder-minute',
+          courseId: 'all',
+          value: 30,
+          unit: 'minute',
+        },
+        {
+          id: 'reminder-day',
+          courseId: 'course-1',
+          value: 2,
+          unit: 'day',
+        },
+      ],
+    };
+
+    render(<AlarmSettings accessToken="mock-token" />);
+
+    expect(screen.getByText(/마감\s*30\s*분\s*전/)).toBeInTheDocument();
+    expect(screen.getByText(/마감\s*2\s*일\s*전/)).toBeInTheDocument();
+  });
 });
