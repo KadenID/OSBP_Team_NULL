@@ -58,18 +58,3 @@ def login_to_lms(user_id, user_pw):
         return None, "서버 응답 시간이 초과되었습니다."
     except Exception as e:
         return None, f"알 수 없는 오류 발생: {str(e)}"
-
-# 단독 테스트 코드
-if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python lms_login.py <student_id> <password>")
-        sys.exit(1)
-        
-    test_id = sys.argv[1]
-    test_pw = sys.argv[2]
-    
-    session, message = login_to_lms(test_id, test_pw)
-    if session:
-        print(f"{message} | 세션: {session}")
-    else:
-        print(f"{message}")

@@ -291,7 +291,3 @@ def check_and_send_notifications():
             logger.error(f"사용자 {student_id} 예약 갱신 중 오류: {e}")
     
     logger.info("전역 알림 예약 동기화 완료")
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    check_and_send_notifications()
