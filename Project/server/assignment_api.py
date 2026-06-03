@@ -248,8 +248,10 @@ from fastapi.responses import JSONResponse
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     for error in exc.errors():
-        if error['type'] == 'value_error.any_str.max_length':
-            limit = error['ctx']['limit_value']
+        # Pydantic v1/v2 에러 타입 모두 대응
+        if error['type'] in ['value_error.any_str.max_length', 'string_too_long']:
+            # v1: limit_value, v2: max_length
+            limit = error.get('ctx', {}).get('max_length') or error.get('ctx', {}).get('limit_value')
             field = "아이디" if error['loc'][-1] == "student_id" else "비밀번호"
             return JSONResponse(
                 status_code=400,
