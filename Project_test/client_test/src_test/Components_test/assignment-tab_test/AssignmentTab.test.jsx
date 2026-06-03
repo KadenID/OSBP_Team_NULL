@@ -78,8 +78,9 @@ describe('AssignmentTab 컴포넌트 유닛 테스트 (100% 커버리지)', () =
 
     test('기본 필터링 상태에서 조건에 맞는 카드만 노출되는가', () => {
       render(<AssignmentTab accessToken={mockToken} />);
+      // Mock 데이터의 실제 과제명을 사용하여 검증
       expect(screen.getByText('과제 1 제출 안내')).toBeInTheDocument();
-      expect(screen.getByText('프로젝트 기능 명세서 작성 및 수정')).toBeInTheDocument();
+      expect(screen.getByText('스터디 발표 자료 초안 작성')).toBeInTheDocument();
     });
 
     test('과제 목록 API 호출 실패 시 에러 상태를 올바르게 처리하는가', async () => {
@@ -286,13 +287,15 @@ describe('AssignmentTab 컴포넌트 유닛 테스트 (100% 커버리지)', () =
 
     test('USER 과제의 완료하기 버튼을 누르면 toggleSubmit이 실행되는가', () => {
       render(<AssignmentTab accessToken={mockToken} />);
+      // custom-102 (스터디 발표...) 과제의 완료하기 버튼을 찾음
       const completeBtn = screen.getAllByRole('button', { name: '완료하기' })[0];
       fireEvent.click(completeBtn);
-      expect(mockToggleSubmit).toHaveBeenCalledWith('custom-101', mockToken);
+      expect(mockToggleSubmit).toHaveBeenCalledWith('custom-102', mockToken);
     });
 
     test('USER 과제의 삭제 버튼 취소 및 확정 모달 분기 검증', () => {
       render(<AssignmentTab accessToken={mockToken} />);
+      // custom-102 과제의 삭제 버튼을 찾음
       const listDeleteBtn = screen.getAllByRole('button', { name: '삭제' })[0];
       
       // 1. 과제 제거 컨펌 모달창 열기
@@ -310,7 +313,7 @@ describe('AssignmentTab 컴포넌트 유닛 테스트 (100% 커버리지)', () =
       const confirmBtn = within(modalOverlay).getByRole('button', { name: '삭제' });
       fireEvent.click(confirmBtn);
 
-      expect(mockDeleteAssignment).toHaveBeenCalledWith('custom-101', mockToken);
+      expect(mockDeleteAssignment).toHaveBeenCalledWith('custom-102', mockToken);
     });
 
     test('삭제 모달에서 취소 후 다시 삭제를 시도하면 정상적으로 삭제되는가 (Lines 431-434)', () => {
