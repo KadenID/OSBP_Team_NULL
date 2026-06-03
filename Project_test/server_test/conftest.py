@@ -29,3 +29,11 @@ sys.modules["upstash_redis"] = mock_redis_module
 def setup_test_env():
     """테스트 세션 시작 시 필요한 초기화 작업 (현재는 환경 변수만으로 충분)"""
     pass
+
+@pytest.fixture
+def mock_session():
+    """requests.Session을 모킹하고 세션 인스턴스를 반환하는 공용 픽스처"""
+    from unittest.mock import patch
+    with patch("requests.Session") as mock_class:
+        session_instance = mock_class.return_value
+        yield session_instance

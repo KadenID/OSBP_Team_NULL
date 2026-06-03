@@ -10,12 +10,8 @@ def read_mock_file(filename):
     with open(os.path.join(MOCK_DATA_DIR, filename), "r", encoding="utf-8") as f:
         return f.read()
 
-@patch("requests.Session")
-def test_lms_login_success(mock_session_class):
+def test_lms_login_success(mock_session):
     """로그인 성공 시나리오 테스트 (Mock)"""
-    # 가짜 세션 설정
-    mock_session = mock_session_class.return_value
-    
     # GET 요청에 대한 응답 (로그인 페이지 HTML)
     mock_get_resp = MagicMock()
     mock_get_resp.status_code = 200
@@ -30,16 +26,12 @@ def test_lms_login_success(mock_session_class):
     # 함수 실행
     session, message = login_to_lms("test_user", "test_pw")
     
-    # 5. 검증
+    # 검증
     assert session is not None
     assert "성공" in message
-    print("\n[성공] 목 데이터를 이용한 로그인 성공 테스트 통과")
 
-@patch("requests.Session")
-def test_lms_login_fail(mock_session_class):
+def test_lms_login_fail(mock_session):
     """로그인 실패 시나리오 테스트 (Mock)"""
-    mock_session = mock_session_class.return_value
-    
     # 로그인 페이지 로드 성공
     mock_get_resp = MagicMock()
     mock_get_resp.text = read_mock_file("login_page.html")
@@ -54,13 +46,9 @@ def test_lms_login_fail(mock_session_class):
     
     assert session is None
     assert "실패" in message
-    print("\n[성공] 목 데이터를 이용한 로그인 실패 테스트 통과")
 
-@patch("requests.Session")
-def test_lms_login_admin(mock_session_class):
+def test_lms_login_admin(mock_session):
     """admin / testpw 계정 전용 로그인 테스트 (Mock)"""
-    mock_session = mock_session_class.return_value
-    
     # 로그인 페이지 로드 (가짜 토큰 반환)
     mock_get_resp = MagicMock()
     mock_get_resp.text = read_mock_file("login_page.html")
@@ -87,5 +75,3 @@ def test_lms_login_admin(mock_session_class):
     session_fail, message_fail = login_to_lms("admin", "wrong_pw")
     assert session_fail is None
     assert "실패" in message_fail
-    
-    print("\n[성공] admin/testpw 계정 전용 목 테스트 통과")
