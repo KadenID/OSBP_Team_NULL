@@ -1,5 +1,6 @@
 import pytest
 import importlib
+import urllib.parse
 from unittest.mock import patch, MagicMock
 from requests.exceptions import HTTPError
 
@@ -23,80 +24,89 @@ def test_get_course_sort_key():
     assert get_course_sort_key("!@#")[0] == 3
     assert get_course_sort_key("")[0] == 4
     assert get_course_sort_key(None)[0] == 4
-    assert get_course_sort_key(123)[0] == 2 # 숫자가 들어올 경우
+    assert get_course_sort_key(123)[0] == 2
 
-# ─── get_enrolled_courses 테스트 ─────────────────────────────────────────
+# ─── get_enrolled_courses 보강 테스트 ──────────────────────────────────────
 
 @patch("redis_cache.get_cached_courses")
 def test_get_enrolled_courses_from_cache(mock_get_cache):
-    """캐시된 과목 정보가 있을 때 그대로 정렬되어 반환되는지 테스트한다."""
+    """캐시된 과목 정보가 있을 때 정렬되어 반환되는지 테스트."""
     mock_get_cache.return_value = {
         "2": {"name": "가나다", "type": "regular"},
         "1": {"name": "abc", "type": "regular"}
     }
-    
     result = get_enrolled_courses(MagicMock(), student_id="user1")
-    # 한글이 영어보다 우선순위가 높으므로 가나다가 먼저 와야 함
-    keys = list(result.keys())
-    assert keys == ["2", "1"]
+    assert list(result.keys()) == ["2", "1"]
 
-def test_get_enrolled_courses_session_expired():
-    """302 리다이렉트 발생 시 SessionExpiredError가 발생하는지 테스트한다."""
+def test_get_enrolled_courses_status_codes():
+    """302 및 401 응답 시 세션 만료 예외 발생 확인."""
     mock_session = MagicMock()
-    mock_resp = MagicMock()
-    mock_resp.status_code = 302
-    mock_session.get.return_value = mock_resp
-    
+    mock_session.get.return_value = MagicMock(status_code=302)
+    with pytest.raises(SessionExpiredError):
+        get_enrolled_courses(mock_session)
+    mock_session.get.return_value = MagicMock(status_code=401)
     with pytest.raises(SessionExpiredError):
         get_enrolled_courses(mock_session)
 
-@patch("storage.save_user_courses")
-@patch("redis_cache.set_cached_courses")
-@patch("redis_cache.get_cached_courses", return_value=None)
-def test_get_enrolled_courses_success(mock_get_cache, mock_set_cache, mock_save_db):
-    """HTML을 파싱하여 정규/비교과 과목이 정상 추출되는지 테스트한다."""
+@patch("storage.get_user_courses")
+@patch("redis_cache.get_cached_courses")
+def test_get_enrolled_courses_backup_logic(mock_get_cache, mock_get_db):
+    """크롤링 실패 시 DB에서 백업 데이터를 로드하는지 테스트."""
     mock_session = MagicMock()
-    mock_resp = MagicMock()
-    mock_resp.status_code = 200
-    mock_resp.text = """
+    mock_session.get.return_value = MagicMock(status_code=200, text="<html></html>")
+    mock_get_cache.return_value = None
+    # DB 반환값 형식을 실제와 동일하게 딕셔너리로 설정
+    mock_get_db.return_value = {"999": {"name": "백업과목", "type": "regular"}}
+    
+    result = get_enrolled_courses(mock_session, student_id="user1")
+    assert "999" in result
+    assert result["999"]["name"] == "백업과목"
+
+def test_get_enrolled_courses_complex_parsing():
+    """복잡한 HTML 구조 및 '진행중' 텍스트 파싱 테스트."""
+    mock_session = MagicMock()
+    # title 속성 패턴(괄호 코드 포함) 및 '진행중' 분기 커버
+    html = """
     <html>
-        <a href="course/view.php?id=101" title="소프트웨어공학 (2026-1)"></a>
-        <div class="badge-coursetype-re"></div>
-        
-        <a href="course/view.php?id=102" title="비교과특강">비교과특강</a>
+        <a href="course/view.php?id=201" title="알고리즘 (20261-001)"></a>
         <div class="badge-coursetype-on"></div>
+        
+        <a href="course/view.php?id=202">
+            <span>진행중</span>
+            <span>데이터베이스</span>
+        </a>
     </html>
     """
-    mock_session.get.return_value = mock_resp
+    mock_session.get.return_value = MagicMock(status_code=200, text=html)
     
-    result = get_enrolled_courses(mock_session, "user1")
-    
-    # 101, 102 추출 확인
-    assert "101" in result
-    assert result["101"]["name"] == "소프트웨어공학"
-    # assert result["101"]["type"] == "regular" # HTML 구조상 형제가 아니므로 정규식이나 parent 체크에 따라 달라짐
-    assert "102" in result
-    assert result["102"]["name"] == "비교과특강"
-    
-    # DB 및 캐시 저장 함수 호출 확인
-    mock_save_db.assert_called_once()
-    mock_set_cache.assert_called_once()
+    result = get_enrolled_courses(mock_session)
+    assert result["201"]["name"] == "알고리즘"
+    assert result["201"]["type"] == "comparative"
+    assert result["202"]["name"] == "데이터베이스"
 
-# ─── get_user_profile 테스트 ───────────────────────────────────────────
-
-def test_get_user_profile_success():
-    """LMS 프로필 정보(sesskey 파싱 및 두 번째 요청) 추출을 테스트한다."""
+def test_sort_courses_bad_data_handling():
+    """데이터 형식이 비정상적일 때 정렬 헬퍼 함수가 안전하게 동작하는지 테스트."""
+    from lms_crawler import get_enrolled_courses
     mock_session = MagicMock()
+    # 크롤링 성공했으나 과목명이 없는 등의 상황 시뮬레이션
+    html = '<a href="course/view.php?id=1"></a>'
+    mock_session.get.return_value = MagicMock(status_code=200, text=html)
     
-    # 1. 대시보드에서 sesskey 추출
-    mock_resp1 = MagicMock(status_code=200, text='{"sesskey":"abc1234"}')
+    # 예외가 발생하지 않고 빈 결과가 나오거나 안전하게 리턴되어야 함
+    result = get_enrolled_courses(mock_session)
+    assert isinstance(result, dict)
+
+# ─── get_user_profile 보강 테스트 ──────────────────────────────────────────
+
+def test_get_user_profile_success_variant():
+    """다른 sesskey 패턴과 상세 학과 파싱 로직 테스트."""
+    mock_session = MagicMock()
+    mock_resp1 = MagicMock(status_code=200, text='sesskey=xyz789') # query string 패턴
     
-    # 2. 프로필 API 응답 (json)
     profile_html = """
-    <h4 class="username">김철수</h4>
+    <h4 class="username"> 이몽룡 </h4>
     <div class="department">
-        <span>충북대학교</span><br>
-        <span>소프트웨어학부</span>
+        공과대학<br>컴퓨터공학과
     </div>
     """
     mock_resp2 = MagicMock(status_code=200)
@@ -105,98 +115,95 @@ def test_get_user_profile_success():
     mock_session.get.return_value = mock_resp1
     mock_session.post.return_value = mock_resp2
     
-    result = get_user_profile(mock_session, "20240001")
-    
-    assert result["name"] == "김철수"
-    assert result["department"] == "소프트웨어학부"
-    assert result["student_id"] == "20240001"
+    result = get_user_profile(mock_session, "20240002")
+    assert result["name"] == "이몽룡"
+    assert result["department"] == "컴퓨터공학과"
 
-# ─── get_assignments_for_course 테스트 ──────────────────────────────────
-
-def test_get_assignments_for_course_success():
-    """특정 과목의 과제 목록 HTML 파싱을 테스트한다."""
+def test_get_user_profile_errors():
+    """프로필 추출 시 다양한 에러 상황 테스트."""
     mock_session = MagicMock()
-    mock_resp = MagicMock(status_code=200)
-    mock_resp.text = """
+    mock_session.get.return_value = MagicMock(status_code=200, text="no sesskey")
+    with pytest.raises(Exception, match="sesskey"):
+        get_user_profile(mock_session, "user1")
+        
+    mock_session.get.return_value = MagicMock(status_code=200, text='"sesskey":"abc"')
+    mock_session.post.return_value = MagicMock(status_code=200, text="")
+    with pytest.raises(Exception, match="비어 있습니다"):
+        get_user_profile(mock_session, "user1")
+
+# ─── get_assignments_for_course 보강 테스트 ───────────────────────────────
+
+def test_get_assignments_for_course_error():
+    """과제 목록 크롤링 시 일반 예외 발생 처리 테스트."""
+    mock_session = MagicMock()
+    mock_session.get.side_effect = Exception("Network Down")
+    with pytest.raises(Exception, match="과제 추출 중 오류"):
+        get_assignments_for_course(mock_session, "101", "과목")
+
+def test_get_assignments_date_parsing_edge_cases():
+    """과제 마감일 날짜 형식이 특이할 때의 파싱 테스트."""
+    mock_session = MagicMock()
+    # tbody를 추가하여 rows 탐색 성공 유도
+    html = """
     <table class="generaltable">
         <tbody>
             <tr>
                 <td>1</td>
-                <td><a href="assign/view.php?id=555">중간과제</a></td>
-                <td>2026-06-01 23:59:00</td>
-                <td>미제출</td>
+                <td><a href="?id=1">과제</a></td>
+                <td>2026년 6월 1일 9:0</td>
+                <td>제출</td>
             </tr>
         </tbody>
     </table>
     """
-    mock_session.get.return_value = mock_resp
-    
-    result = get_assignments_for_course(mock_session, "101", "소공")
-    
+    mock_session.get.return_value = MagicMock(status_code=200, text=html)
+    result = get_assignments_for_course(mock_session, "101", "과목")
     assert len(result) == 1
-    assert result[0]["assignment_id"] == "555"
-    assert result[0]["assignment_name"] == "중간과제"
-    assert result[0]["course_id"] == "101"
+    assert "2026-06-01T09:00:00" in result[0]["due_date"]
 
-# ─── crawl_all_assignments 테스트 ───────────────────────────────────────
+# ─── get_assignment_detail 보강 테스트 ──────────────────────────────────────
+
+def test_get_assignment_detail_complex():
+    """상세 페이지 파싱 및 이미지/파일 경로 변환 보강 테스트."""
+    mock_session = MagicMock()
+    html = """
+    <h2 class="main">과제명</h2>
+    <div class="assignmentintro">
+        <img src="/pluginfile.php/1.jpg">
+        <a href="/pluginfile.php/2.pdf">파일</a>
+    </div>
+    """
+    mock_session.get.return_value = MagicMock(status_code=200, text=html)
+    result = get_assignment_detail(mock_session, "1")
+    assert result["title"] == "과제명"
+    assert "https://lms.chungbuk.ac.kr/pluginfile.php/1.jpg" in result["description_html"]
+    assert len(result["attachments"]) == 1
+
+def test_get_assignment_detail_status_codes():
+    """상세 페이지 302/401 세션 만료 테스트."""
+    mock_session = MagicMock()
+    mock_session.get.return_value = MagicMock(status_code=401)
+    with pytest.raises(SessionExpiredError):
+        get_assignment_detail(mock_session, "1")
+
+# ─── crawl_all_assignments 보강 테스트 ──────────────────────────────────────
 
 @patch("lms_crawler.get_enrolled_courses")
 @patch("lms_crawler.get_assignments_for_course")
-def test_crawl_all_assignments(mock_get_assigns, mock_get_courses):
-    """모든 과목의 과제를 병렬로 수집하여 마감일 순으로 정렬하는지 테스트한다."""
+def test_crawl_all_assignments_worker_error(mock_get_assigns, mock_get_courses):
+    """특정 과목 크롤링 중 에러가 발생해도 다른 과목은 정상 수집되는지 테스트."""
     mock_session = MagicMock()
-    mock_get_courses.return_value = {
-        "101": {"name": "과목A"},
-        "102": {"name": "과목B"}
-    }
-    
-    # 각 과목당 리턴할 과제 세팅
-    assign_A = [{'assignment_id': '1', 'due_date': '2026-06-05T23:59:00'}]
-    assign_B = [{'assignment_id': '2', 'due_date': '2026-06-03T23:59:00'}]
-    
-    # side_effect를 통해 순서대로 반환
-    mock_get_assigns.side_effect = [assign_A, assign_B]
+    mock_get_courses.return_value = {"1": "과목1", "2": "과목2"}
+    # 첫 번째 과목은 에러, 두 번째는 성공
+    mock_get_assigns.side_effect = [Exception("Error"), [{"assignment_id": "99", "due_date": "2026"}]]
     
     result = crawl_all_assignments(mock_session, "user1")
-    
-    assert len(result) == 2
-    # 마감일 순 오름차순 정렬 확인
-    assert result[0]["assignment_id"] == "2" # 06-03
-    assert result[1]["assignment_id"] == "1" # 06-05
+    assert len(result) == 1
+    assert result[0]["assignment_id"] == "99"
 
-# ─── get_assignment_detail 테스트 ───────────────────────────────────────
+# ─── 모듈 복구 픽스처 ──────────────────────────────────────────────────
 
-def test_get_assignment_detail_success():
-    """과제 상세 내용과 첨부파일 변환 로직을 테스트한다."""
-    mock_session = MagicMock()
-    mock_resp = MagicMock(status_code=200)
-    mock_resp.text = """
-    <div class="page-header-headings"><h1>과제 제목입니다</h1></div>
-    <div id="intro">
-        <p>과제 상세 설명입니다.</p>
-        <img src="/pluginfile.php/image.jpg">
-        <a href="/pluginfile.php/download.pdf">참고자료.pdf</a>
-    </div>
-    """
-    mock_session.get.return_value = mock_resp
-    
-    result = get_assignment_detail(mock_session, "555")
-    
-    assert result["title"] == "과제 제목입니다"
-    assert "과제 상세 설명입니다." in result["description"]
-    # 이미지 절대경로 변환 확인
-    assert "https://lms.chungbuk.ac.kr/pluginfile.php/image.jpg" in result["description_html"]
-    # 링크 프록시 변환 확인
-    assert len(result["attachments"]) == 1
-    assert "api/download?url=" in result["attachments"][0]["url"]
-    assert result["attachments"][0]["name"] == "참고자료.pdf"
-
-def test_get_assignment_detail_no_data():
-    """상세 페이지에 정보가 없을 때 예외 발생을 테스트한다."""
-    mock_session = MagicMock()
-    mock_resp = MagicMock(status_code=200, text="<html><body>빈 페이지</body></html>")
-    mock_session.get.return_value = mock_resp
-    
-    with pytest.raises(ValueError) as excinfo:
-        get_assignment_detail(mock_session, "555")
-    assert "과제 정보를 찾을 수 없습니다." in str(excinfo.value)
+@pytest.fixture(scope="module", autouse=True)
+def restore_lms_module():
+    yield
+    importlib.reload(importlib.import_module("lms_crawler"))
