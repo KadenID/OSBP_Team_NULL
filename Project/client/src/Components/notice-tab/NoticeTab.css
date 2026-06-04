@@ -133,13 +133,11 @@
 
 .notice-item:first-child {
   padding-top: 4px;
-  padding: 18px 24px;
 }
 
 .notice-item:last-child {
   border-bottom: none;
   padding-bottom: 0;
-  padding: 18px 24px;
 }
 
 .notice-title-area {
