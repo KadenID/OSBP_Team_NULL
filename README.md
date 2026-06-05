@@ -1,108 +1,111 @@
 # OSBP_Team_NULL - LMS 통합 과제 대시보드 및 알림 서비스
 
-충북대학교 등 묶음 LMS(Coursemos)를 사용하는 학생들을 위한 **과제 통합 대시보드** 및 **개인 맞춤형 알림 서비스**입니다. 여러 과목에 흩어져 있는 과제와 공지사항을 한눈에 확인하고, 설정한 시간에 다가오는 과제를 이메일로 알림 받을 수 있습니다.
+충북대학교 등 Coursemos를 사용하는 학생들을 위한 **과제 통합 대시보드** 및 **개인 맞춤형 알림 서비스**입니다. 여러 과목에 흩어져 있는 과제와 공지사항을 한눈에 확인하고, 설정한 시간에 맞춰 이메일 및 브라우저 푸시 알림을 받을 수 있습니다.
 
 ## 주요 기능 (Features)
 
 *   **과제 통합 대시보드:** 수강 중인 모든 과목의 과제를 마감일 순으로 정렬하여 한눈에 파악.
-*   **공지사항 모아보기:** 각 과목 게시판에 흩어진 공지사항을 하나의 피드에서 확인.
-*   **사용자 맞춤형 과제 추가:** LMS에 등록되지 않은 개인 과제나 일정을 직접 추가하여 관리.
-*   **개인 맞춤형 알림 서비스:** 특정 과목이나 마감 기한을 지정하여 이메일 알림(리마인더) 수신.
+*   **공지사항 & 쪽지 모아보기:** 각 과목 게시판의 공지사항과 LMS 쪽지를 하나의 피드에서 확인.
+*   **사용자 맞춤형 과제:** LMS 외 개인 일정이나 과제를 직접 추가하여 통합 관리.
+*   **스마트 알림 서비스:** 
+    *   **이메일 알림:** Resend API를 통한 고신뢰성 마감 리마인더 발송.
+    *   **브라우저 푸시:** PWA 기반 실시간 브라우저 알림 (VAPID).
+    *   **알림 이력:** 전송된 알림 기록을 대시보드에서 확인 가능.
+*   **보안 및 편의 기능:**
+    *   **세션 자동 복구:** LMS 세션 만료 시 백엔드에서 자동으로 재로그인 및 세션 갱신.
 
 ---
 
 ## 1. 의존성 (Dependencies)
 
-본 프로젝트는 Frontend(React)와 Backend(FastAPI)로 분리되어 있습니다.
-
 ### 필수 환경 (System Requirements)
 *   **OS:** Windows 10/11, macOS, Linux
-*   **Node.js:** v18.0.0 이상 (Frontend 구동)
-*   **Python:** v3.9 이상 (Backend 구동)
-*   **Redis:** (선택 사항) 캐싱 및 세션 관리 (Upstash Redis 등의 클라우드 서비스 활용 가능)
+*   **Node.js:** v18.0.0 이상
+*   **Python:** v3.9 이상
+*   **Redis:** 캐싱, 세션 관리 및 속도 제한(Rate Limit) 적용
 
-### 주요 라이브러리 버전
-*   **Frontend (`client/package.json` 참조)**
-    *   React (^18.x)
-    *   Vite (^5.x)
-    *   Axios
-    *   Zustand (상태 관리)
-*   **Backend (`server/requirements.txt` 참조)**
-    *   FastAPI
-    *   Uvicorn
-    *   BeautifulSoup4 (크롤링)
-    *   Requests
-    *   Upstash-Redis (캐싱)
-    *   APScheduler (알림 스케줄링)
+### 주요 라이브러리
+*   **Frontend (`client/package.json`)**
+    *   React (^19.x), Vite (^6.x)
+    *   Zustand (상태 관리), Axios (API 통신)
+    *   React Icons, React Router DOM
+*   **Backend (`server/requirements.txt`)**
+    *   FastAPI, Uvicorn
+    *   BeautifulSoup4 (크롤링), Requests
+    *   Resend (이메일 발송), pywebpush (푸시 알림)
+    *   APScheduler (예약 작업), PyJWT (인증)
+    *   Upstash-Redis (캐싱 및 데이터 저장)
 
 ---
 
-## 2. 설치 방법 (Installation)
+## 2. 설치 및 실행 (Installation & Usage)
 
-저장소를 클론한 후, 프론트엔드와 백엔드 디렉토리에서 각각 패키지를 설치해야 합니다.
-
+### 저장소 클론
 ```bash
-# 1. 저장소 클론
 git clone https://github.com/KadenID/OSBP_Team_NULL.git
 cd OSBP_Team_NULL
-
-# 2. Frontend 설치
-cd client
-npm install
-
-# 3. Backend 설치
-cd ../server
-python -m venv .venv
-# 가상환경 활성화 (Windows)
-.venv\Scripts\activate
-# 가상환경 활성화 (Mac/Linux)
-# source venv/bin/activate
-pip install -r requirements.txt
 ```
 
-### 환경 변수 설정 (.env)
-`client`와 `server` 디렉토리 각각에 `.env` 파일을 생성해야 합니다. 제공된 `.env.example` 파일을 참고하세요.
-
-**`server/.env` 예시:**
-```env
-# Redis 설정 (Upstash)
-UPSTASH_REDIS_REST_URL=your_redis_url
-UPSTASH_REDIS_REST_TOKEN=your_redis_token
-
-# 이메일 알림 설정 (SMTP)
-EMAIL_HOST_USER=your_email@gmail.com
-EMAIL_HOST_PASSWORD=your_app_password
-```
-
----
-
-## 3. 사용 방법 (Usage)
-
-### 로컬 개발 서버 실행
-
-터미널 두 개를 열어 각각 프론트엔드와 백엔드를 실행합니다.
-
-**Backend (터미널 1):**
+### Backend 설정
 ```bash
-cd server
-venv\Scripts\activate
+cd Project/server
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# Mac/Linux
+# source .venv/bin/activate
+pip install -r requirements.txt
 uvicorn assignment_api:app --reload --port 8000
 ```
 
-**Frontend (터미널 2):**
+### Frontend 설정
 ```bash
-cd client
+cd Project/client
+npm install
 npm run dev
 ```
 
-서버가 실행되면 웹 브라우저에서 `http://localhost:5173` (Vite 기본 포트)로 접속하여 서비스를 이용할 수 있습니다. LMS 계정으로 로그인하면 자동으로 과제와 공지사항이 동기화됩니다.
+### 환경 변수 설정 (.env)
+`server` 디렉토리에 `.env` 파일을 생성하고 다음 항목을 설정해야 합니다.
 
-### 테스트 (Unit Test)
+```env
+# Redis 설정
+UPSTASH_REDIS_REST_URL=your_url
+UPSTASH_REDIS_REST_TOKEN=your_token
 
+# 알림 설정
+RESEND_API_KEY=re_your_api_key
+SMTP_FROM_EMAIL=your_verified_domain_or_onboarding_email
+VAPID_PUBLIC_KEY=your_public_key
+VAPID_PRIVATE_KEY=your_private_key
+VAPID_CLAIMS_EMAIL=mailto:your_email@example.com
 
+# 보안 설정
+JWT_SECRET_KEY=your_random_secret_key
+```
+
+---
+
+## 3. 테스트 및 품질 관리 (Testing)
+
+### 유닛 테스트 및 커버리지 측정
+
+#### 백엔드 (Python / Pytest)
+```bash
+cd Project_test
+# 커버리지 대상 소스를 명시하여 실행
+coverage run --source=../Project/server -m pytest
+coverage report -m
+```
+
+#### 프론트엔드 (React / Vitest)
+```bash
+cd Project/client
+npm run coverage
+```
 
 ---
 
 ## 4. 라이선스 (License)
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. (또는 프로젝트에 맞는 라이선스 명시)
+이 프로젝트는 MIT 라이선스에 따라 배포됩니다.

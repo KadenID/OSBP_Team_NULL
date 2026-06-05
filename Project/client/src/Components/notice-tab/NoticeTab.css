@@ -1,0 +1,224 @@
+/* 상단 헤더 영역 */
+.notice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.notice-header-right {
+  display: flex;
+  flex-direction: column; 
+  align-items: flex-end;  
+  gap: 10px;          
+}
+
+.notice-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.notice-title-group h2 {
+  color: var(--text-header);
+  font-weight: 700;
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.notice-emoji {
+  font-size: 1.4rem;
+}
+
+.notice-more-btn { 
+  padding: 6px 10px;
+  border: 1px solid var(--accent);
+  font-size: 12px;
+  font-weight: 500;
+  background-color: var(--accent);
+  color: var(--text-on-accent);
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+/* 공지사항, 쪽지함 영역 */
+.notice-tab-toggles {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-card); 
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+/* 공지사항, 쪽지함 버튼 */
+.tab-toggle-btn {  
+  padding: 6px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.tab-toggle-btn:hover:not(.active) {
+  background-color: var(--shadow-hover);
+}
+
+.tab-toggle-btn.active {
+  background-color: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 600;
+  box-shadow: 0 2px 4px var(--btn-bg-hover); 
+}
+
+.filter-tag-btn:hover {
+  background-color: var(--btn-bg-hover); 
+  transform: translateY(-1px);
+}
+
+/* 필터 태그 영역 */
+.notice-filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+/* 필터 버튼 */
+.filter-tag-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+/* 활성화 태그 */
+.filter-tag-btn.active {
+  background-color: var(--accent);
+  color: var(--text-on-accent);
+  border-color: var(--accent);
+  font-weight: 500;
+}
+
+.notice-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* 공지 아이템 */
+.notice-item {
+  border-bottom: 1px solid var(--border);
+  padding: 18px 24px;
+  cursor: pointer;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notice-item:first-child {
+  padding-top: 4px;
+}
+
+.notice-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.notice-title-area {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.notice-course-tag {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-header); 
+  margin-right: 8px; 
+  flex-shrink: 0; 
+}
+
+.notice-item-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-main);
+  
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
+  flex: 1; 
+  min-width: 0;
+}
+
+/* 공지 날짜 태그 */
+.notice-item-date {
+  font-size: 0.8rem;
+  color: var(--text-color);
+  flex-shrink: 0;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.notice-item:hover .notice-item-title {
+  text-decoration: underline;
+}
+
+/* JSX 코드 내의 인라인 스타일 대체하는 빈 화면 전용 클래스 추가 */
+.notice-empty {
+  text-align: center;
+  padding: 20px 0;
+  color: var(--text-main);
+  opacity: 0.5;
+  font-size: 0.9rem;
+}
+
+@media screen and (max-width: 1300px) {
+  .notice-section {
+    padding: 22px; 
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .notice-section {
+    padding: 20px;
+    border-radius: 16px; 
+  }
+
+  .notice-header {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+
+  /* 제목, 에모지, 버튼 크기 일괄 축소 */
+  .notice-title-group h2 { font-size: 1.15rem; }
+  .notice-emoji { font-size: 1.2rem; }
+  .notice-more-btn { padding: 4px 8px; font-size: 11px; }
+
+  /* 필터 버튼 영역 축소 */
+  .notice-filter-tags { gap: 6px; margin-bottom: 14px; }
+  .filter-tag-btn { padding: 5px 10px; font-size: 11px; }
+
+  /* 리스트 텍스트 크기 및 간격 일괄 조정 */
+  .notice-item { padding: 10px 0; }
+  .notice-course-tag, .notice-item-title { font-size: 0.85rem; }
+}
